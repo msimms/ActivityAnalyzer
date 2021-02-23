@@ -1,0 +1,3 @@
+[submodule "LibMath"]
+	path = LibMath
+	url = https://github.com/msimms/LibMath
