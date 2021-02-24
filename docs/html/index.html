@@ -199,7 +199,7 @@ function draw_bar_chart(data, title, color)
 <section class="settings">
     <div style="text-align: center">
         <h1>Select a File</h1>
-        <input type="file" id="file_picker" class="modern_button" name="file_list" webkitdirectory multiple><br>
+        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_list" webkitdirectory multiple><br>
         <button type="button" onclick="return upload_selected_files()">Upload File</button><br>
     </div>
 </section>
@@ -212,7 +212,7 @@ function draw_bar_chart(data, title, color)
 </section>
 
 <section class="faq">
-    <div>
+    <div style="text-align: center">
         <h1>Frequently Asked Questions</h1>
         <ul>
             <li>How much does this cost? <p>Nothing</p>
