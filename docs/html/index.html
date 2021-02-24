@@ -3,11 +3,10 @@
 
 <head>
 
-<title>Run Everywhere</title>
+<title>Interval Analyzer</title>
 
 <link rel="stylesheet" type="text/css" href="../css/normalize.css">
 <link rel="stylesheet" type="text/css" href="../css/site.css">
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.css" />
 
 <meta charset="UTF-8">
 <meta name="description" content="Map of locations in which the user has logged Strava activities">
@@ -20,16 +19,54 @@
 
 <body>
 
+<style type="text/css">
+    html { height: 100% }
+    body { height: 100%; margin: 0; padding: 0 }
+    div { margin: 0px }
+    #map_canvas { height: 75% }
+
+    div.bar
+    {
+        display: inline-block;
+        width: 20px;
+        height: 75px;	/* Gets overriden by D3-assigned height below */
+        background-color: teal;
+    }
+
+    path
+    {
+        stroke: steelblue;
+        stroke-width: 2;
+        fill: none;
+    }
+
+    .axis path,
+    .axis line
+    {
+        fill: none;
+        stroke: #000;
+        stroke-width: 1;
+        shape-rendering: crispEdges;
+    }
+</style>
+
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" integrity="sha256-dsOXGNHAo/syFnazt+KTBsCQeRmlcW1XKL0bCK4Baec=" crossorigin="anonymous"></script>
 
 <script>
 
 </script>
 
+<section class="charts">
+    <div id="charts"/>
+</section>
+
 <section class="settings">
     <div style="text-align: center">
         <h1>Select a File</h1>
+        <input type="file" id="file_picker" class="modern_button" name="file_list" webkitdirectory multiple><br>
+        <button type="button" onclick="return upload_selected_files()">Upload File</button><br>
     </div>
 </section>
 
