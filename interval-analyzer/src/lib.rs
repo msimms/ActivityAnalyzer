@@ -17,3 +17,7 @@ extern {
 pub fn greet() {
     alert("Hello, interval-analyzer!");
 }
+
+#[wasm_bindgen]
+pub fn analyze(s: &str) {
+}

@@ -55,6 +55,9 @@
 
 <script>
 
+var selected_file_list;
+
+/// @function draw_graph
 function draw_graph(data, title, units, color)
 {
     if (data.length <= 1)
@@ -139,9 +142,10 @@ function draw_graph(data, title, units, color)
         .text(title);
 }
 
+/// @function draw_bar_chart
 function draw_bar_chart(data, title, color)
 {
-    let xVals = Array.apply(null, Array(data.length - 1)).map(function (x, i) { return i + 1; } );
+    let xVals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
 
     let margin = {top: 20, right: 20, bottom: 55, left: 50},
         width = $("#charts").width() - margin.left - margin.right,
@@ -186,9 +190,78 @@ function draw_bar_chart(data, title, color)
         .style("fill", color)
         .attr("width", x.rangeBand())
         .attr("height", function(d) { return height - y(d); })
-        .attr("x", function(d, i) { return x(i); })
+        .attr("x", function(d, i) { return x(i+1); })
         .attr("y", function(d) { return y(d); });
 }
+
+/// @function draw_intervals_graph
+function draw_intervals_graph(interval_data)
+{
+    interval_graph = [];
+
+    if (interval_data.length > 0)
+    {
+        if (start_time > 0)
+        {
+            graph_node = {};
+            graph_node["date"] = new Date(start_time);
+            graph_node["value"] = 0;
+            interval_graph.push(graph_node);
+        }
+
+        for (let i in interval_data)
+        {
+            let interval = interval_data[i];
+            let start_interval_time = Number(interval[0]);
+            let end_interval_time = Number(interval[1]);
+
+            graph_node = {};
+            graph_node["date"] = new Date(start_interval_time-1000);
+            graph_node["value"] = 0;
+            interval_graph.push(graph_node);
+            graph_node = {};
+            graph_node["date"] = new Date(start_interval_time);
+            graph_node["value"] = 1;
+            interval_graph.push(graph_node);
+            graph_node = {};
+            graph_node["date"] = new Date(end_interval_time);
+            graph_node["value"] = 1;
+            interval_graph.push(graph_node);
+            graph_node = {};
+            graph_node["date"] = new Date(end_interval_time+1000);
+            graph_node["value"] = 0;
+            interval_graph.push(graph_node);
+        }
+
+        if (end_time > 0)
+        {
+            graph_node = {};
+            graph_node["date"] = new Date(end_time);
+            graph_node["value"] = 0;
+            interval_graph.push(graph_node);
+        }
+
+        draw_graph(interval_graph, "Intervals", "", "Black");
+    }
+}
+
+function upload_selected_files()
+{
+    if (selected_file_list.length > 0)
+    {
+    }
+    else
+    {
+        alert("A file was not specified.");
+    }
+}
+
+picker.addEventListener('change', e => {
+    for (let file of Array.from(e.target.files))
+    {
+        selected_file_list.push(file);
+    };
+});
 
 </script>
 
@@ -199,7 +272,7 @@ function draw_bar_chart(data, title, color)
 <section class="settings">
     <div style="text-align: center">
         <h1>Select a File</h1>
-        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_list" webkitdirectory multiple><br>
+        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_list" webkitdirectory single><br>
         <button type="button" onclick="return upload_selected_files()">Upload File</button><br>
     </div>
 </section>
