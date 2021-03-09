@@ -53,9 +53,39 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" integrity="sha256-dsOXGNHAo/syFnazt+KTBsCQeRmlcW1XKL0bCK4Baec=" crossorigin="anonymous"></script>
 
+<!-- Note the usage of `type=module` here as this is an ES6 module -->
+<script type="module">
+    import init, { greet, analyze } from '../../interval-analyzer/pkg/interval_analyzer.js';
+
+    async function run() {
+        await init();
+        greet();
+    }
+
+    async function analyze_file_data(blob) {
+        analyze(blob);
+    }
+
+    run();
+</script>
+
+<section class="charts">
+    <div id="charts"/>
+</section>
+
+<section class="settings">
+    <div style="text-align: center">
+        <h1>Select a File</h1>
+        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_picker" webkitdirectory single><br>
+        <button type="button" onclick="return upload_selected_files()">Upload File</button><br>
+    </div>
+</section>
+
+<!-- Scripts for loading the file and drawing the graphs -->
 <script>
 
-var selected_file_list;
+var selected_file_list = [];
+var file_picker = document.getElementById('file_picker');
 
 /// @function draw_graph
 function draw_graph(data, title, units, color)
@@ -249,6 +279,20 @@ function upload_selected_files()
 {
     if (selected_file_list.length > 0)
     {
+        for (var i = 0; i < selected_file_list.length; i++)
+        {
+            var reader = new FileReader();
+
+            reader.onerror = function(event)
+            {
+                reader.abort();
+            };
+            reader.onload = function(e)
+            {
+                let i =0;
+            }
+            reader.readAsBinaryString(selected_file_list[i]);
+        }
     }
     else
     {
@@ -256,33 +300,26 @@ function upload_selected_files()
     }
 }
 
-picker.addEventListener('change', e => {
-    for (let file of Array.from(e.target.files))
-    {
-        selected_file_list.push(file);
-    };
+$(document).ready(function()
+{
+    file_picker.addEventListener('change', e => {
+        for (let file of Array.from(e.target.files))
+        {
+            selected_file_list.push(file);
+        };
+    });
 });
 
 </script>
 
-<section class="charts">
-    <div id="charts"/>
-</section>
-
-<section class="settings">
-    <div style="text-align: center">
-        <h1>Select a File</h1>
-        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_list" webkitdirectory single><br>
-        <button type="button" onclick="return upload_selected_files()">Upload File</button><br>
-    </div>
-</section>
-
+<!--
 <section class="connections">
     <div style="text-align: center">
         <h1>Connected Services</h1>
         <a href="api/connect_to_strava"><img src="../images/connect_to_strava.png" width="256"></a>
     </div>
 </section>
+-->
 
 <section class="faq">
     <div style="text-align: center">
