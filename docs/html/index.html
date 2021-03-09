@@ -62,7 +62,7 @@
         greet();
     }
 
-    async function analyze_file_data(blob) {
+    window.analyze_file_data = function analyze_file_data(blob) {
         analyze(blob);
     }
 
@@ -82,233 +82,233 @@
 </section>
 
 <!-- Scripts for loading the file and drawing the graphs -->
-<script>
+<script type="text/javascript">
 
-var selected_file_list = [];
-var file_picker = document.getElementById('file_picker');
+    var selected_file_list = [];
+    var file_picker = document.getElementById('file_picker');
 
-/// @function draw_graph
-function draw_graph(data, title, units, color)
-{
-    if (data.length <= 1)
+    /// @function draw_graph
+    function draw_graph(data, title, units, color)
     {
-        return;
-    }
-
-    // Need to zero out the first and last points or else the fill will look silly.
-    data[0].value = 0.0;
-    data[data.length-1].value = 0.0;
-
-    var Tooltip = d3.select("#charts")
-        .append("div")
-            .style("opacity", 0)
-            .style("position", "absolute")
-            .style("visibility", "hidden")
-            .style("background-color", "white")
-            .style("z-index", 1)
-            .style("cursor", "pointer")
-    var mouseover = function() {
-        Tooltip
-            .style("opacity", 0.7)
-            .style("visibility", "visible")
-    }
-    var mousemove = function() {
-        let coordinates = d3.mouse(this);
-        let x = coordinates[0];
-
-        Tooltip
-            .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
-            .style("top", (event.pageY)+"px")
-            .style("left",(event.pageX)+"px")
-    }
-    var mouseleave = function() {
-    }
-
-    let margin = { top: 20, right: 20, bottom: 20, left: 50 },
-        width = $("#charts").width() - margin.left - margin.right,
-        height = 250 - margin.top - margin.bottom;
-
-    let x = d3.time.scale().range([0, width]);
-    let y = d3.scale.linear().range([height, 0]);
-
-    let xAxis = d3.svg.axis().scale(x).orient("bottom");
-    let yAxis = d3.svg.axis().scale(y).orient("left").ticks(5);
-
-    let valueline = d3.svg.line()
-        .x(function(d) { return x(d.date); })
-        .y(function(d) { return y(d.value); });
-
-    let svg = d3.select("#charts")
-        .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .on('mouseover', mousemove)
-            .on('mousemove', mouseover)
-            .on('mouseleave', mouseleave)
-        .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain(d3.extent(data, function(d) { return d.value; }));
-
-    svg.append("path")
-        .attr("class", "line")
-        .attr("d", valueline(data))
-        .style("fill", color)
-        .style("stroke", "LightSlateGray")
-        .style("stroke-width", 1.25);
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", ".71em")
-        .style("text-anchor", "end")
-        .text(title);
-}
-
-/// @function draw_bar_chart
-function draw_bar_chart(data, title, color)
-{
-    let xVals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
-
-    let margin = {top: 20, right: 20, bottom: 55, left: 50},
-        width = $("#charts").width() - margin.left - margin.right,
-        height = 250 - margin.top - margin.bottom;
-
-    let x = d3.scale.ordinal().domain(xVals).rangeBands([0, width]);
-    let y = d3.scale.linear().domain([0, d3.max(data)]).range([height, 0]);
-
-    let xAxis = d3.svg.axis().scale(x).orient("bottom");
-    let yAxis = d3.svg.axis().scale(y).orient("left").ticks(0);
-
-    let svg = d3.select("#charts")
-        .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis)
-        .selectAll("text")
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", "-.55em")
-        .attr("transform", "rotate(-90)" );
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("dy", ".71em")
-        .style("text-anchor", "end");
-    svg.append("text")
-        .attr("transform", "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
-        .style("text-anchor", "middle")
-        .text(title);
-    svg.selectAll("bar")
-        .data(data)
-        .enter().append("rect")
-        .style("fill", color)
-        .attr("width", x.rangeBand())
-        .attr("height", function(d) { return height - y(d); })
-        .attr("x", function(d, i) { return x(i+1); })
-        .attr("y", function(d) { return y(d); });
-}
-
-/// @function draw_intervals_graph
-function draw_intervals_graph(interval_data)
-{
-    interval_graph = [];
-
-    if (interval_data.length > 0)
-    {
-        if (start_time > 0)
+        if (data.length <= 1)
         {
-            graph_node = {};
-            graph_node["date"] = new Date(start_time);
-            graph_node["value"] = 0;
-            interval_graph.push(graph_node);
+            return;
         }
 
-        for (let i in interval_data)
-        {
-            let interval = interval_data[i];
-            let start_interval_time = Number(interval[0]);
-            let end_interval_time = Number(interval[1]);
+        // Need to zero out the first and last points or else the fill will look silly.
+        data[0].value = 0.0;
+        data[data.length-1].value = 0.0;
 
-            graph_node = {};
-            graph_node["date"] = new Date(start_interval_time-1000);
-            graph_node["value"] = 0;
-            interval_graph.push(graph_node);
-            graph_node = {};
-            graph_node["date"] = new Date(start_interval_time);
-            graph_node["value"] = 1;
-            interval_graph.push(graph_node);
-            graph_node = {};
-            graph_node["date"] = new Date(end_interval_time);
-            graph_node["value"] = 1;
-            interval_graph.push(graph_node);
-            graph_node = {};
-            graph_node["date"] = new Date(end_interval_time+1000);
-            graph_node["value"] = 0;
-            interval_graph.push(graph_node);
+        var Tooltip = d3.select("#charts")
+            .append("div")
+                .style("opacity", 0)
+                .style("position", "absolute")
+                .style("visibility", "hidden")
+                .style("background-color", "white")
+                .style("z-index", 1)
+                .style("cursor", "pointer")
+        var mouseover = function() {
+            Tooltip
+                .style("opacity", 0.7)
+                .style("visibility", "visible")
+        }
+        var mousemove = function() {
+            let coordinates = d3.mouse(this);
+            let x = coordinates[0];
+
+            Tooltip
+                .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
+                .style("top", (event.pageY)+"px")
+                .style("left",(event.pageX)+"px")
+        }
+        var mouseleave = function() {
         }
 
-        if (end_time > 0)
-        {
-            graph_node = {};
-            graph_node["date"] = new Date(end_time);
-            graph_node["value"] = 0;
-            interval_graph.push(graph_node);
-        }
+        let margin = { top: 20, right: 20, bottom: 20, left: 50 },
+            width = $("#charts").width() - margin.left - margin.right,
+            height = 250 - margin.top - margin.bottom;
 
-        draw_graph(interval_graph, "Intervals", "", "Black");
+        let x = d3.time.scale().range([0, width]);
+        let y = d3.scale.linear().range([height, 0]);
+
+        let xAxis = d3.svg.axis().scale(x).orient("bottom");
+        let yAxis = d3.svg.axis().scale(y).orient("left").ticks(5);
+
+        let valueline = d3.svg.line()
+            .x(function(d) { return x(d.date); })
+            .y(function(d) { return y(d.value); });
+
+        let svg = d3.select("#charts")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .on('mouseover', mousemove)
+                .on('mousemove', mouseover)
+                .on('mouseleave', mouseleave)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        x.domain(d3.extent(data, function(d) { return d.date; }));
+        y.domain(d3.extent(data, function(d) { return d.value; }));
+
+        svg.append("path")
+            .attr("class", "line")
+            .attr("d", valueline(data))
+            .style("fill", color)
+            .style("stroke", "LightSlateGray")
+            .style("stroke-width", 1.25);
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end")
+            .text(title);
     }
-}
 
-function upload_selected_files()
-{
-    if (selected_file_list.length > 0)
+    /// @function draw_bar_chart
+    function draw_bar_chart(data, title, color)
     {
-        for (var i = 0; i < selected_file_list.length; i++)
-        {
-            var reader = new FileReader();
+        let xVals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
 
-            reader.onerror = function(event)
+        let margin = {top: 20, right: 20, bottom: 55, left: 50},
+            width = $("#charts").width() - margin.left - margin.right,
+            height = 250 - margin.top - margin.bottom;
+
+        let x = d3.scale.ordinal().domain(xVals).rangeBands([0, width]);
+        let y = d3.scale.linear().domain([0, d3.max(data)]).range([height, 0]);
+
+        let xAxis = d3.svg.axis().scale(x).orient("bottom");
+        let yAxis = d3.svg.axis().scale(y).orient("left").ticks(0);
+
+        let svg = d3.select("#charts")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis)
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", "-.55em")
+            .attr("transform", "rotate(-90)" );
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("dy", ".71em")
+            .style("text-anchor", "end");
+        svg.append("text")
+            .attr("transform", "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
+            .style("text-anchor", "middle")
+            .text(title);
+        svg.selectAll("bar")
+            .data(data)
+            .enter().append("rect")
+            .style("fill", color)
+            .attr("width", x.rangeBand())
+            .attr("height", function(d) { return height - y(d); })
+            .attr("x", function(d, i) { return x(i+1); })
+            .attr("y", function(d) { return y(d); });
+    }
+
+    /// @function draw_intervals_graph
+    function draw_intervals_graph(interval_data)
+    {
+        interval_graph = [];
+
+        if (interval_data.length > 0)
+        {
+            if (start_time > 0)
             {
-                reader.abort();
-            };
-            reader.onload = function(e)
-            {
-                let i =0;
+                graph_node = {};
+                graph_node["date"] = new Date(start_time);
+                graph_node["value"] = 0;
+                interval_graph.push(graph_node);
             }
-            reader.readAsBinaryString(selected_file_list[i]);
+
+            for (let i in interval_data)
+            {
+                let interval = interval_data[i];
+                let start_interval_time = Number(interval[0]);
+                let end_interval_time = Number(interval[1]);
+
+                graph_node = {};
+                graph_node["date"] = new Date(start_interval_time-1000);
+                graph_node["value"] = 0;
+                interval_graph.push(graph_node);
+                graph_node = {};
+                graph_node["date"] = new Date(start_interval_time);
+                graph_node["value"] = 1;
+                interval_graph.push(graph_node);
+                graph_node = {};
+                graph_node["date"] = new Date(end_interval_time);
+                graph_node["value"] = 1;
+                interval_graph.push(graph_node);
+                graph_node = {};
+                graph_node["date"] = new Date(end_interval_time+1000);
+                graph_node["value"] = 0;
+                interval_graph.push(graph_node);
+            }
+
+            if (end_time > 0)
+            {
+                graph_node = {};
+                graph_node["date"] = new Date(end_time);
+                graph_node["value"] = 0;
+                interval_graph.push(graph_node);
+            }
+
+            draw_graph(interval_graph, "Intervals", "", "Black");
         }
     }
-    else
-    {
-        alert("A file was not specified.");
-    }
-}
 
-$(document).ready(function()
-{
-    file_picker.addEventListener('change', e => {
-        for (let file of Array.from(e.target.files))
+    function upload_selected_files()
+    {
+        if (selected_file_list.length > 0)
         {
-            selected_file_list.push(file);
-        };
+            for (var i = 0; i < selected_file_list.length; i++)
+            {
+                var reader = new FileReader();
+
+                reader.onerror = function(event)
+                {
+                    reader.abort();
+                };
+                reader.onload = function(e)
+                {
+                    window.analyze_file_data(reader.result);
+                }
+                reader.readAsBinaryString(selected_file_list[i]);
+            }
+        }
+        else
+        {
+            alert("A file was not specified.");
+        }
+    }
+
+    $(document).ready(function()
+    {
+        file_picker.addEventListener('change', e => {
+            for (let file of Array.from(e.target.files))
+            {
+                selected_file_list.push(file);
+            };
+        });
     });
-});
 
 </script>
 
