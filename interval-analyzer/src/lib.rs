@@ -1,6 +1,15 @@
+// Copyright (c) 2021 Michael J. Simms. All rights reserved.
+
+extern crate gpx;
+
 mod utils;
 
 use wasm_bindgen::prelude::*;
+
+use std::io::BufReader;
+use gpx::read;
+use gpx::{Gpx, Track, TrackSegment};
+use gpx::errors::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -15,9 +24,20 @@ extern {
 
 #[wasm_bindgen]
 pub fn greet() {
-    alert("Hello, interval-analyzer!");
+    alert("Copyright (c) 2021 Michael J. Simms. All rights reserved.");
 }
 
 #[wasm_bindgen]
 pub fn analyze(s: &str) {
+    let data = BufReader::new(s.as_bytes());
+    let res: Result<Gpx> = read(data);
+
+    match res {
+        Ok(gpx) => {
+            let track: &Track = &gpx.tracks[0];
+            let segment: &TrackSegment = &track.segments[0];
+        }
+        Err(e) => {
+        }
+    }
 }
