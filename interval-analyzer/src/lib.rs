@@ -3,6 +3,7 @@
 extern crate gpx;
 
 mod utils;
+mod location_analyzer;
 
 use wasm_bindgen::prelude::*;
 
@@ -36,6 +37,11 @@ pub fn analyze(s: &str) {
         Ok(gpx) => {
             let track: &Track = &gpx.tracks[0];
             let segment: &TrackSegment = &track.segments[0];
+            let points = &segment.points;
+
+            for point in points {
+                location_analyzer::append_location(&point.point().x(), &point.point().y(), &point.elevation.unwrap());
+            }
         }
         Err(e) => {
         }
