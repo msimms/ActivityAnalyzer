@@ -35,12 +35,18 @@ pub fn analyze(s: &str) {
 
     match res {
         Ok(gpx) => {
+            let mut analyzer = location_analyzer::LocationAnalyzer::new();
             let track: &Track = &gpx.tracks[0];
             let segment: &TrackSegment = &track.segments[0];
             let points = &segment.points;
 
             for point in points {
-                location_analyzer::append_location(&point.point().x(), &point.point().y(), &point.elevation.unwrap());
+                let time = point.time.unwrap().timestamp();
+                let lat = point.point().x();
+                let lon = point.point().y();
+                let alt = point.elevation.unwrap();
+
+                analyzer.append_location(time as u64, lat, lon, alt);
             }
         }
         Err(e) => {
