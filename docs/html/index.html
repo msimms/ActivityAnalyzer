@@ -63,7 +63,7 @@
     }
 
     window.analyze_file_data = function analyze_file_data(blob) {
-        analyze(blob);
+        return analyze(blob);
     }
 
     run();
@@ -289,7 +289,7 @@
                 };
                 reader.onload = function(e)
                 {
-                    window.analyze_file_data(reader.result);
+                    report = window.analyze_file_data(reader.result);
                 }
                 reader.readAsBinaryString(selected_file_list[i]);
             }

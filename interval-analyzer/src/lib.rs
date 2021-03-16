@@ -19,6 +19,11 @@ use gpx::errors::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
+pub struct AnalysisReport {
+    pub total_distance: f64,
+}
+
+#[wasm_bindgen]
 extern {
     fn alert(s: &str);
 }
@@ -29,7 +34,8 @@ pub fn greet() {
 }
 
 #[wasm_bindgen]
-pub fn analyze(s: &str) {
+pub fn analyze(s: &str) -> AnalysisReport {
+    let mut analysis_report = AnalysisReport{ total_distance: 0.0 };
     let data = BufReader::new(s.as_bytes());
     let res: Result<Gpx> = read(data);
 
@@ -52,4 +58,6 @@ pub fn analyze(s: &str) {
         Err(e) => {
         }
     }
+
+    analysis_report
 }
