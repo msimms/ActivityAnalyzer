@@ -55,7 +55,7 @@
 
 <!-- Note the usage of `type=module` here as this is an ES6 module -->
 <script type="module">
-    import init, { greet, analyze } from '../../interval-analyzer/pkg/interval_analyzer.js';
+    import init, { greet, analyze, AnalysisReport } from '../../interval-analyzer/pkg/interval_analyzer.js';
 
     async function run() {
         await init();
@@ -63,7 +63,9 @@
     }
 
     window.analyze_file_data = function analyze_file_data(blob) {
-        return analyze(blob);
+        let report = analyze(blob);
+        let total_distance = report.total_distance;
+        let total_vertical = report.total_vertical;
     }
 
     run();
@@ -289,7 +291,7 @@
                 };
                 reader.onload = function(e)
                 {
-                    report = window.analyze_file_data(reader.result);
+                    window.analyze_file_data(reader.result);
                 }
                 reader.readAsBinaryString(selected_file_list[i]);
             }

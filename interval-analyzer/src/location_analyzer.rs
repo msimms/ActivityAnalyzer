@@ -21,8 +21,8 @@ pub struct LocationAnalyzer {
     speed_times: Vec<u64>, // Holds the times associated with speed_graph
     speed_graph: Vec<f64>, // Holds the current speed calculations 
     //speed_blocks: Vec<>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
-    total_distance: f64, // Distance traveled (in meters)
-    total_vertical: f64, // Total ascent (in meters)
+    pub total_distance: f64, // Distance traveled (in meters)
+    pub total_vertical: f64, // Total ascent (in meters)
 
     mile_splits: Vec<f64>, // Mile split times
     km_splits: Vec<f64>, // Kilometer split times
@@ -45,12 +45,21 @@ impl LocationAnalyzer {
         }
     }
 
+    fn get_best_time(&self, record_name: &str) -> u64 {
+        // Returns the time associated with the specified record, or None if not found.
+        /*if record_name in self.bests {
+            return self.bests[record_name]
+        }*/
+        0
+    }
+
     fn do_record_check(&mut self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) {
         // Looks up the existing record and, if necessary, updates it.
         if (meters as u64) == (record_meters as u64) {
-/*            old_value = self.get_best_time(record_name)
-            if old_value is None or seconds < old_value:
-                self.bests[record_name] = seconds */
+            let old_value = self.get_best_time(record_name);
+            if old_value == 0 || seconds < old_value {
+//                self.bests[record_name] = seconds
+            }
         }
     }
 

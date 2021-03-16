@@ -21,6 +21,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[wasm_bindgen]
 pub struct AnalysisReport {
     pub total_distance: f64,
+    pub total_vertical: f64,
 }
 
 #[wasm_bindgen]
@@ -35,7 +36,7 @@ pub fn greet() {
 
 #[wasm_bindgen]
 pub fn analyze(s: &str) -> AnalysisReport {
-    let mut analysis_report = AnalysisReport{ total_distance: 0.0 };
+    let mut analysis_report = AnalysisReport{ total_distance: 0.0, total_vertical: 0.0 };
     let data = BufReader::new(s.as_bytes());
     let res: Result<Gpx> = read(data);
 
@@ -54,8 +55,13 @@ pub fn analyze(s: &str) -> AnalysisReport {
 
                 analyzer.append_location(time as u64, lat, lon, alt);
             }
+
+            // Copy items to the final report.
+            analysis_report.total_distance = analyzer.total_distance;
+            analysis_report.total_vertical = analyzer.total_vertical;
         }
         Err(e) => {
+            alert("Error parsing GPX file.");
         }
     }
 
