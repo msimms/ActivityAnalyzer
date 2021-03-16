@@ -53,19 +53,132 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" integrity="sha256-dsOXGNHAo/syFnazt+KTBsCQeRmlcW1XKL0bCK4Baec=" crossorigin="anonymous"></script>
 
+<script type="text/javascript">
+    /// @function pad
+    /// Utility function for padding a number with leading zeroes.
+    function pad(num, size)
+    {
+        var s = "000000000" + num;
+        return s.substr(s.length - size);
+    }
+
+    /// @function convert_seconds_to_hours_mins_secs
+    /// Converts seconds to HH:MM:SS format.
+    function convert_seconds_to_hours_mins_secs(seconds_in)
+    {
+        seconds = seconds_in % 60;
+        minutes = Math.trunc(seconds_in / 60);
+        hours = Math.trunc(minutes / 60);
+        minutes = Math.trunc(minutes % 60);
+        out_str = pad(hours.toFixed(0), 2) + ":" + pad(minutes.toFixed(0), 2) + ":" + pad(seconds.toFixed(0), 2);
+        return out_str;
+    }
+
+    /// @function unix_time_to_local_string
+    function unix_time_to_local_string(unix_time)
+    {
+        let date = new Date(unix_time * 1000);
+        return date.toLocaleString();
+    }
+
+    /// @function unix_time_to_local_date_string
+    function unix_time_to_local_date_string(unix_time)
+    {
+        let date = new Date(unix_time * 1000);
+        return date.toLocaleDateString();
+    }
+
+    /// @function convert_distance_to_unit_system_str
+    /// Converts meters to whatever the preferred units are and formats it as a string.
+    function convert_distance_to_unit_system_str(unit_system, meters_traveled)
+    {
+        if (unit_system == "Metric")
+        {
+            let km = meters_traveled / 1000.0;
+            return km.toFixed(2).toString() + " kms";
+        }
+        let miles = meters_traveled * 0.000621371;
+        return miles.toFixed(2).toString() + " miles";
+    }
+
+    /// @function convert_vertical_distance_to_unit_system_str
+    /// Converts meters to whatever the preferred units are and formats it as a string.
+    function convert_vertical_distance_to_unit_system_str(unit_system, meters_climbed)
+    {
+        if (unit_system == "Metric")
+        {
+            return meters_climbed.toFixed(2).toString() + " meters";
+        }
+        let feet = meters_climbed * 3.28084;
+        return feet.toFixed(2).toString() + " feet";
+    }
+
+    /// @function convert_speed_to_unit_system_str
+    /// Converts meters/minute to whatever the preferred units are and formats it as a string.
+    function convert_speed_to_unit_system_str(unit_system, speed)
+    {
+        if (unit_system == "Metric")
+        {
+            let km = speed / 3.6;
+            return km.toFixed(2).toString() + " km/hr";
+        }
+        let miles = speed * 2.23694;
+        return miles.toFixed(2).toString() + " miles/hr";
+    }
+
+    /// @function append_to_table_row
+    function append_to_table_row(row, text)
+    {
+        let cell = row.insertCell();
+        let a = document.createElement('a');
+        let link_text = document.createTextNode(text);
+
+        a.appendChild(link_text);
+        a.title = text;
+        cell.appendChild(a);
+    }
+
+    /// @function append_to_table
+    function append_to_table(table, name, value)
+    {
+        let new_row = table.insertRow();
+
+        append_to_table_row(new_row, name);
+        append_to_table_row(new_row, value);
+    }
+
+    /// @function on_units_changed
+    function on_units_changed()
+    {
+        let units = document.getElementById('units').value;
+        document.cookie = "units=" + units;
+    }
+</script>
+
 <!-- Note the usage of `type=module` here as this is an ES6 module -->
 <script type="module">
-    import init, { greet, analyze, AnalysisReport } from '../../interval-analyzer/pkg/interval_analyzer.js';
+    import init, { greet, analyze_gpx, analyze_tcx, AnalysisReport } from '../../interval-analyzer/pkg/interval_analyzer.js';
 
     async function run() {
         await init();
-        greet();
     }
 
     window.analyze_file_data = function analyze_file_data(blob) {
-        let report = analyze(blob);
+        let report = analyze_gpx(blob);
         let total_distance = report.total_distance;
         let total_vertical = report.total_vertical;
+        let avg_speed = report.avg_speed;
+        let elapsed_time = report.end_time - report.start_time;
+        let units = document.getElementById('units').value;
+        let analysis_table = document.getElementById('analysis_table');
+
+        // Remove previous table contents, in case the user pressed the button twice.
+        analysis_table.innerHTML = ''
+
+        append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(elapsed_time));
+        append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, report.total_distance));
+        append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, report.total_vertical));
+        append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, avg_speed));
     }
 
     run();
@@ -76,10 +189,22 @@
 </section>
 
 <section class="settings">
-    <div style="text-align: center">
+    <div>
         <h1>Select a File</h1>
-        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_picker" single><br>
-        <button type="button" onclick="return upload_selected_files()">Upload File</button><br>
+        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_picker" single>
+        <button type="button" class="modern_button" onclick="return analyze_selected_files()">Analyze File</button><br>
+        <select id="units" onchange="on_units_changed()">
+            <option value="Metric">Metric</option>
+            <option value="Standard">Standard</option>
+        </select>
+    </div>
+</section>
+
+<section class="analysis">
+    <div>
+        <h1>Analysis</h1>
+        <table id="analysis_table">
+        </table>
     </div>
 </section>
 
@@ -277,7 +402,7 @@
         }
     }
 
-    function upload_selected_files()
+    function analyze_selected_files()
     {
         if (selected_file_list.length > 0)
         {
@@ -302,21 +427,46 @@
         }
     }
 
+    function get_cookie(cookie_name)
+    {
+        let name = cookie_name + "=";
+        let decoded_cookie = decodeURIComponent(document.cookie);
+        let ca = decoded_cookie.split(';');
+
+        for (let i = 0; i < ca.length; i++)
+        {
+            let c = ca[i];
+
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
     $(document).ready(function()
     {
+        // Add the on change listener for the file picker.
         file_picker.addEventListener('change', e => {
             for (let file of Array.from(e.target.files))
             {
                 selected_file_list.push(file);
             };
         });
+
+        // Set the preferred units.
+        let units = get_cookie("units");
+        document.getElementById('units').value = units;
     });
 
 </script>
 
 <!--
 <section class="connections">
-    <div style="text-align: center">
+    <div>
         <h1>Connected Services</h1>
         <a href="api/connect_to_strava"><img src="../images/connect_to_strava.png" width="256"></a>
     </div>
@@ -324,7 +474,7 @@
 -->
 
 <section class="faq">
-    <div style="text-align: center">
+    <div>
         <h1>Frequently Asked Questions</h1>
         <ul>
             <li>How much does this cost? <p>Nothing</p>

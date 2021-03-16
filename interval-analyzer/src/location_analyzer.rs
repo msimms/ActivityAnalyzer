@@ -2,6 +2,7 @@
 
 use lib_math::{distance};
 
+const METERS_PER_KM: f64 = 1000.0;
 const METERS_PER_MILE: f64 = 1609.34;
 
 struct DistanceNode {
@@ -11,8 +12,8 @@ struct DistanceNode {
 }
 
 pub struct LocationAnalyzer {
-    start_time: u64,
-    last_time: u64,
+    pub start_time: u64,
+    pub last_time: u64,
     last_lat: f64,
     last_lon: f64,
     last_alt: f64,
@@ -27,8 +28,8 @@ pub struct LocationAnalyzer {
     mile_splits: Vec<f64>, // Mile split times
     km_splits: Vec<f64>, // Kilometer split times
 
-    avg_speed: f64, // Average speed (in meters/second)
-    current_speed: f64 // Current speed (in meters/second)
+    pub avg_speed: f64, // Average speed (in meters/second)
+    pub current_speed: f64 // Current speed (in meters/second)
 }
 
 impl LocationAnalyzer {
@@ -94,7 +95,7 @@ impl LocationAnalyzer {
             self.update_average_speed(date_time);
 
             // Update the split calculations.
-            self.do_split_check(date_time - self.start_time, 1000.0, &self.km_splits);
+            self.do_split_check(date_time - self.start_time, METERS_PER_KM, &self.km_splits);
             self.do_split_check(date_time - self.start_time, METERS_PER_MILE, &self.mile_splits);
         }
 
