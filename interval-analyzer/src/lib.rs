@@ -75,7 +75,7 @@ pub fn analyze_gpx(s: &str) -> AnalysisReport {
 }
 
 #[wasm_bindgen]
-pub fn analyze_tcx(s: &str) -> AnalysisReport {
-    let mut analysis_report = AnalysisReport{ start_time: 0.0, end_time: 0.0, total_distance: 0.0, total_vertical: 0.0, avg_speed: 0.0 };
+pub fn analyze_tcx(_s: &str) -> AnalysisReport {
+    let analysis_report = AnalysisReport{ start_time: 0.0, end_time: 0.0, total_distance: 0.0, total_vertical: 0.0, avg_speed: 0.0 };
     analysis_report
 }

@@ -99,6 +99,12 @@ h2 {
 	text-align: center;
 }
 
+.analysis div {
+    margin: 0 auto;
+	background: white;
+    text-align: center;
+}
+
 .analysis table {
     font-family: arial, sans-serif;
     background: linear-gradient(to left, #FFFFFF , #FFFFFF);

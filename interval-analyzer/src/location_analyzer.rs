@@ -1,9 +1,26 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
 use lib_math::{distance};
+use std::collections::HashMap;
 
 const METERS_PER_KM: f64 = 1000.0;
 const METERS_PER_MILE: f64 = 1609.34;
+const METERS_PER_HALF_MARATHON: f64 = 13.1 * METERS_PER_MILE;
+const METERS_PER_MARATHON: f64 = 26.2 * METERS_PER_MILE;
+
+const BEST_1K: &str = "Best 1K";
+const BEST_MILE: &str = "Best Mile";
+const BEST_5K: &str = "Best 5K";
+const BEST_10K: &str = "Best 10K";
+const BEST_15K: &str = "Best 15K";
+const BEST_HALF_MARATHON: &str = "Best Half Marathon";
+const BEST_MARATHON: &str = "Best Marathon";
+const BEST_METRIC_CENTURY: &str = "Best Metric Century";
+const BEST_CENTURY: &str = "Best Century";
+
+const TYPE_UNSPECIFIED_ACTIVITY_KEY: &str = "Unknown";
+const TYPE_RUNNING_KEY: &str = "Running";
+const TYPE_CYCLING_KEY: &str = "Cycling";
 
 struct DistanceNode {
     date_time: u64,
@@ -25,54 +42,160 @@ pub struct LocationAnalyzer {
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
 
-    mile_splits: Vec<f64>, // Mile split times
-    km_splits: Vec<f64>, // Kilometer split times
+    pub mile_splits: Vec<f64>, // Mile split times
+    pub km_splits: Vec<f64>, // Kilometer split times
 
     pub avg_speed: f64, // Average speed (in meters/second)
-    pub current_speed: f64 // Current speed (in meters/second)
+    pub current_speed: f64, // Current speed (in meters/second)
+
+    pub bests: HashMap<String, u64>,
+
+    activity_type: String
 }
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{start_time: 0, last_time: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0};
+        let analyzer = LocationAnalyzer{start_time: 0, last_time: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string()};
         analyzer
     }
 
-    fn update_average_speed(&mut self, date_time: u64) {
+    fn update_average_speed(&mut self, elapsed_seconds: u64) {
         // Computes the average speed of the workout. Called by 'append_location'.
-        let elapsed_milliseconds = date_time - self.start_time;
-        if elapsed_milliseconds > 0 {
-            self.avg_speed = self.total_distance / (elapsed_milliseconds as f64 / 1000.0)
+        if elapsed_seconds > 0 {
+            self.avg_speed = self.total_distance / (elapsed_seconds as f64)
         }
     }
 
     fn get_best_time(&self, record_name: &str) -> u64 {
         // Returns the time associated with the specified record, or None if not found.
-        /*if record_name in self.bests {
-            return self.bests[record_name]
-        }*/
-        0
+        match self.bests.get(record_name) {
+            Some(&number) => return number,
+            _ => return 0,
+        }
     }
 
-    fn do_record_check(&mut self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) {
+    fn do_record_check(&self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) {
         // Looks up the existing record and, if necessary, updates it.
         if (meters as u64) == (record_meters as u64) {
             let old_value = self.get_best_time(record_name);
             if old_value == 0 || seconds < old_value {
-//                self.bests[record_name] = seconds
+                //self.bests.insert(record_name.to_string(), seconds);
             }
         }
     }
 
-    fn do_split_check(&self, seconds: u64, split_meters: f64, split_buf: &Vec<f64>) {
-        let units_traveled = self.total_distance / split_meters;
-        let whole_units_traveled = units_traveled as u64;
-/*        if len(split_buf) < whole_units_traveled + 1 {
-            split_buf.append(seconds)
+    fn do_km_split_check(&mut self, seconds: u64) {
+        let units_traveled = self.total_distance / METERS_PER_KM;
+        let whole_units_traveled = units_traveled as usize;
+
+        if self.km_splits.len() < whole_units_traveled + 1 {
+            self.km_splits.push(seconds as f64);
         }
         else {
-            split_buf[whole_units_traveled] = seconds
-        } */
+            self.km_splits[whole_units_traveled] = seconds as f64;
+        }
+    }
+
+    fn do_mile_split_check(&mut self, seconds: u64) {
+        let units_traveled = self.total_distance / METERS_PER_MILE;
+        let whole_units_traveled = units_traveled as usize;
+
+        if self.mile_splits.len() < whole_units_traveled + 1 {
+            self.mile_splits.push(seconds as f64);
+        }
+        else {
+            self.mile_splits[whole_units_traveled] = seconds as f64;
+        }
+    }
+
+    fn update_speeds(&mut self) {
+        // Computes the average speed over the last mile. Called by 'append_location'.
+
+        // This will be recomputed here, so zero it out.
+        self.current_speed = 0.0;
+
+        // Loop through the list, in reverse order, updating the current speed, and all "bests".
+        for time_distance_node in self.distance_buf.iter().rev() {
+
+            // Convert time from ms to seconds - seconds from this point to the end of the activity.
+            let current_time = time_distance_node.date_time;
+            let total_seconds = (self.last_time - current_time) / 1000;
+            if total_seconds <= 0 {
+                continue;
+            }
+
+            // Distance travelled from this point to the end of the activity.
+            let current_distance = time_distance_node.total_distance;
+            let total_meters = self.total_distance - current_distance;
+
+            // Current speed is the average of the last ten seconds.
+            /*if (total_seconds as u64) == self.speed_window_size {
+
+                self.current_speed = total_meters / total_seconds
+            }*/
+
+            // Is this a new kilometer record for this activity?
+            if total_meters < 1000.0 {
+                continue;
+            }
+            self.do_record_check(BEST_1K, total_seconds, total_meters, 1000.0);
+
+            // Is this a new mile record for this activity?
+            if total_meters < METERS_PER_MILE {
+                continue;
+            }
+            self.do_record_check(BEST_MILE, total_seconds, total_meters, METERS_PER_MILE);
+
+            // Is this a new 5K record for this activity?
+            if total_meters < 5000.0 {
+                continue;
+            }
+            self.do_record_check(BEST_5K, total_seconds, total_meters, 5000.0);
+
+            // Is this a new 10K record for this activity?
+            if total_meters < 10000.0 {
+                continue;
+            }
+            self.do_record_check(BEST_10K, total_seconds, total_meters, 10000.0);
+
+            // Running-specific records:
+            if self.activity_type == TYPE_RUNNING_KEY {
+
+                // Is this a new 15K record for this activity?
+                if total_meters < 15000.0 {
+                    continue;
+                }
+                self.do_record_check(BEST_15K, total_seconds, total_meters, 15000.0);
+
+                // Is this a new half marathon record for this activity?
+                if total_meters < METERS_PER_HALF_MARATHON {
+                    continue;
+                }
+                self.do_record_check(BEST_HALF_MARATHON, total_seconds, total_meters, METERS_PER_HALF_MARATHON);
+
+                // Is this a new marathon record for this activity?
+                if total_meters < METERS_PER_MARATHON {
+                    continue;
+                }
+                self.do_record_check(BEST_MARATHON, total_seconds, total_meters, METERS_PER_MARATHON);
+            }
+
+            // Cycling-specific records:
+            if self.activity_type == TYPE_CYCLING_KEY {
+
+                // Is this a new metric century record for this activity?
+                if total_meters < 100000.0 {
+                    continue;
+                }
+                self.do_record_check(BEST_METRIC_CENTURY, total_seconds, total_meters, 100000.0);
+
+                // Is this a new century record for this activity?
+                if total_meters < METERS_PER_MILE * 100.0 {
+                    continue;
+                }
+                self.do_record_check(BEST_CENTURY, total_seconds, total_meters, METERS_PER_MILE * 100.0);
+            }
+        }
     }
 
     pub fn append_location(&mut self, date_time: u64, latitude: f64, longitude: f64, altitude: f64) {
@@ -87,16 +210,19 @@ impl LocationAnalyzer {
             // How far since the last point?
             let meters_traveled = distance::haversine_distance(latitude, longitude, altitude, self.last_lat, self.last_lon, self.last_alt);
 
+            // How long has it been?
+            let elapsed_seconds = date_time - self.start_time;
+
             // Update totals and averages.
             self.total_distance = self.total_distance + meters_traveled;
             let distance_node = DistanceNode{date_time: date_time, meters_traveled: meters_traveled, total_distance: self.total_distance};
             self.distance_buf.push(distance_node);
             self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
-            self.update_average_speed(date_time);
+            self.update_average_speed(elapsed_seconds);
 
             // Update the split calculations.
-            self.do_split_check(date_time - self.start_time, METERS_PER_KM, &self.km_splits);
-            self.do_split_check(date_time - self.start_time, METERS_PER_MILE, &self.mile_splits);
+            self.do_km_split_check(elapsed_seconds);
+            self.do_mile_split_check(elapsed_seconds);
         }
 
         // Update the heat map.

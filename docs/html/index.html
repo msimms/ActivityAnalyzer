@@ -172,6 +172,10 @@
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
 
+        // Show the section
+        let section = document.getElementById('analysis');
+        section.style = "display: block;";
+
         // Remove previous table contents, in case the user pressed the button twice.
         analysis_table.innerHTML = ''
 
@@ -200,7 +204,7 @@
     </div>
 </section>
 
-<section class="analysis">
+<section class="analysis" id="analysis" style="display: none;">
     <div>
         <h1>Analysis</h1>
         <table id="analysis_table">
@@ -479,7 +483,7 @@
         <ul>
             <li>How much does this cost? <p>Nothing</p>
             <li>How does it work? <p>Magic</p>
-            <li>What data do you store? <p>Nothing</p>
+            <li>What data do you store? <p>Nothing. All processing is done in the browser. No data leaves the local machine.</p>
         </ul>
     </div>
 </section>
