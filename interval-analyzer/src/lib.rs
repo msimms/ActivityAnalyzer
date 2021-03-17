@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use std::io::BufReader;
 use gpx::read;
-use gpx::{Gpx, Track, TrackSegment};
+use gpx::{Gpx, TrackSegment};
 use gpx::errors::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -46,17 +46,28 @@ pub fn analyze_gpx(s: &str) -> AnalysisReport {
     match res {
         Ok(gpx) => {
             let mut analyzer = location_analyzer::LocationAnalyzer::new();
-            let track: &Track = &gpx.tracks[0];
-            let segment: &TrackSegment = &track.segments[0];
-            let points = &segment.points;
 
-            for point in points {
-                let time = point.time.unwrap().timestamp();
-                let lat = point.point().x();
-                let lon = point.point().y();
-                let alt = point.elevation.unwrap();
+            // Iterate through the tracks.
+            for track in gpx.tracks {
 
-                analyzer.append_location(time as u64, lat, lon, alt);
+                // Get the track name.
+                match &track._type {
+                    Some(activity_type) => analyzer.set_activity_type(activity_type.to_string()),
+                    _ => {},
+                }
+
+                let segment: &TrackSegment = &track.segments[0];
+                let points = &segment.points;
+
+                // Iterate through the points.
+                for point in points {
+                    let time = point.time.unwrap().timestamp();
+                    let lat = point.point().x();
+                    let lon = point.point().y();
+                    let alt = point.elevation.unwrap();
+
+                    analyzer.append_location(time as u64, lat, lon, alt);
+                }
             }
 
             // Copy items to the final report.

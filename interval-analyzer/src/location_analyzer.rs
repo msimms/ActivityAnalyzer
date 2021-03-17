@@ -50,13 +50,27 @@ pub struct LocationAnalyzer {
 
     pub bests: HashMap<String, u64>,
 
-    activity_type: String
+    pub activity_type: String,
+    speed_window_size: u64
 }
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{start_time: 0, last_time: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string()};
+        let analyzer = LocationAnalyzer{start_time: 0, last_time: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1};
         analyzer
+    }
+
+    pub fn set_activity_type(&mut self, activity_type: String) {
+        self.activity_type = activity_type;
+
+        // This refers to the number of seconds used when averaging samples together to
+        // compute the current speed. The exact numbers were chosen based on experimentation.
+        if self.activity_type == TYPE_CYCLING_KEY {
+            self.speed_window_size = 7;
+        }
+        else {
+            self.speed_window_size = 11;
+        }
     }
 
     fn update_average_speed(&mut self, elapsed_seconds: u64) {
@@ -129,10 +143,9 @@ impl LocationAnalyzer {
             let total_meters = self.total_distance - current_distance;
 
             // Current speed is the average of the last ten seconds.
-            /*if (total_seconds as u64) == self.speed_window_size {
-
-                self.current_speed = total_meters / total_seconds
-            }*/
+            if total_seconds == self.speed_window_size {
+                self.current_speed = total_meters / total_seconds as f64;
+            }
 
             // Is this a new kilometer record for this activity?
             if total_meters < 1000.0 {
