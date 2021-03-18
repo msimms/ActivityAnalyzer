@@ -8,15 +8,15 @@ const METERS_PER_MILE: f64 = 1609.34;
 const METERS_PER_HALF_MARATHON: f64 = 13.1 * METERS_PER_MILE;
 const METERS_PER_MARATHON: f64 = 26.2 * METERS_PER_MILE;
 
-const BEST_1K: &str = "Best 1K";
-const BEST_MILE: &str = "Best Mile";
-const BEST_5K: &str = "Best 5K";
-const BEST_10K: &str = "Best 10K";
-const BEST_15K: &str = "Best 15K";
-const BEST_HALF_MARATHON: &str = "Best Half Marathon";
-const BEST_MARATHON: &str = "Best Marathon";
-const BEST_METRIC_CENTURY: &str = "Best Metric Century";
-const BEST_CENTURY: &str = "Best Century";
+pub const BEST_1K: &str = "Best 1K";
+pub const BEST_MILE: &str = "Best Mile";
+pub const BEST_5K: &str = "Best 5K";
+pub const BEST_10K: &str = "Best 10K";
+pub const BEST_15K: &str = "Best 15K";
+pub const BEST_HALF_MARATHON: &str = "Best Half Marathon";
+pub const BEST_MARATHON: &str = "Best Marathon";
+pub const BEST_METRIC_CENTURY: &str = "Best Metric Century";
+pub const BEST_CENTURY: &str = "Best Century";
 
 const TYPE_UNSPECIFIED_ACTIVITY_KEY: &str = "Unknown";
 const TYPE_RUNNING_KEY: &str = "Running";
@@ -24,7 +24,6 @@ const TYPE_CYCLING_KEY: &str = "Cycling";
 
 struct DistanceNode {
     date_time: u64,
-    meters_traveled: f64, // Meters traveled so far
     total_distance: f64, // Distance traveled (in meters)
 }
 
@@ -38,7 +37,7 @@ pub struct LocationAnalyzer {
     distance_buf: Vec<DistanceNode>, // Holds the distance calculations; used for the current speed calcuations. Each item is an array of the form [date_time, meters_traveled, total_distance]
     pub speed_times: Vec<u64>, // Holds the times associated with speed_graph
     pub speed_graph: Vec<f64>, // Holds the current speed calculations 
-    //speed_blocks: Vec<>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
+    //pub speed_blocks: Vec<>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
 
@@ -80,7 +79,7 @@ impl LocationAnalyzer {
         }
     }
 
-    fn get_best_time(&self, record_name: &str) -> u64 {
+    pub fn get_best_time(&self, record_name: &str) -> u64 {
         // Returns the time associated with the specified record, or None if not found.
         match self.bests.get(record_name) {
             Some(&number) => return number,
@@ -89,8 +88,11 @@ impl LocationAnalyzer {
     }
 
     fn do_record_check(&self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) -> bool {
-        // Looks up the existing record and, if necessary, updates it.
-        if (meters as u64) == (record_meters as u64) {
+        // Looks up the existing record and returns true if it needs updating.
+        let int_meters = meters as u64;
+        let int_record_meters = record_meters as u64;
+
+        if int_meters == int_record_meters {
             let old_value = self.get_best_time(record_name);
 
             if old_value == 0 || seconds < old_value {
@@ -250,7 +252,7 @@ impl LocationAnalyzer {
 
             // Update totals and averages.
             self.total_distance = self.total_distance + meters_traveled;
-            let distance_node = DistanceNode{date_time: date_time, meters_traveled: meters_traveled, total_distance: self.total_distance};
+            let distance_node = DistanceNode{date_time: date_time, total_distance: self.total_distance};
             self.distance_buf.push(distance_node);
             self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
             self.update_average_speed(elapsed_seconds);

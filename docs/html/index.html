@@ -126,6 +126,19 @@
         return miles.toFixed(2).toString() + " miles/hr";
     }
 
+    /// @function convert_pace_to_unit_system_str
+    /// Converts meters/minute to whatever the preferred units are and formats it as a string.
+    function convert_pace_to_unit_system_str(unit_system, pace)
+    {
+        if (unit_system == "Metric")
+        {
+            let km = pace / 1000.0;
+            return km.toFixed(2).toString() + " mins/km";
+        }
+        let miles = pace * 609.344;
+        return miles.toFixed(2).toString() + " mins/mile";
+    }
+
     /// @function append_to_table_row
     function append_to_table_row(row, text)
     {
@@ -165,9 +178,6 @@
 
     window.analyze_file_data = function analyze_file_data(blob) {
         let report = analyze_gpx(blob);
-        let total_distance = report.total_distance;
-        let total_vertical = report.total_vertical;
-        let avg_speed = report.avg_speed;
         let elapsed_time = report.end_time - report.start_time;
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
@@ -182,7 +192,11 @@
         append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(elapsed_time));
         append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, report.total_distance));
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, report.total_vertical));
-        append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, avg_speed));
+        append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, report.avg_speed));
+        append_to_table(analysis_table, "Best 1K", convert_pace_to_unit_system_str(units, report.best_1k));
+        append_to_table(analysis_table, "Best 5K", convert_pace_to_unit_system_str(units, report.best_5k));
+        append_to_table(analysis_table, "Best 10K", convert_pace_to_unit_system_str(units, report.best_10k));
+        append_to_table(analysis_table, "Best 15K", convert_pace_to_unit_system_str(units, report.best_15k));
     }
 
     run();
@@ -201,6 +215,7 @@
             <option value="Metric">Metric</option>
             <option value="Standard">Standard</option>
         </select>
+        <h4>Currently, only GPX files are supported.</h4>
     </div>
 </section>
 
@@ -463,7 +478,10 @@
 
         // Set the preferred units.
         let units = get_cookie("units");
-        document.getElementById('units').value = units;
+        if (units.length == 0)
+            document.getElementById('units').value = "Metric";
+        else
+            document.getElementById('units').value = units;
     });
 
 </script>
@@ -482,8 +500,9 @@
         <h1>Frequently Asked Questions</h1>
         <ul>
             <li>How much does this cost? <p>Nothing</p>
-            <li>How does it work? <p>Magic</p>
+            <li>How does it work? <p>This page is a combination of HTML, Javascript, CSS, and WebAssembly compiled from Rust.</p>
             <li>What data do you store? <p>Nothing. All processing is done in the browser. No data leaves the local machine.</p>
+            <li>Can I connect this to Strava, etc.? <p>Not right now, but maybe in the future.</p>
         </ul>
     </div>
 </section>
