@@ -36,8 +36,8 @@ pub struct LocationAnalyzer {
     last_alt: f64,
 
     distance_buf: Vec<DistanceNode>, // Holds the distance calculations; used for the current speed calcuations. Each item is an array of the form [date_time, meters_traveled, total_distance]
-    speed_times: Vec<u64>, // Holds the times associated with speed_graph
-    speed_graph: Vec<f64>, // Holds the current speed calculations 
+    pub speed_times: Vec<u64>, // Holds the times associated with speed_graph
+    pub speed_graph: Vec<f64>, // Holds the current speed calculations 
     //speed_blocks: Vec<>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
@@ -88,14 +88,17 @@ impl LocationAnalyzer {
         }
     }
 
-    fn do_record_check(&self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) {
+    fn do_record_check(&self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) -> bool {
         // Looks up the existing record and, if necessary, updates it.
         if (meters as u64) == (record_meters as u64) {
             let old_value = self.get_best_time(record_name);
+
             if old_value == 0 || seconds < old_value {
-                //self.bests.insert(record_name.to_string(), seconds);
+                return true;
             }
         }
+
+        false
     }
 
     fn do_km_split_check(&mut self, seconds: u64) {
@@ -122,14 +125,15 @@ impl LocationAnalyzer {
         }
     }
 
-    fn update_speeds(&mut self) {
+    pub fn update_speeds(&mut self) {
         // Computes the average speed over the last mile. Called by 'append_location'.
 
         // This will be recomputed here, so zero it out.
         self.current_speed = 0.0;
 
         // Loop through the list, in reverse order, updating the current speed, and all "bests".
-        for time_distance_node in self.distance_buf.iter().rev() {
+        let time_distance_iter = self.distance_buf.iter().rev();
+        for time_distance_node in time_distance_iter {
 
             // Convert time from ms to seconds - seconds from this point to the end of the activity.
             let current_time = time_distance_node.date_time;
@@ -151,25 +155,33 @@ impl LocationAnalyzer {
             if total_meters < 1000.0 {
                 continue;
             }
-            self.do_record_check(BEST_1K, total_seconds, total_meters, 1000.0);
+            if self.do_record_check(BEST_1K, total_seconds, total_meters, 1000.0) {
+                self.bests.entry(BEST_1K.to_string()).or_insert(total_seconds);
+            }
 
             // Is this a new mile record for this activity?
             if total_meters < METERS_PER_MILE {
                 continue;
             }
-            self.do_record_check(BEST_MILE, total_seconds, total_meters, METERS_PER_MILE);
+            if self.do_record_check(BEST_MILE, total_seconds, total_meters, METERS_PER_MILE) {
+                self.bests.entry(BEST_MILE.to_string()).or_insert(total_seconds);
+            }
 
             // Is this a new 5K record for this activity?
             if total_meters < 5000.0 {
                 continue;
             }
-            self.do_record_check(BEST_5K, total_seconds, total_meters, 5000.0);
+            if self.do_record_check(BEST_5K, total_seconds, total_meters, 5000.0) {
+                self.bests.entry(BEST_5K.to_string()).or_insert(total_seconds);
+            }
 
             // Is this a new 10K record for this activity?
             if total_meters < 10000.0 {
                 continue;
             }
-            self.do_record_check(BEST_10K, total_seconds, total_meters, 10000.0);
+            if self.do_record_check(BEST_10K, total_seconds, total_meters, 10000.0) {
+                self.bests.entry(BEST_10K.to_string()).or_insert(total_seconds);
+            }
 
             // Running-specific records:
             if self.activity_type == TYPE_RUNNING_KEY {
@@ -178,19 +190,25 @@ impl LocationAnalyzer {
                 if total_meters < 15000.0 {
                     continue;
                 }
-                self.do_record_check(BEST_15K, total_seconds, total_meters, 15000.0);
+                if self.do_record_check(BEST_15K, total_seconds, total_meters, 15000.0) {
+                    self.bests.entry(BEST_15K.to_string()).or_insert(total_seconds);
+                }
 
                 // Is this a new half marathon record for this activity?
                 if total_meters < METERS_PER_HALF_MARATHON {
                     continue;
                 }
-                self.do_record_check(BEST_HALF_MARATHON, total_seconds, total_meters, METERS_PER_HALF_MARATHON);
+                if self.do_record_check(BEST_HALF_MARATHON, total_seconds, total_meters, METERS_PER_HALF_MARATHON) {
+                    self.bests.entry(BEST_HALF_MARATHON.to_string()).or_insert(total_seconds);
+                }
 
                 // Is this a new marathon record for this activity?
                 if total_meters < METERS_PER_MARATHON {
                     continue;
                 }
-                self.do_record_check(BEST_MARATHON, total_seconds, total_meters, METERS_PER_MARATHON);
+                if self.do_record_check(BEST_MARATHON, total_seconds, total_meters, METERS_PER_MARATHON) {
+                    self.bests.entry(BEST_MARATHON.to_string()).or_insert(total_seconds);
+                }
             }
 
             // Cycling-specific records:
@@ -200,13 +218,17 @@ impl LocationAnalyzer {
                 if total_meters < 100000.0 {
                     continue;
                 }
-                self.do_record_check(BEST_METRIC_CENTURY, total_seconds, total_meters, 100000.0);
+                if self.do_record_check(BEST_METRIC_CENTURY, total_seconds, total_meters, 100000.0) {
+                    self.bests.entry(BEST_METRIC_CENTURY.to_string()).or_insert(total_seconds);
+                }
 
                 // Is this a new century record for this activity?
                 if total_meters < METERS_PER_MILE * 100.0 {
                     continue;
                 }
-                self.do_record_check(BEST_CENTURY, total_seconds, total_meters, METERS_PER_MILE * 100.0);
+                if self.do_record_check(BEST_CENTURY, total_seconds, total_meters, METERS_PER_MILE * 100.0) {
+                    self.bests.entry(BEST_CENTURY.to_string()).or_insert(total_seconds);
+                }
             }
         }
     }

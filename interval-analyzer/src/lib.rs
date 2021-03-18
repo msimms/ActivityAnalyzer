@@ -67,6 +67,7 @@ pub fn analyze_gpx(s: &str) -> AnalysisReport {
                     let alt = point.elevation.unwrap();
 
                     analyzer.append_location(time as u64, lat, lon, alt);
+                    analyzer.update_speeds();
                 }
             }
 
@@ -77,7 +78,7 @@ pub fn analyze_gpx(s: &str) -> AnalysisReport {
             analysis_report.total_vertical = analyzer.total_vertical;
             analysis_report.avg_speed = analyzer.avg_speed;
         }
-        Err(e) => {
+        Err(_e) => {
             alert("Error parsing GPX file.");
         }
     }
