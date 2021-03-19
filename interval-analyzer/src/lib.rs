@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use std::io::BufReader;
 use gpx::read;
-use gpx::{Gpx, TrackSegment};
+use gpx::Gpx;
 use gpx::errors::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -61,23 +61,24 @@ pub fn analyze_gpx(s: &str) -> AnalysisReport {
                     _ => {},
                 }
 
-                let segment: &TrackSegment = &track.segments[0];
-                let points = &segment.points;
+                // Iterate through the track segments.
+                for trackseg in track.segments {
 
-                // Iterate through the points.
-                for point in points {
-                    let time = point.time.unwrap().timestamp();
-                    let lat = point.point().x();
-                    let lon = point.point().y();
-                    let alt = point.elevation.unwrap();
+                    // Iterate through the points.
+                    for point in trackseg.points {
+                        let time = point.time.unwrap().timestamp();
+                        let lat = point.point().y();
+                        let lon = point.point().x();
+                        let alt = point.elevation.unwrap();
 
-                    analyzer.append_location((time * 1000) as u64, lat, lon, alt);
-                    analyzer.update_speeds();
+                        analyzer.append_location((time * 1000) as u64, lat, lon, alt);
+                        analyzer.update_speeds();
+                    }
                 }
-
-                // For calculations that only make sense once all the points have been added.
-                analyzer.analyze();
             }
+
+            // For calculations that only make sense once all the points have been added.
+            analyzer.analyze();
 
             // Copy items to the final report.
             analysis_report.start_time_ms = analyzer.start_time_ms as f64;
