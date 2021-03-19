@@ -170,7 +170,7 @@
 
 <!-- Note the usage of `type=module` here as this is an ES6 module -->
 <script type="module">
-    import init, { greet, analyze_gpx, analyze_tcx, AnalysisReport } from '../../interval-analyzer/pkg/interval_analyzer.js';
+    import init, { greet, analyze_gpx, analyze_tcx } from '../../interval-analyzer/pkg/interval_analyzer.js';
 
     async function run() {
         await init();
@@ -189,15 +189,28 @@
         // Remove previous table contents, in case the user pressed the button twice.
         analysis_table.innerHTML = ''
 
-        append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(elapsed_time));
-        append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, report.total_distance));
-        append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, report.total_vertical));
-        append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, report.avg_speed));
-        append_to_table(analysis_table, "Best 1K", convert_seconds_to_hours_mins_secs(report.best_1k));
-        append_to_table(analysis_table, "Best Mile", convert_seconds_to_hours_mins_secs(report.best_mile));
-        append_to_table(analysis_table, "Best 5K", convert_seconds_to_hours_mins_secs(report.best_5k));
-        append_to_table(analysis_table, "Best 10K", convert_seconds_to_hours_mins_secs(report.best_10k));
-        append_to_table(analysis_table, "Best 15K", convert_seconds_to_hours_mins_secs(report.best_15k));
+        // The data is returned as a JSON string.
+        let json_data = JSON.parse(report);
+
+        append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(json_data["Elapsed Time"]));
+        append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, json_data["Total Distance"]));
+        append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
+        append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, json_data["Average Speed"]));
+
+        if (json_data["Best 1K"] > 0)
+            append_to_table(analysis_table, "Best 1K", convert_seconds_to_hours_mins_secs(json_data["Best 1K"]));
+        if (json_data["Best Mile"] > 0)
+            append_to_table(analysis_table, "Best Mile", convert_seconds_to_hours_mins_secs(json_data["Best Mile"]));
+        if (json_data["Best 5K"] > 0)
+            append_to_table(analysis_table, "Best 5K", convert_seconds_to_hours_mins_secs(json_data["Best 5K"]));
+        if (json_data["Best 10K"] > 0)
+            append_to_table(analysis_table, "Best 10K", convert_seconds_to_hours_mins_secs(json_data["Best 10K"]));
+        if (json_data["Best 15K"] > 0)
+            append_to_table(analysis_table, "Best 15K", convert_seconds_to_hours_mins_secs(json_data["Best 15K"]));
+        if (json_data["Best Half Marathon"] > 0)
+            append_to_table(analysis_table, "Best Half Marathon", convert_seconds_to_hours_mins_secs(json_data["Best Half Marathon"]));
+        if (json_data["Best Marathon"] > 0)
+            append_to_table(analysis_table, "Best Marathon", convert_seconds_to_hours_mins_secs(json_data["Best Marathon"]));
     }
 
     run();

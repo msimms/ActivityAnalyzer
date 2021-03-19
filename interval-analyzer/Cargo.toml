@@ -14,6 +14,8 @@ default = ["console_error_panic_hook"]
 wasm-bindgen = "0.2"
 gpx = "*"
 chrono = "*"
+serde = "*"
+serde_json = "*"
 lib_math = { path = "../LibMath/rust/" }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
