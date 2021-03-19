@@ -50,12 +50,14 @@ pub struct LocationAnalyzer {
     pub bests: HashMap<String, u64>,
 
     pub activity_type: String,
-    speed_window_size: u64
+
+    speed_window_size: u64,
+    last_speed_buf_update_time: u64
 }
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1};
+        let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
     }
 
@@ -154,6 +156,15 @@ impl LocationAnalyzer {
             // Current speed is the average of the last ten seconds.
             if total_seconds == self.speed_window_size {
                 self.current_speed = total_meters / total_seconds as f64;
+
+                if self.total_distance < 1000.0 {
+                    break;
+                }
+                if current_time_ms > self.last_speed_buf_update_time {
+                    self.speed_times.push(current_time_ms);
+                    self.speed_graph.push(self.current_speed);
+                    self.last_speed_buf_update_time = current_time_ms;
+                }
             }
 
             // Is this a new kilometer record for this activity?
@@ -265,9 +276,6 @@ impl LocationAnalyzer {
             self.do_km_split_check(elapsed_seconds);
             self.do_mile_split_check(elapsed_seconds);
         }
-
-        // Update the heat map.
-        //self.location_heat_map.append(latitude, longitude);
 
         self.last_time_ms = date_time_ms;
         self.last_lat = latitude;

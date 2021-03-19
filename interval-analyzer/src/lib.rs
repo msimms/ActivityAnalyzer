@@ -81,7 +81,9 @@ pub fn analyze_gpx(s: &str) -> String {
                 "Best Half Marathon": analyzer.get_best_time(location_analyzer::BEST_HALF_MARATHON),
                 "Best Marathon": analyzer.get_best_time(location_analyzer::BEST_MARATHON),
                 "Mile Splits": analyzer.mile_splits,
-                "KM Splits": analyzer.km_splits
+                "KM Splits": analyzer.km_splits,
+                "Times": analyzer.speed_times,
+                "Speeds": analyzer.speed_graph
             }).to_string();
         }
         Err(_e) => {
