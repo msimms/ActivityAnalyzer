@@ -23,13 +23,13 @@ const TYPE_RUNNING_KEY: &str = "Running";
 const TYPE_CYCLING_KEY: &str = "Cycling";
 
 struct DistanceNode {
-    date_time: u64,
+    date_time_ms: u64,
     total_distance: f64, // Distance traveled (in meters)
 }
 
 pub struct LocationAnalyzer {
-    pub start_time: u64,
-    pub last_time: u64,
+    pub start_time_ms: u64,
+    pub last_time_ms: u64,
     last_lat: f64,
     last_lon: f64,
     last_alt: f64,
@@ -55,7 +55,7 @@ pub struct LocationAnalyzer {
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{start_time: 0, last_time: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1};
+        let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1};
         analyzer
     }
 
@@ -127,6 +127,9 @@ impl LocationAnalyzer {
         }
     }
 
+    pub fn analyze(&mut self) {
+    }
+
     pub fn update_speeds(&mut self) {
         // Computes the average speed over the last mile. Called by 'append_location'.
 
@@ -138,8 +141,8 @@ impl LocationAnalyzer {
         for time_distance_node in time_distance_iter {
 
             // Convert time from ms to seconds - seconds from this point to the end of the activity.
-            let current_time = time_distance_node.date_time;
-            let total_seconds = (self.last_time - current_time) / 1000;
+            let current_time_ms = time_distance_node.date_time_ms;
+            let total_seconds = (self.last_time_ms - current_time_ms) / 1000;
             if total_seconds <= 0 {
                 continue;
             }
@@ -235,25 +238,26 @@ impl LocationAnalyzer {
         }
     }
 
-    pub fn append_location(&mut self, date_time: u64, latitude: f64, longitude: f64, altitude: f64) {
+    pub fn append_location(&mut self, date_time_ms: u64, latitude: f64, longitude: f64, altitude: f64) {
         // Not much we can do with the first location other than note the start time.
-        if self.start_time == 0 {
-            self.start_time = date_time;
+        if self.start_time_ms == 0 {
+            self.start_time_ms = date_time_ms;
         }
 
         // Update the total distance calculation.
-        else if self.last_time != 0 {
+        else if self.last_time_ms != 0 {
 
             // How far since the last point?
             let meters_traveled = distance::haversine_distance(latitude, longitude, altitude, self.last_lat, self.last_lon, self.last_alt);
 
             // How long has it been?
-            let elapsed_seconds = date_time - self.start_time;
+            let elapsed_seconds = (date_time_ms - self.start_time_ms) / 1000;
 
             // Update totals and averages.
-            self.total_distance = self.total_distance + meters_traveled;
-            let distance_node = DistanceNode{date_time: date_time, total_distance: self.total_distance};
+            let new_distance = self.total_distance + meters_traveled;
+            let distance_node = DistanceNode{date_time_ms: date_time_ms, total_distance: new_distance};
             self.distance_buf.push(distance_node);
+            self.total_distance = new_distance;
             self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
             self.update_average_speed(elapsed_seconds);
 
@@ -265,7 +269,7 @@ impl LocationAnalyzer {
         // Update the heat map.
         //self.location_heat_map.append(latitude, longitude);
 
-        self.last_time = date_time;
+        self.last_time_ms = date_time_ms;
         self.last_lat = latitude;
         self.last_lon = longitude;
         self.last_alt = altitude;

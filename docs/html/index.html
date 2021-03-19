@@ -178,7 +178,7 @@
 
     window.analyze_file_data = function analyze_file_data(blob) {
         let report = analyze_gpx(blob);
-        let elapsed_time = report.end_time - report.start_time;
+        let elapsed_time = (report.end_time_ms - report.start_time_ms) / 1000;
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
 
@@ -193,10 +193,11 @@
         append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, report.total_distance));
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, report.total_vertical));
         append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, report.avg_speed));
-        append_to_table(analysis_table, "Best 1K", convert_pace_to_unit_system_str(units, report.best_1k));
-        append_to_table(analysis_table, "Best 5K", convert_pace_to_unit_system_str(units, report.best_5k));
-        append_to_table(analysis_table, "Best 10K", convert_pace_to_unit_system_str(units, report.best_10k));
-        append_to_table(analysis_table, "Best 15K", convert_pace_to_unit_system_str(units, report.best_15k));
+        append_to_table(analysis_table, "Best 1K", convert_seconds_to_hours_mins_secs(report.best_1k));
+        append_to_table(analysis_table, "Best Mile", convert_seconds_to_hours_mins_secs(report.best_mile));
+        append_to_table(analysis_table, "Best 5K", convert_seconds_to_hours_mins_secs(report.best_5k));
+        append_to_table(analysis_table, "Best 10K", convert_seconds_to_hours_mins_secs(report.best_10k));
+        append_to_table(analysis_table, "Best 15K", convert_seconds_to_hours_mins_secs(report.best_15k));
     }
 
     run();
