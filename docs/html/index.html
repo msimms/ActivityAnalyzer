@@ -319,10 +319,10 @@
         let time_speed_data = times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
         });
-        time_speed_data = convert_speed_graph_to_display_units(units, time_speed_data);
+        let adjusted_time_speed_data = convert_speed_graph_to_display_units(units, time_speed_data);
         let time_pace_data = convert_speed_graph_to_pace_graph(units, time_speed_data);
 
-        draw_graph(time_speed_data, "Speed", speed_units, "DodgerBlue");
+        draw_graph(adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue");
         draw_graph(time_pace_data, "Pace", pace_units, "SlateBlue");
     }
 
