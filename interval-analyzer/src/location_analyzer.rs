@@ -1,7 +1,9 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
-use lib_math::{distance};
+use lib_math::{distance, peaks, statistics, signals};
 use std::collections::HashMap;
+use crate::power_analyzer;
+use crate::heart_rate_analyzer;
 
 const METERS_PER_KM: f64 = 1000.0;
 const METERS_PER_MILE: f64 = 1609.34;
@@ -27,7 +29,14 @@ struct DistanceNode {
     total_distance: f64, // Distance traveled (in meters)
 }
 
+struct SpeedBlocks {
+    line_avg_speed: f64,
+}
+
 pub struct LocationAnalyzer {
+    power: power_analyzer::PowerAnalyzer,
+    heart_rate: heart_rate_analyzer::HeartRateAnalyzer,
+
     pub start_time_ms: u64,
     pub last_time_ms: u64,
     last_lat: f64,
@@ -37,7 +46,7 @@ pub struct LocationAnalyzer {
     distance_buf: Vec<DistanceNode>, // Holds the distance calculations; used for the current speed calcuations. Each item is an array of the form [date_time, meters_traveled, total_distance]
     pub speed_times: Vec<u64>, // Holds the times associated with speed_graph
     pub speed_graph: Vec<f64>, // Holds the current speed calculations 
-    //pub speed_blocks: Vec<>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
+    speed_blocks: Vec<SpeedBlocks>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
 
@@ -46,9 +55,9 @@ pub struct LocationAnalyzer {
 
     pub avg_speed: f64, // Average speed (in meters/second)
     pub current_speed: f64, // Current speed (in meters/second)
+    pub speed_variance: f64,
 
     pub bests: HashMap<String, u64>,
-
     pub activity_type: String,
 
     speed_window_size: u64,
@@ -57,7 +66,7 @@ pub struct LocationAnalyzer {
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1, last_speed_buf_update_time: 0};
+        let analyzer = LocationAnalyzer{power: power_analyzer::PowerAnalyzer::new(), heart_rate: heart_rate_analyzer::HeartRateAnalyzer::new(), start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
     }
 
@@ -129,7 +138,61 @@ impl LocationAnalyzer {
         }
     }
 
+    fn examine_interval_peak(&mut self, start_index: usize, end_index: usize) -> bool {
+        // Examines a line of near-constant pace/speed.
+        if start_index >= end_index {
+            return false;
+        }
+
+        // How long (in seconds) was this block?
+        let start_time = self.speed_times[start_index];
+        let end_time = self.speed_times[end_index];
+        let line_duration_seconds = end_time - start_time;
+        let line_length_meters = 0;
+        let line_avg_speed = 0.0;
+
+        // Don't consider anything less than ten seconds.
+        if line_duration_seconds > 10 {
+        }
+
+        false
+    }
+
     pub fn analyze(&mut self) {
+        // Do a speed/pace analysis.
+        if self.speed_graph.len() > 1 {
+
+            // Compute the speed/pace variation. This will tell us how consistent the pace was.
+            self.speed_variance = statistics::variance_f64(&self.speed_graph, self.avg_speed);
+
+            // Don't look for peaks unless the variance was high. Cutoff selected via experimentation.
+            if self.speed_variance > 0.25 {
+
+                // Smooth the speed graph to take out some of the GPS jitter.
+                let smoothed_graph = signals::smooth(&self.speed_graph, 4);
+                if smoothed_graph.len() > 1 {
+
+                    // Find peaks in the speed graph. We're looking for intervals.
+                    let peak_list = peaks::find_peaks(&smoothed_graph, 0.3);
+
+                    // Examine the lines between the peaks. Extract pertinant data, such as avg speed/pace and set it aside.
+                    // This data is used later when generating the report.
+                    let mut all_intervals = Vec::new();
+                    for peak in peak_list {
+                        let interval = self.examine_interval_peak(peak.left_trough.x, peak.right_trough.x);
+                        if interval {
+                            all_intervals.push(interval);
+                        }
+                    }
+
+                    // Do a k-means analysis on the computed speed/pace blocks so we can get rid of any outliers.
+                    //let significant_intervals = Vec::new();
+                    let num_speed_blocks = self.speed_blocks.len();
+                    if num_speed_blocks > 1 {
+                    }
+                }
+            }
+        }
     }
 
     pub fn update_speeds(&mut self) {

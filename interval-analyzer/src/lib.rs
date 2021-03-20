@@ -6,6 +6,8 @@ extern crate serde_json;
 
 mod utils;
 mod location_analyzer;
+mod power_analyzer;
+mod heart_rate_analyzer;
 
 use wasm_bindgen::prelude::*;
 use std::io::BufReader;
