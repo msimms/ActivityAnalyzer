@@ -29,10 +29,6 @@ struct DistanceNode {
     total_distance: f64, // Distance traveled (in meters)
 }
 
-struct SpeedBlocks {
-    line_avg_speed: f64,
-}
-
 pub struct LocationAnalyzer {
     power: power_analyzer::PowerAnalyzer,
     heart_rate: heart_rate_analyzer::HeartRateAnalyzer,
@@ -46,7 +42,7 @@ pub struct LocationAnalyzer {
     distance_buf: Vec<DistanceNode>, // Holds the distance calculations; used for the current speed calcuations. Each item is an array of the form [date_time, meters_traveled, total_distance]
     pub speed_times: Vec<u64>, // Holds the times associated with speed_graph
     pub speed_graph: Vec<f64>, // Holds the current speed calculations 
-    speed_blocks: Vec<SpeedBlocks>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
+    speed_blocks: Vec<f64>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
 
@@ -66,7 +62,11 @@ pub struct LocationAnalyzer {
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{power: power_analyzer::PowerAnalyzer::new(), heart_rate: heart_rate_analyzer::HeartRateAnalyzer::new(), start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(), speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), speed_window_size: 1, last_speed_buf_update_time: 0};
+        let analyzer = LocationAnalyzer{power: power_analyzer::PowerAnalyzer::new(), heart_rate: heart_rate_analyzer::HeartRateAnalyzer::new(),
+            start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
+            speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(),
+            avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(),
+            speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
     }
 
@@ -148,11 +148,39 @@ impl LocationAnalyzer {
         let start_time = self.speed_times[start_index];
         let end_time = self.speed_times[end_index];
         let line_duration_seconds = end_time - start_time;
-        let line_length_meters = 0;
-        let line_avg_speed = 0.0;
 
         // Don't consider anything less than ten seconds.
         if line_duration_seconds > 10 {
+            let speeds = &self.speed_graph[start_index..end_index - 1];
+
+            let mut start_distance_rec: Option<&DistanceNode> = None;
+            let mut end_distance_rec: Option<&DistanceNode> = None;
+
+            for rec in self.distance_buf.iter() {
+                if rec.date_time_ms == start_time {
+                    start_distance_rec = Some(&rec);
+                }
+                if rec.date_time_ms == end_time {
+                    end_distance_rec = Some(&rec);
+                    break;
+                }
+            }
+
+            let mut line_length_meters = 0.0;
+            match start_distance_rec {
+                Some(start_rec) => {
+                    match end_distance_rec {
+                        Some(end_rec) => {
+                            line_length_meters = end_rec.total_distance - start_rec.total_distance;
+                        },
+                        _ => {},
+                    }
+                },
+                _ => {},
+            }
+
+            let line_avg_speed = statistics::average_f64(&speeds.to_vec());
+            self.speed_blocks.push(line_avg_speed);
         }
 
         false
