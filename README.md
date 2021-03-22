@@ -5,7 +5,8 @@ Extracts and analyzes interval data from a GPX or TCX file. Does not store any p
 # Building
 
 ```
-git clone https://github.com/msimms/IntervalAnalyzer
-cd IntervalAnalyzer/interval-analyzer
+git clone https://github.com/msimms/ActivityAnalyzer
+git submodule update --init
+cd ActivityAnalyzer/interval-analyzer
 wasm-pack build --target web
 ```
