@@ -83,23 +83,23 @@ impl LocationAnalyzer {
         }
     }
 
+    /// Computes the average speed of the workout. Called by 'append_location'.
     fn update_average_speed(&mut self, elapsed_seconds: u64) {
-        // Computes the average speed of the workout. Called by 'append_location'.
         if elapsed_seconds > 0 {
             self.avg_speed = self.total_distance / (elapsed_seconds as f64)
         }
     }
 
+    /// Returns the time associated with the specified record, or None if not found.
     pub fn get_best_time(&self, record_name: &str) -> u64 {
-        // Returns the time associated with the specified record, or None if not found.
         match self.bests.get(record_name) {
             Some(&number) => return number,
             _ => return 0,
         }
     }
 
+    /// Looks up the existing record and returns true if it needs updating.
     fn do_record_check(&self, record_name: &str, seconds: u64, meters: f64, record_meters: f64) -> bool {
-        // Looks up the existing record and returns true if it needs updating.
         let int_meters = meters as u64;
         let int_record_meters = record_meters as u64;
 
@@ -217,14 +217,48 @@ impl LocationAnalyzer {
                     //let significant_intervals = Vec::new();
                     let num_speed_blocks = self.speed_blocks.len();
                     if num_speed_blocks > 1 {
+
+                        // Determine the maximum value of k.
+                        let mut max_k = 10;
+                        if num_speed_blocks < max_k {
+                            max_k = num_speed_blocks;
+                        }
+
+                        // Run k means for each possible k.
+                        let mut best_k = 0;
+                        //let best_labels = Vec::new();
+                        let mut steepest_slope = 0.0;
+                        let distortions = Vec::<f64>::new();
+                        for k in 1..max_k {
+                            //kmeans_model = KMeans(n_clusters=k).fit(X)
+                            //distortions.append(sum(np.min(cdist(X, kmeans_model.cluster_centers_, 'euclidean'), axis = 1)) / X.shape[0])
+
+                            // Use the elbow method to find the best value for k.
+                            if distortions.len() > 1 {
+                                let slope = (distortions[k-1] + distortions[k-2]) / 2.0;
+                                if best_k == 0 || slope > steepest_slope {
+                                    best_k = k;
+                                    steepest_slope = slope;
+                                }
+                            }
+                        }
+
+                        // Save off the significant peaks.
+                        let interval_index = 0;
+                        for label in best_labels {
+                            if label >= 1 {
+                                significant_intervals.append(all_intervals[interval_index]);
+                            }
+                            interval_index = interval_index + 1;
+                        }
                     }
                 }
             }
         }
     }
 
+    /// Computes the average speed over the last mile. Called by 'append_location'.
     pub fn update_speeds(&mut self) {
-        // Computes the average speed over the last mile. Called by 'append_location'.
 
         // This will be recomputed here, so zero it out.
         self.current_speed = 0.0;
