@@ -11,6 +11,10 @@ cd ActivityAnalyzer/activity-analyzer
 wasm-pack build --target web
 ```
 
-## Example
+# Example
 
 An example implementation is available at https://activity-analyzer.app.
+
+# Version History
+
+0.5 - Basic functionality, minus interval detection and TCX file handling.

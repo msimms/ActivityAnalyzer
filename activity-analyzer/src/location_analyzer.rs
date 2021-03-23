@@ -2,6 +2,8 @@
 
 use lib_math::{distance, peaks, statistics, signals};
 use std::collections::HashMap;
+use kmeans::*;
+
 use crate::power_analyzer;
 use crate::heart_rate_analyzer;
 
@@ -41,7 +43,7 @@ pub struct LocationAnalyzer {
 
     distance_buf: Vec<DistanceNode>, // Holds the distance calculations; used for the current speed calcuations. Each item is an array of the form [date_time, meters_traveled, total_distance]
     pub speed_times: Vec<u64>, // Holds the times associated with speed_graph
-    pub speed_graph: Vec<f64>, // Holds the current speed calculations 
+    pub speed_graph: Vec<f64>, // Holds the current speed calculations
     speed_blocks: Vec<f64>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
@@ -56,6 +58,8 @@ pub struct LocationAnalyzer {
     pub bests: HashMap<String, u64>,
     pub activity_type: String,
 
+    pub significant_intervals: Vec<f64>,
+
     speed_window_size: u64,
     last_speed_buf_update_time: u64
 }
@@ -66,10 +70,11 @@ impl LocationAnalyzer {
             start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
             speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(),
             avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(),
-            speed_window_size: 1, last_speed_buf_update_time: 0};
+            significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
     }
 
+    /// Accessor for setting the activity type.
     pub fn set_activity_type(&mut self, activity_type: String) {
         self.activity_type = activity_type;
 
@@ -167,6 +172,7 @@ impl LocationAnalyzer {
             }
 
             let mut line_length_meters = 0.0;
+
             match start_distance_rec {
                 Some(start_rec) => {
                     match end_distance_rec {
@@ -214,7 +220,7 @@ impl LocationAnalyzer {
                     }
 
                     // Do a k-means analysis on the computed speed/pace blocks so we can get rid of any outliers.
-                    //let significant_intervals = Vec::new();
+                    // let significant_intervals = Vec::new();
                     let num_speed_blocks = self.speed_blocks.len();
                     if num_speed_blocks > 1 {
 
@@ -226,12 +232,16 @@ impl LocationAnalyzer {
 
                         // Run k means for each possible k.
                         let mut best_k = 0;
-                        //let best_labels = Vec::new();
+                        let best_labels = Vec::<usize>::new();
                         let mut steepest_slope = 0.0;
                         let distortions = Vec::<f64>::new();
                         for k in 1..max_k {
-                            //kmeans_model = KMeans(n_clusters=k).fit(X)
-                            //distortions.append(sum(np.min(cdist(X, kmeans_model.cluster_centers_, 'euclidean'), axis = 1)) / X.shape[0])
+                            let kmean = KMeans::new(self.speed_blocks.to_vec(), num_speed_blocks, 1);
+                            let result = kmean.kmeans_lloyd(k, 100, KMeans::init_kmeanplusplus, &KMeansConfig::default());
+                            // let distances = self.speed_blocks / result.centroids;
+                            // let distances_sum = sum(np.min(distances, axis = 1));
+                            // let distortion = distances_sum / num_speed_blocks;
+                            // distortions.push(distortion);
 
                             // Use the elbow method to find the best value for k.
                             if distortions.len() > 1 {
@@ -244,10 +254,10 @@ impl LocationAnalyzer {
                         }
 
                         // Save off the significant peaks.
-                        let interval_index = 0;
+                        let mut interval_index = 0;
                         for label in best_labels {
                             if label >= 1 {
-                                significant_intervals.append(all_intervals[interval_index]);
+                                //self.significant_intervals.append(all_intervals[interval_index]);
                             }
                             interval_index = interval_index + 1;
                         }
