@@ -13,7 +13,7 @@ impl HeartRateAnalyzer {
     }
 
     /// Adds another reading to the analyzer.
-    pub fn append_sensor_value(&mut self, date_time_ms: u64, value: f64) {
+    pub fn append_sensor_value(&mut self, _date_time_ms: u64, value: f64) {
 
         // Update average heart rate.
         self.readings.push(value);
