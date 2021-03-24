@@ -113,7 +113,7 @@ pub fn analyze_tcx(s: &str) -> String {
         for lap in activity.laps {
             for track in lap.tracks {
                 for trackpoint in track.trackpoints {
-                    let time = trackpoint.time.timestamp();
+                    let time = trackpoint.time.timestamp() * 1000 + trackpoint.time.timestamp_subsec_millis() as i64;
                     let position = trackpoint.position.unwrap();
                     let altitude = trackpoint.altitude_meters.unwrap();
 
