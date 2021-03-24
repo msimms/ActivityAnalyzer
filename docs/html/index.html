@@ -200,7 +200,8 @@
                 value = speed * 3.6;
             else
                 value = speed * 2.23694;
-            new_speed_list.push({date, value});    }
+            new_speed_list.push({date, value}); 
+        }
         return new_speed_list;
     }
 
@@ -260,8 +261,15 @@
         await init();
     }
 
-    window.analyze_file_data = function analyze_file_data(blob) {
-        let report = analyze_gpx(blob);
+    window.analyze_file_data = function analyze_file_data(name, blob) {
+        let ext = name.split('.').pop();
+        let report = "";
+
+        if (ext == "gpx")
+            report = analyze_gpx(blob);
+        else
+            report = analyze_tcx(blob);
+
         let elapsed_time = (report.end_time_ms - report.start_time_ms) / 1000;
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
@@ -554,6 +562,7 @@
         {
             for (var i = 0; i < selected_file_list.length; i++)
             {
+                var selected_file_obj = selected_file_list[i];
                 var reader = new FileReader();
 
                 reader.onerror = function(event)
@@ -562,9 +571,9 @@
                 };
                 reader.onload = function(e)
                 {
-                    window.analyze_file_data(reader.result);
+                    window.analyze_file_data(selected_file_obj.name, reader.result);
                 }
-                reader.readAsBinaryString(selected_file_list[i]);
+                reader.readAsBinaryString(selected_file_obj);
             }
         }
         else
