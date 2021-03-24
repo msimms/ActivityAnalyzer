@@ -114,12 +114,12 @@
     }
 
     /// @function convert_speed_to_unit_system_str
-    /// Converts meters/minute to whatever the preferred units are and formats it as a string.
+    /// Converts meters/second to whatever the preferred units are and formats it as a string.
     function convert_speed_to_unit_system_str(unit_system, speed)
     {
         if (unit_system == "Metric")
         {
-            let km = speed / 3.6;
+            let km = speed * 3.6;
             return km.toFixed(2).toString() + " km/hr";
         }
         let miles = speed * 2.23694;
