@@ -236,12 +236,12 @@ impl LocationAnalyzer {
                         let mut steepest_slope = 0.0;
                         let distortions = Vec::<f64>::new();
                         for k in 1..max_k {
-                            let kmean = KMeans::new(self.speed_blocks.to_vec(), num_speed_blocks, 1);
+                            /*let kmean = KMeans::new(self.speed_blocks.to_vec(), num_speed_blocks, 1);
                             let result = kmean.kmeans_lloyd(k, 100, KMeans::init_kmeanplusplus, &KMeansConfig::default());
                             // let distances = self.speed_blocks / result.centroids;
                             // let distances_sum = sum(np.min(distances, axis = 1));
                             // let distortion = distances_sum / num_speed_blocks;
-                            // distortions.push(distortion);
+                            // distortions.push(distortion);*/
 
                             // Use the elbow method to find the best value for k.
                             if distortions.len() > 1 {
