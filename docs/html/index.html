@@ -326,12 +326,20 @@
             append_to_table(analysis_table, "Maximum Cadence", json_data["Maximum Cadence"].toFixed(2).toString() + " rpm");
         if (json_data["Average Cadence"] > 0)
             append_to_table(analysis_table, "Average Cadence", json_data["Average Cadence"].toFixed(2).toString() + " rpm");
+        if (json_data["Maximum Heart Rate"] > 0)
+            append_to_table(analysis_table, "Maximum Heart Rate", json_data["Maximum Heart Rate"].toFixed(2).toString() + " bpm");
+        if (json_data["Average Heart Rate"] > 0)
+            append_to_table(analysis_table, "Average Heart Rate", json_data["Average Heart Rate"].toFixed(2).toString() + " bpm");
 
         draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "LightSteelBlue");
         draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Tomato");
 
         let times = json_data["Times"];
         let speeds = json_data["Speeds"];
+        let power = json_data["Power Readings"];
+        let cadence = json_data["Cadence Readings"];
+        let hr = json_data["Heart Rate Readings"];
+
         let time_speed_data = times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
         });
@@ -340,6 +348,28 @@
 
         draw_graph(adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue");
         draw_graph(time_pace_data, "Pace", pace_units, "SlateBlue");
+
+        if (power.length > 0)
+        {
+            let time_power_data = times.map(function(x, i) {
+                return {"date": new Date(x), "value": power[i]};
+            });
+            draw_graph(time_power_data, "Power", "Watts", "ForestGreen");
+        }
+        if (cadence.length > 0)
+        {
+            let time_cadence_data = times.map(function(x, i) {
+                return {"date": new Date(x), "value": cadence[i]};
+            });
+            draw_graph(time_cadence_data, "Cadence", "rpm", "ForestGreen");
+        }
+        if (hr.length > 0)
+        {
+            let time_hr_data = times.map(function(x, i) {
+                return {"date": new Date(x), "value": hr[i]};
+            });
+            draw_graph(time_hr_data, "Heart Rate", "bpm", "FireBrick");
+        }
     }
 
     run();
@@ -354,7 +384,7 @@
             <option value="Metric">Metric</option>
             <option value="Standard">Standard</option>
         </select>
-        <h4>Only GPX and TCX files are supported.</h4>
+        <h4>Only GPX and TCX files are supported.<br>Cycling power and cadence data are only read from TCX files.</h4>
     </div>
 </section>
 

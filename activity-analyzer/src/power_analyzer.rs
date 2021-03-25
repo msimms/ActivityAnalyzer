@@ -3,7 +3,7 @@
 pub struct PowerAnalyzer {
     pub readings: Vec<f64>, // All the readings
     pub max_power: f64,
-    np_buf: Vec<f64>,
+    pub np_buf: Vec<f64>,
     current_30_sec_buf: Vec<f64>,
     current_30_sec_buf_start_time: u64
 }

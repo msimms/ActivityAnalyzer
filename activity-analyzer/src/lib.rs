@@ -29,13 +29,16 @@ pub fn greet() {
     alert("Copyright (c) 2021 Michael J. Simms. All rights reserved.");
 }
 
-fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analyzer: Option<&power_analyzer::PowerAnalyzer>, cadence_analyzer: Option<&cadence_analyzer::CadenceAnalyzer>) -> String {
+fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analyzer: Option<&power_analyzer::PowerAnalyzer>, cadence_analyzer: Option<&cadence_analyzer::CadenceAnalyzer>, hr_analyzer: Option<&heart_rate_analyzer::HeartRateAnalyzer>) -> String {
     let mut max_power = 0.0;
     let mut avg_power = 0.0;
     let mut power_readings = Vec::<f64>::new();
     let mut max_cadence = 0.0;
     let mut avg_cadence = 0.0;
     let mut cadence_readings = Vec::<f64>::new();
+    let mut max_hr = 0.0;
+    let mut avg_hr = 0.0;
+    let mut hr_readings = Vec::<f64>::new();
 
     match power_analyzer {
         None => {
@@ -43,7 +46,7 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         Some(power_analyzer) => {
             max_power = power_analyzer.max_power;
             avg_power = power_analyzer.compute_average();
-            //power_readings = power_analyzer.readings;
+            power_readings = power_analyzer.readings.clone();
         }
     }
 
@@ -53,7 +56,17 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         Some(cadence_analyzer) => {
             max_cadence = cadence_analyzer.max_cadence;
             avg_cadence = cadence_analyzer.compute_average();
-            //cadence_readings = cadence_analyzer.readings;
+            cadence_readings = cadence_analyzer.readings.clone();
+        }
+    }
+
+    match hr_analyzer {
+        None => {
+        }
+        Some(hr_analyzer) => {
+            max_hr = hr_analyzer.max_hr;
+            avg_hr = hr_analyzer.compute_average();
+            hr_readings = hr_analyzer.readings.clone();
         }
     }
 
@@ -80,7 +93,10 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         "Power Readings": power_readings,
         "Maximum Cadence": max_cadence,
         "Average Cadence": avg_cadence,
-        "Cadence Readings": cadence_readings
+        "Cadence Readings": cadence_readings,
+        "Maximum Heart Rate": max_hr,
+        "Average Heart Rate": avg_hr,
+        "Heart Rate Readings": hr_readings
     }).to_string();
 
     analysis_report_str
@@ -126,7 +142,7 @@ pub fn analyze_gpx(s: &str) -> String {
             analyzer.analyze();
 
             // Copy items to the final report.
-            analysis_report_str = make_final_report(&analyzer, None, None);
+            analysis_report_str = make_final_report(&analyzer, None, None, None);
         }
         Err(_e) => {
             alert("Error parsing GPX file.");
@@ -141,6 +157,7 @@ pub fn analyze_tcx(s: &str) -> String {
     let mut data = BufReader::new(s.as_bytes());
     let res = tcx::read(&mut data);
     let mut analyzer = location_analyzer::LocationAnalyzer::new();
+    let mut hr_analyzer = heart_rate_analyzer::HeartRateAnalyzer::new();
     let mut cadence_analyzer = cadence_analyzer::CadenceAnalyzer::new();
     let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
     let activities = res.activities.unwrap();
@@ -155,6 +172,16 @@ pub fn analyze_tcx(s: &str) -> String {
 
                     analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
                     analyzer.update_speeds();
+
+                    // Get the heart rate reading.
+                    let hr = trackpoint.heart_rate;
+                    match hr {
+                        None => {
+                        }
+                        Some(hr) => {
+                            hr_analyzer.append_sensor_value(time as u64, hr.value as f64);
+                        }
+                    }
 
                     // Get the cadence reading.
                     let cadence = trackpoint.cadence;
@@ -199,7 +226,7 @@ pub fn analyze_tcx(s: &str) -> String {
     analyzer.analyze();
 
     // Copy items to the final report.
-    let analysis_report_str = make_final_report(&analyzer, Some(&power_analyzer), Some(&cadence_analyzer));
+    let analysis_report_str = make_final_report(&analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
 
     analysis_report_str
 }
