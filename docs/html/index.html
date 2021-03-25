@@ -318,6 +318,14 @@
             append_to_table(analysis_table, "Best Half Marathon", convert_seconds_to_hours_mins_secs(json_data["Best Half Marathon"]));
         if (json_data["Best Marathon"] > 0)
             append_to_table(analysis_table, "Best Marathon", convert_seconds_to_hours_mins_secs(json_data["Best Marathon"]));
+        if (json_data["Maximum Power"] > 0)
+            append_to_table(analysis_table, "Maximum Power", json_data["Maximum Power"].toFixed(2).toString() + " watts");
+        if (json_data["Average Power"] > 0)
+            append_to_table(analysis_table, "Average Power", json_data["Average Power"].toFixed(2).toString() + " watts");
+        if (json_data["Maximum Cadence"] > 0)
+            append_to_table(analysis_table, "Maximum Cadence", json_data["Maximum Cadence"].toFixed(2).toString() + " rpm");
+        if (json_data["Average Cadence"] > 0)
+            append_to_table(analysis_table, "Average Cadence", json_data["Average Cadence"].toFixed(2).toString() + " rpm");
 
         draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "LightSteelBlue");
         draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Tomato");
@@ -346,7 +354,7 @@
             <option value="Metric">Metric</option>
             <option value="Standard">Standard</option>
         </select>
-        <h4>Currently, only GPX files are supported.</h4>
+        <h4>Only GPX and TCX files are supported.</h4>
     </div>
 </section>
 

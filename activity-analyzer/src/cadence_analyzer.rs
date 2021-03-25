@@ -1,13 +1,13 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
-pub struct HeartRateAnalyzer {
+pub struct CadenceAnalyzer {
     pub readings: Vec<f64>, // All the readings
-    pub max_hr: f64
+    pub max_cadence: f64,
 }
 
-impl HeartRateAnalyzer {
+impl CadenceAnalyzer {
     pub fn new() -> Self {
-        let analyzer = HeartRateAnalyzer{readings: Vec::new(), max_hr: 0.0};
+        let analyzer = CadenceAnalyzer{readings: Vec::new(), max_cadence: 0.0};
         analyzer
     }
 
@@ -24,12 +24,12 @@ impl HeartRateAnalyzer {
     /// Adds another reading to the analyzer.
     pub fn append_sensor_value(&mut self, _date_time_ms: u64, value: f64) {
 
-        // Update average heart rate.
+        // Update average power.
         self.readings.push(value);
 
-        // Update max heart rate.
-        if value > self.max_hr {
-            self.max_hr = value;
+        // Update max power.
+        if value > self.max_cadence {
+            self.max_cadence = value;
         }
     }
 }
