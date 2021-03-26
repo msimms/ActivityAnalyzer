@@ -32,6 +32,10 @@ pub fn greet() {
 fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analyzer: Option<&power_analyzer::PowerAnalyzer>, cadence_analyzer: Option<&cadence_analyzer::CadenceAnalyzer>, hr_analyzer: Option<&heart_rate_analyzer::HeartRateAnalyzer>) -> String {
     let mut max_power = 0.0;
     let mut avg_power = 0.0;
+    let mut best_5_sec_power = 0.0;
+    let mut best_12_min_power = 0.0;
+    let mut best_20_min_power = 0.0;
+    let mut best_1_hour_power = 0.0;
     let mut power_readings = Vec::<f64>::new();
     let mut max_cadence = 0.0;
     let mut avg_cadence = 0.0;
@@ -46,7 +50,11 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         Some(power_analyzer) => {
             max_power = power_analyzer.max_power;
             avg_power = power_analyzer.compute_average();
-            power_readings = power_analyzer.readings.clone();
+            best_5_sec_power = power_analyzer.get_best_power(power_analyzer::BEST_5_SEC_POWER);
+            best_12_min_power = power_analyzer.get_best_power(power_analyzer::BEST_12_MIN_POWER);
+            best_20_min_power = power_analyzer.get_best_power(power_analyzer::BEST_20_MIN_POWER);
+            best_1_hour_power = power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER);
+            power_readings = power_analyzer.power_readings.clone();
         }
     }
 
@@ -90,6 +98,10 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         "Speeds": analyzer.speed_graph,
         "Maximum Power": max_power,
         "Average Power": avg_power,
+        "5 Second Power": best_5_sec_power,
+        "12 Minute Power": best_12_min_power,
+        "20 Minute Power": best_20_min_power,
+        "1 Hour Power": best_1_hour_power,
         "Power Readings": power_readings,
         "Maximum Cadence": max_cadence,
         "Average Cadence": avg_cadence,

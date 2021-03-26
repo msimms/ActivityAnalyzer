@@ -322,6 +322,14 @@
             append_to_table(analysis_table, "Maximum Power", json_data["Maximum Power"].toFixed(2).toString() + " watts");
         if (json_data["Average Power"] > 0)
             append_to_table(analysis_table, "Average Power", json_data["Average Power"].toFixed(2).toString() + " watts");
+        if (json_data["5 Second Power"] > 0)
+            append_to_table(analysis_table, "5 Second Power", json_data["5 Second Power"].toFixed(2).toString() + " watts");
+        if (json_data["12 Minute Power"] > 0)
+            append_to_table(analysis_table, "12 Minute Power", json_data["12 Minute Power"].toFixed(2).toString() + " watts");
+        if (json_data["20 Minute Power"] > 0)
+            append_to_table(analysis_table, "20 Minute Power", json_data["20 Minute Power"].toFixed(2).toString() + " watts");
+        if (json_data["1 Hour Power"] > 0)
+            append_to_table(analysis_table, "1 Hour Power", json_data["1 Hour Power"].toFixed(2).toString() + " watts");
         if (json_data["Maximum Cadence"] > 0)
             append_to_table(analysis_table, "Maximum Cadence", json_data["Maximum Cadence"].toFixed(2).toString() + " rpm");
         if (json_data["Average Cadence"] > 0)
@@ -677,6 +685,7 @@
             <li>How does it work? <p>This page is a combination of HTML, Javascript, CSS, and WebAssembly compiled from Rust.</p>
             <li>What data do you store? <p>Nothing. All processing is done in the browser. No data leaves the local machine.</p>
             <li>Can I connect this to Strava, etc.? <p>Not right now, but maybe in the future.</p>
+            <li>Can I see the source code? <p>Yes, it is available on <a href="https://github.com/msimms/ActivityAnalyzer">GitHub</a>.</p>
         </ul>
     </div>
 </section>

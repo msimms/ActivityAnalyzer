@@ -4,9 +4,6 @@ use lib_math::{distance, peaks, statistics, signals};
 use std::collections::HashMap;
 use kmeans::*;
 
-use crate::power_analyzer;
-use crate::heart_rate_analyzer;
-
 const METERS_PER_KM: f64 = 1000.0;
 const METERS_PER_MILE: f64 = 1609.34;
 const METERS_PER_HALF_MARATHON: f64 = 13.1 * METERS_PER_MILE;
@@ -32,9 +29,6 @@ struct DistanceNode {
 }
 
 pub struct LocationAnalyzer {
-    power: power_analyzer::PowerAnalyzer,
-    heart_rate: heart_rate_analyzer::HeartRateAnalyzer,
-
     pub start_time_ms: u64,
     pub last_time_ms: u64,
     last_lat: f64,
@@ -66,8 +60,7 @@ pub struct LocationAnalyzer {
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{power: power_analyzer::PowerAnalyzer::new(), heart_rate: heart_rate_analyzer::HeartRateAnalyzer::new(),
-            start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
+        let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
             speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(),
             avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(),
             significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0};

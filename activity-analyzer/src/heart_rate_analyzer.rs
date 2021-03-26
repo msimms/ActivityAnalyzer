@@ -16,7 +16,7 @@ impl HeartRateAnalyzer {
         let count = self.readings.len();
         if count > 0 {
             let sum: f64 = Iterator::sum(self.readings.iter());
-            return f64::from(sum) / (self.readings.len() as f64);
+            return f64::from(sum) / (count as f64);
         }
         0.0
     }
