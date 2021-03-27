@@ -74,17 +74,17 @@
         return out_str;
     }
 
-    /// @function unix_time_to_local_string
-    function unix_time_to_local_string(unix_time)
+    /// @function unix_time_ms_to_local_string
+    function unix_time_ms_to_local_string(unix_time)
     {
-        let date = new Date(unix_time * 1000);
+        let date = new Date(unix_time);
         return date.toLocaleString();
     }
 
-    /// @function unix_time_to_local_date_string
-    function unix_time_to_local_date_string(unix_time)
+    /// @function unix_time_ms_to_local_date_string
+    function unix_time_ms_to_local_date_string(unix_time)
     {
-        let date = new Date(unix_time * 1000);
+        let date = new Date(unix_time);
         return date.toLocaleDateString();
     }
 
@@ -270,7 +270,6 @@
         else
             report = analyze_tcx(blob);
 
-        let elapsed_time = (report.end_time_ms - report.start_time_ms) / 1000;
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
 
@@ -299,6 +298,8 @@
             pace_units = "mins/mile";
         }
 
+        append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(json_data["Start Time (ms)"]));
+        append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(json_data["End Time (ms)"]));
         append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(json_data["Elapsed Time"]));
         append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, json_data["Total Distance"]));
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
