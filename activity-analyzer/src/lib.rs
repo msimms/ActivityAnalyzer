@@ -96,6 +96,7 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         "KM Splits": analyzer.km_splits,
         "Times": analyzer.speed_times,
         "Speeds": analyzer.speed_graph,
+        "Altitude Readings": analyzer.altitude_graph,
         "Maximum Power": max_power,
         "Average Power": avg_power,
         "5 Second Power": best_5_sec_power,

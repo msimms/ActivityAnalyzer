@@ -347,6 +347,7 @@
         let power = json_data["Power Readings"];
         let cadence = json_data["Cadence Readings"];
         let hr = json_data["Heart Rate Readings"];
+        let altitude = json_data["Altitude Readings"];
 
         let time_speed_data = times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
@@ -377,6 +378,13 @@
                 return {"date": new Date(x), "value": hr[i]};
             });
             draw_graph(time_hr_data, "Heart Rate", "bpm", "FireBrick");
+        }
+        if (altitude.length > 0)
+        {
+            let time_altitude_data = times.map(function(x, i) {
+                return {"date": new Date(x), "value": altitude[i]};
+            });
+            draw_graph(time_altitude_data, "Altitude", "meters", "PeachPuff");
         }
     }
 

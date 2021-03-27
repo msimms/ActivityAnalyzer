@@ -41,6 +41,7 @@ pub struct LocationAnalyzer {
     speed_blocks: Vec<f64>, // List of speed/pace blocks, i.e. statistically significant times spent at a given pace
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
+    pub altitude_graph: Vec<f64>, // Holds all altitude readings
 
     pub mile_splits: Vec<f64>, // Mile split times
     pub km_splits: Vec<f64>, // Kilometer split times
@@ -61,7 +62,7 @@ pub struct LocationAnalyzer {
 impl LocationAnalyzer {
     pub fn new() -> Self {
         let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
-            speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, mile_splits: Vec::new(), km_splits: Vec::new(),
+            speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(),
             avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(),
             significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
@@ -398,6 +399,7 @@ impl LocationAnalyzer {
             self.distance_buf.push(distance_node);
             self.total_distance = new_distance;
             self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
+            self.altitude_graph.push(altitude);
             self.update_average_speed(elapsed_seconds);
 
             // Update the split calculations.
