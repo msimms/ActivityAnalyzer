@@ -23,6 +23,15 @@ const TYPE_UNSPECIFIED_ACTIVITY_KEY: &str = "Unknown";
 const TYPE_RUNNING_KEY: &str = "Running";
 const TYPE_CYCLING_KEY: &str = "Cycling";
 
+#[derive(Clone, Copy)]
+pub struct IntervalDescription {
+    pub start_time: u64,
+    pub end_time: u64,
+    pub line_duration_seconds: u64,
+    pub line_length_meters: f64,
+    pub line_avg_speed: f64
+}
+
 struct DistanceNode {
     date_time_ms: u64,
     total_distance: f64, // Distance traveled (in meters)
@@ -55,7 +64,7 @@ pub struct LocationAnalyzer {
     pub bests: HashMap<String, u64>,
     pub activity_type: String,
 
-    pub significant_intervals: Vec<f64>,
+    pub significant_intervals: Vec<IntervalDescription>,
 
     speed_window_size: u64,
     last_speed_buf_update_time: u64
@@ -145,16 +154,19 @@ impl LocationAnalyzer {
         gap
     }
 
-    fn examine_interval_peak(&mut self, start_index: usize, end_index: usize) -> bool {
+    fn examine_interval_peak(&mut self, start_index: usize, end_index: usize) -> Option<IntervalDescription> {
         // Examines a line of near-constant pace/speed.
         if start_index >= end_index {
-            return false;
+            let result: Option::<IntervalDescription> = None;
+            return result;
         }
 
         // How long (in seconds) was this block?
         let start_time = self.speed_times[start_index];
         let end_time = self.speed_times[end_index];
         let line_duration_seconds = end_time - start_time;
+        let mut line_length_meters = 0.0;
+        let mut line_avg_speed = 0.0;
 
         // Don't consider anything less than ten seconds.
         if line_duration_seconds > 10 {
@@ -173,8 +185,6 @@ impl LocationAnalyzer {
                 }
             }
 
-            let mut line_length_meters = 0.0;
-
             match start_distance_rec {
                 Some(start_rec) => {
                     match end_distance_rec {
@@ -187,11 +197,13 @@ impl LocationAnalyzer {
                 _ => {},
             }
 
-            let line_avg_speed = statistics::average_f64(&speeds.to_vec());
+            line_avg_speed = statistics::average_f64(&speeds.to_vec());
             self.speed_blocks.push(line_avg_speed);
         }
 
-        false
+        let desc = IntervalDescription{start_time: start_time, end_time: end_time, line_duration_seconds: line_duration_seconds, line_length_meters: line_length_meters, line_avg_speed: line_avg_speed};
+        let result: Option::<IntervalDescription> = Some(desc);
+        result
     }
 
     pub fn analyze(&mut self) {
@@ -216,13 +228,15 @@ impl LocationAnalyzer {
                     let mut all_intervals = Vec::new();
                     for peak in peak_list {
                         let interval = self.examine_interval_peak(peak.left_trough.x, peak.right_trough.x);
-                        if interval {
-                            all_intervals.push(interval);
+                        match interval {
+                            Some(interval) => {
+                                all_intervals.push(interval);
+                            }
+                            _ => {},
                         }
                     }
 
                     // Do a k-means analysis on the computed speed/pace blocks so we can get rid of any outliers.
-                    // let significant_intervals = Vec::new();
                     let num_speed_blocks = self.speed_blocks.len();
                     if num_speed_blocks > 1 {
 
@@ -236,14 +250,12 @@ impl LocationAnalyzer {
                         let mut best_k = 0;
                         let best_labels = Vec::<usize>::new();
                         let mut steepest_slope = 0.0;
-                        let distortions = Vec::<f64>::new();
+                        let mut distortions = Vec::<f64>::new();
                         for k in 1..max_k {
-                            /*let kmean = KMeans::new(self.speed_blocks.to_vec(), num_speed_blocks, 1);
-                            let result = kmean.kmeans_lloyd(k, 100, KMeans::init_kmeanplusplus, &KMeansConfig::default());
-                            // let distances = self.speed_blocks / result.centroids;
-                            // let distances_sum = sum(np.min(distances, axis = 1));
-                            // let distortion = distances_sum / num_speed_blocks;
-                            // distortions.push(distortion);*/
+                            let kmean = KMeans::new(self.speed_blocks.to_vec(), num_speed_blocks, 1);
+                            let result = kmean.kmeans_lloyd(k, 10, KMeans::init_kmeanplusplus, &KMeansConfig::default());
+                            let distortion = result.distsum / num_speed_blocks as f64;
+                            distortions.push(distortion);
 
                             // Use the elbow method to find the best value for k.
                             if distortions.len() > 1 {
@@ -259,7 +271,7 @@ impl LocationAnalyzer {
                         let mut interval_index = 0;
                         for label in best_labels {
                             if label >= 1 {
-                                //self.significant_intervals.append(all_intervals[interval_index]);
+                                //self.significant_intervals.push(all_intervals[interval_index]);
                             }
                             interval_index = interval_index + 1;
                         }
