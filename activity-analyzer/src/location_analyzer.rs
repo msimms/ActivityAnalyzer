@@ -42,6 +42,8 @@ pub struct LocationAnalyzer {
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
     pub altitude_graph: Vec<f64>, // Holds all altitude readings
+    pub gradient_curve: Vec<f64>, // Holds the gradient calculations
+    pub gap_graph: Vec<u64>, // Holds the grade adjusted pace calculations
 
     pub mile_splits: Vec<f64>, // Mile split times
     pub km_splits: Vec<f64>, // Kilometer split times
@@ -62,9 +64,9 @@ pub struct LocationAnalyzer {
 impl LocationAnalyzer {
     pub fn new() -> Self {
         let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
-            speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(),
-            avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(),
-            significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
+            speed_graph: Vec::new(), speed_blocks: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), gradient_curve: Vec::new(),
+            gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(),
+            activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
     }
 
@@ -135,6 +137,12 @@ impl LocationAnalyzer {
         else {
             self.mile_splits[whole_units_traveled] = seconds as f64;
         }
+    }
+
+    fn compute_grade_adjusted_pace(gradient: f64, pace: f64) -> f64 {
+        let cost = (155.4 * (f64::powf(gradient, 5.0))) - (30.4 * f64::powf(gradient, 4.0)) - (43.4 * f64::powf(gradient, 3.0)) - (46.3 * (gradient * gradient)) - (19.5 * gradient) + 3.6;
+        let gap = pace + (cost - 3.6) / 3.6;
+        gap
     }
 
     fn examine_interval_peak(&mut self, start_index: usize, end_index: usize) -> bool {
@@ -392,6 +400,14 @@ impl LocationAnalyzer {
 
             // How long has it been?
             let elapsed_seconds = (date_time_ms - self.start_time_ms) / 1000;
+
+            // Compute the grade adjusted pace.
+            let num_alts = self.altitude_graph.len();
+            if num_alts > 0 {
+                let prev_alt = self.altitude_graph[num_alts - 1];
+                let gradient = (altitude - prev_alt) / meters_traveled;
+                self.gradient_curve.push(gradient);
+            }
 
             // Update totals and averages.
             let new_distance = self.total_distance + meters_traveled;

@@ -97,6 +97,7 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         "Times": analyzer.speed_times,
         "Speeds": analyzer.speed_graph,
         "Altitude Readings": analyzer.altitude_graph,
+        "Gradient Curve": analyzer.gradient_curve,
         "Maximum Power": max_power,
         "Average Power": avg_power,
         "5 Second Power": best_5_sec_power,
