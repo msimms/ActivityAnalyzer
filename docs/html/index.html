@@ -188,6 +188,7 @@
     {
         let new_speed_list = [];
         let is_metric = (unit_system == "Metric");
+        let max = 0.0;
 
         // Speed is in meters/second.
         for (let data_point in speed_list)
@@ -200,9 +201,11 @@
                 value = speed * 3.6;
             else
                 value = speed * 2.23694;
+            if (value > max)
+                max = value;
             new_speed_list.push({date, value}); 
         }
-        return new_speed_list;
+        return [ new_speed_list, max ];
     }
 
     /// @function convert_speed_graph_to_pace_graph
@@ -210,6 +213,7 @@
     {
         let pace_list = [];
         let is_metric = (unit_system == "Metric");
+        let min = 0.0;
 
         // Speed is in meters/second.
         for (let data_point in speed_list)
@@ -224,12 +228,14 @@
                     value = 16.6666667 / speed;
                 else
                     value = 26.8224 / speed;
+                if (min < 0.1 || value < min)
+                    min = value;
             }
             else
                 value = 0.0;
             pace_list.push({date, value});
         }
-        return pace_list;
+        return [ pace_list, min ];
     }
 
     /// @function compute_grade_adjusted_pace
@@ -346,9 +352,12 @@
         let time_speed_data = times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
         });
-        let adjusted_time_speed_data = convert_speed_graph_to_display_units(units, time_speed_data);
-        let time_pace_data = convert_speed_graph_to_pace_graph(units, time_speed_data);
+        let [ adjusted_time_speed_data, max_speed ] = convert_speed_graph_to_display_units(units, time_speed_data);
+        let [ time_pace_data, min_pace ] = convert_speed_graph_to_pace_graph(units, time_speed_data);
         let gap_data = compute_grade_adjusted_pace(gradients, time_pace_data);
+
+        append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
+        append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
         draw_graph(adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue");
         draw_graph(time_pace_data, "Pace", pace_units, "SlateBlue");
