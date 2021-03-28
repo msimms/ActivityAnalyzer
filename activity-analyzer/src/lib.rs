@@ -244,3 +244,11 @@ pub fn analyze_tcx(s: &str) -> String {
 
     analysis_report_str
 }
+
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn file1_test() {
+    }
+}
