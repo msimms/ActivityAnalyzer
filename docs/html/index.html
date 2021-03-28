@@ -439,7 +439,7 @@
         data[0].value = 0.0;
         data[data.length-1].value = 0.0;
 
-        var Tooltip = d3.select("#charts")
+        let tooltip = d3.select("#charts")
             .append("div")
                 .style("opacity", 0)
                 .style("position", "absolute")
@@ -447,21 +447,21 @@
                 .style("background-color", "white")
                 .style("z-index", 1)
                 .style("cursor", "pointer")
-        var mouseover = function() {
-            Tooltip
+        let mouseover = function() {
+            tooltip
                 .style("opacity", 0.7)
                 .style("visibility", "visible")
         }
-        var mousemove = function() {
+        let mousemove = function() {
             let coordinates = d3.mouse(this);
             let x = coordinates[0];
 
-            Tooltip
+            tooltip
                 .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
                 .style("top", (event.pageY)+"px")
                 .style("left",(event.pageX)+"px")
         }
-        var mouseleave = function() {
+        let mouseleave = function() {
         }
 
         let margin = { top: 20, right: 20, bottom: 20, left: 50 },
@@ -517,6 +517,31 @@
     {
         let xVals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
 
+        let tooltip = d3.select("#charts")
+            .append("div")
+                .style("opacity", 0)
+                .style("position", "absolute")
+                .style("visibility", "hidden")
+                .style("background-color", "white")
+                .style("z-index", 1)
+                .style("cursor", "pointer")
+        let mouseover = function() {
+            tooltip
+                .style("opacity", 0.7)
+                .style("visibility", "visible")
+        }
+        let mousemove = function() {
+            let coordinates = d3.mouse(this);
+            let x = Math.floor((coordinates[0] / width) * data.length);
+
+            tooltip
+                .html("<b>" + convert_seconds_to_hours_mins_secs(data[x]) + "</b>")
+                .style("top", (event.pageY)+"px")
+                .style("left",(event.pageX)+"px")
+        }
+        let mouseleave = function() {
+        }
+
         let margin = {top: 20, right: 20, bottom: 55, left: 50},
             width = $("#charts").width() - margin.left - margin.right,
             height = 250 - margin.top - margin.bottom;
@@ -531,6 +556,9 @@
             .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
+                .on('mouseover', mousemove)
+                .on('mousemove', mouseover)
+                .on('mouseleave', mouseleave)
             .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
