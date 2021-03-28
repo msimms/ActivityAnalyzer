@@ -118,6 +118,8 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
 
 #[wasm_bindgen]
 pub fn analyze_gpx(s: &str) -> String {
+    utils::set_panic_hook();
+
     let mut analysis_report_str = String::new();
 
     let data = BufReader::new(s.as_bytes());
@@ -168,6 +170,8 @@ pub fn analyze_gpx(s: &str) -> String {
 
 #[wasm_bindgen]
 pub fn analyze_tcx(s: &str) -> String {
+    utils::set_panic_hook();
+
     let mut data = BufReader::new(s.as_bytes());
     let res = tcx::read(&mut data);
     let mut analyzer = location_analyzer::LocationAnalyzer::new();
@@ -245,10 +249,46 @@ pub fn analyze_tcx(s: &str) -> String {
     analysis_report_str
 }
 
-
 #[cfg(test)]
 mod tests {
+    use std::io::Read;
+    use std::fs::File;
+    use reqwest;
+    use crate::analyze_tcx;
+
+    /// Downloads a remote file to the local file path.
+    fn download_test_file(local_file_name: &str, remote_file_name: &str) {
+        let resp = reqwest::blocking::get(remote_file_name).unwrap().text().unwrap();
+        std::fs::write(local_file_name, resp).expect("Unable to write file.");
+    }
+
+    /// Tests a local file, downloads if it does not already exist.
+    fn test_file(local_file_name: &str, remote_file_name: &str) -> String {
+        if !std::path::Path::new(local_file_name).exists() {
+            download_test_file(local_file_name, remote_file_name);
+        }
+
+        // Read the file into a string.
+        let mut content = String::new();
+        match File::open(local_file_name) {
+            Ok(mut file) => {
+                file.read_to_string(&mut content).unwrap();
+            },
+            Err(error) => {
+            }
+        }
+
+        // Analyze the file and return the results.
+        let result = analyze_tcx(&content);
+        result
+    }
+
     #[test]
     fn file1_test() {
+        let local_file_name = "tests/20180810_zwift_innsbruckring_x2.tcx";
+        let remote_file_name = "https://github.com/msimms/TestFilesForFitnessApps/raw/master/tcx/20180810_zwift_innsbruckring_x2.tcx";
+
+        let result = test_file(local_file_name, remote_file_name);
+        println!("{}", result);
     }
 }

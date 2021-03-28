@@ -259,15 +259,16 @@ impl LocationAnalyzer {
                         let mut steepest_slope = 0.0;
                         let mut distortions = Vec::<f64>::new();
                         let max_iter = 100;
-                        /*for k in 2..max_k {
+                        /*for k in 1..max_k {
                             let kmean = KMeans::new(samples.to_vec(), num_possible_intervals, sample_dimensions);
                             let result = kmean.kmeans_lloyd(k, max_iter, KMeans::init_kmeanplusplus, &KMeansConfig::default());
                             let distortion = result.distsum / num_possible_intervals as f64;
                             distortions.push(distortion);
 
                             // Use the elbow method to find the best value for k.
-                            if distortions.len() >= 2 {
+                            if distortions.len() >= 2 && k >= 2 {
                                 let slope = (distortions[k-1] + distortions[k-2]) / 2.0;
+
                                 if best_k == 0 || slope > steepest_slope {
                                     best_k = k;
                                     best_labels = result.assignments;
