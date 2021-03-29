@@ -36,6 +36,7 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
     let mut best_12_min_power = 0.0;
     let mut best_20_min_power = 0.0;
     let mut best_1_hour_power = 0.0;
+    let mut normalized_power = 0.0;
     let mut power_readings = Vec::<f64>::new();
     let mut max_cadence = 0.0;
     let mut avg_cadence = 0.0;
@@ -54,6 +55,7 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
             best_12_min_power = power_analyzer.get_best_power(power_analyzer::BEST_12_MIN_POWER);
             best_20_min_power = power_analyzer.get_best_power(power_analyzer::BEST_20_MIN_POWER);
             best_1_hour_power = power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER);
+            normalized_power = power_analyzer.np;
             power_readings = power_analyzer.power_readings.clone();
         }
     }
@@ -104,6 +106,7 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
         "12 Minute Power": best_12_min_power,
         "20 Minute Power": best_20_min_power,
         "1 Hour Power": best_1_hour_power,
+        "Normalized Power": normalized_power,
         "Power Readings": power_readings,
         "Maximum Cadence": max_cadence,
         "Average Cadence": avg_cadence,
@@ -127,14 +130,14 @@ pub fn analyze_gpx(s: &str) -> String {
 
     match res {
         Ok(gpx) => {
-            let mut analyzer = location_analyzer::LocationAnalyzer::new();
+            let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
 
             // Iterate through the tracks.
             for track in gpx.tracks {
 
                 // Get the track name.
                 match &track._type {
-                    Some(activity_type) => analyzer.set_activity_type(activity_type.to_string()),
+                    Some(activity_type) => location_analyzer.set_activity_type(activity_type.to_string()),
                     _ => {},
                 }
 
@@ -148,17 +151,17 @@ pub fn analyze_gpx(s: &str) -> String {
                         let lon = point.point().x();
                         let alt = point.elevation.unwrap();
 
-                        analyzer.append_location((time * 1000) as u64, lat, lon, alt);
-                        analyzer.update_speeds();
+                        location_analyzer.append_location((time * 1000) as u64, lat, lon, alt);
+                        location_analyzer.update_speeds();
                     }
                 }
             }
 
             // For calculations that only make sense once all the points have been added.
-            analyzer.analyze();
+            location_analyzer.analyze();
 
             // Copy items to the final report.
-            analysis_report_str = make_final_report(&analyzer, None, None, None);
+            analysis_report_str = make_final_report(&location_analyzer, None, None, None);
         }
         Err(_e) => {
             alert("Error parsing GPX file.");
@@ -174,7 +177,7 @@ pub fn analyze_tcx(s: &str) -> String {
 
     let mut data = BufReader::new(s.as_bytes());
     let res = tcx::read(&mut data);
-    let mut analyzer = location_analyzer::LocationAnalyzer::new();
+    let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
     let mut hr_analyzer = heart_rate_analyzer::HeartRateAnalyzer::new();
     let mut cadence_analyzer = cadence_analyzer::CadenceAnalyzer::new();
     let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
@@ -188,8 +191,8 @@ pub fn analyze_tcx(s: &str) -> String {
                     let position = trackpoint.position.unwrap();
                     let altitude = trackpoint.altitude_meters.unwrap();
 
-                    analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
-                    analyzer.update_speeds();
+                    location_analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
+                    location_analyzer.update_speeds();
 
                     // Get the heart rate reading.
                     let hr = trackpoint.heart_rate;
@@ -241,10 +244,11 @@ pub fn analyze_tcx(s: &str) -> String {
     }
 
     // For calculations that only make sense once all the points have been added.
-    analyzer.analyze();
+    location_analyzer.analyze();
+    power_analyzer.analyze();
 
     // Copy items to the final report.
-    let analysis_report_str = make_final_report(&analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
+    let analysis_report_str = make_final_report(&location_analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
 
     analysis_report_str
 }

@@ -65,7 +65,8 @@ pub struct LocationAnalyzer {
     pub significant_intervals: Vec<IntervalDescription>,
 
     speed_window_size: u64,
-    last_speed_buf_update_time: u64
+    last_speed_buf_update_time: u64,
+    search_for_intervals: bool
 }
 
 impl LocationAnalyzer {
@@ -73,7 +74,8 @@ impl LocationAnalyzer {
         let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(),
             mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0, speed_variance: 0.0, bests: HashMap::new(),
-            activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
+            activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(), speed_window_size: 1, last_speed_buf_update_time: 0,
+            search_for_intervals: false};
         analyzer
     }
 
@@ -212,7 +214,8 @@ impl LocationAnalyzer {
             self.speed_variance = statistics::variance_f64(&self.speed_graph, self.avg_speed);
 
             // Don't look for peaks unless the variance was high. Cutoff selected via experimentation.
-            if self.speed_variance > 0.25 {
+            // Also, don't search if the feature has been disabled.
+            if self.search_for_intervals && self.speed_variance > 0.25 {
 
                 // Smooth the speed graph to take out some of the GPS jitter.
                 let smoothed_graph = signals::smooth(&self.speed_graph, 4);
@@ -259,9 +262,13 @@ impl LocationAnalyzer {
                         let mut steepest_slope = 0.0;
                         let mut distortions = Vec::<f64>::new();
                         let max_iter = 100;
-                        /*for k in 1..max_k {
+                        for k in 1..max_k {
                             let kmean = KMeans::new(samples.to_vec(), num_possible_intervals, sample_dimensions);
-                            let result = kmean.kmeans_lloyd(k, max_iter, KMeans::init_kmeanplusplus, &KMeansConfig::default());
+                            let conf = KMeansConfig::build()
+                                .init_done(&|_| println!(""))
+                                .iteration_done(&|_, _, _| println!(""))
+                                .build();
+                            let result = kmean.kmeans_lloyd(k, max_iter, KMeans::init_kmeanplusplus, &conf);
                             let distortion = result.distsum / num_possible_intervals as f64;
                             distortions.push(distortion);
 
@@ -275,7 +282,7 @@ impl LocationAnalyzer {
                                     steepest_slope = slope;
                                 }
                             }
-                        }*/
+                        }
 
                         // Save off the significant peaks.
                         let mut interval_index = 0;
