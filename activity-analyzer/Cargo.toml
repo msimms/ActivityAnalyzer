@@ -16,7 +16,6 @@ gpx = "*"
 tcx = "*"
 chrono = "*"
 kmeans = "*"
-rand_core = "*"
 serde = "*"
 serde_json = "*"
 lib_math = { path = "../LibMath/rust/" }
