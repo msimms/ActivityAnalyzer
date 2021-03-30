@@ -183,9 +183,16 @@ pub fn analyze_tcx(s: &str) -> String {
     let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
     let activities = res.activities.unwrap();
 
+    // A file can contain multiple activities.
     for activity in activities.activities {
+
+        // Iterate through the laps.
         for lap in activity.laps {
+
+            // Iterate through the tracks.
             for track in lap.tracks {
+
+                // Iterate through each point.
                 for trackpoint in track.trackpoints {
                     let time = trackpoint.time.timestamp() * 1000 + trackpoint.time.timestamp_subsec_millis() as i64;
                     let position = trackpoint.position.unwrap();
