@@ -23,6 +23,7 @@
     html { height: 100% }
     body { height: 100%; margin: 0; padding: 0 }
     div { margin: 0px }
+    #map_canvas { height: 75% }
 
     div.bar
     {
@@ -498,7 +499,7 @@
             .attr("d", valueline(data))
             .style("fill", color)
             .style("stroke", "LightSlateGray")
-            .style("stroke-width", 1.25);
+            .style("stroke-width", 0.25);
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
