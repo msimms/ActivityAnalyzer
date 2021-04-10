@@ -29,7 +29,7 @@ pub fn greet() {
     alert("Copyright (c) 2021 Michael J. Simms. All rights reserved.");
 }
 
-fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analyzer: Option<&power_analyzer::PowerAnalyzer>, cadence_analyzer: Option<&cadence_analyzer::CadenceAnalyzer>, hr_analyzer: Option<&heart_rate_analyzer::HeartRateAnalyzer>) -> String {
+fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, power_analyzer: Option<&power_analyzer::PowerAnalyzer>, cadence_analyzer: Option<&cadence_analyzer::CadenceAnalyzer>, hr_analyzer: Option<&heart_rate_analyzer::HeartRateAnalyzer>) -> String {
     let mut max_power = 0.0;
     let mut avg_power = 0.0;
     let mut best_5_sec_power = 0.0;
@@ -81,25 +81,27 @@ fn make_final_report(analyzer: &location_analyzer::LocationAnalyzer, power_analy
     }
 
     let analysis_report_str = serde_json::json!({
-        "Start Time (ms)": analyzer.start_time_ms,
-        "End Time (ms)": analyzer.last_time_ms,
-        "Elapsed Time": (analyzer.last_time_ms - analyzer.start_time_ms) / 1000,
-        "Total Distance": analyzer.total_distance,
-        "Total Vertical Distance": analyzer.total_vertical,
-        "Average Speed": analyzer.avg_speed,
-        "Best 1K": analyzer.get_best_time(location_analyzer::BEST_1K),
-        "Best Mile": analyzer.get_best_time(location_analyzer::BEST_MILE),
-        "Best 5K": analyzer.get_best_time(location_analyzer::BEST_5K),
-        "Best 10K": analyzer.get_best_time(location_analyzer::BEST_10K),
-        "Best 15K": analyzer.get_best_time(location_analyzer::BEST_15K),
-        "Best Half Marathon": analyzer.get_best_time(location_analyzer::BEST_HALF_MARATHON),
-        "Best Marathon": analyzer.get_best_time(location_analyzer::BEST_MARATHON),
-        "Mile Splits": analyzer.mile_splits,
-        "KM Splits": analyzer.km_splits,
-        "Times": analyzer.speed_times,
-        "Speeds": analyzer.speed_graph,
-        "Altitude Readings": analyzer.altitude_graph,
-        "Gradient Curve": analyzer.gradient_curve,
+        "Start Time (ms)": location_analyzer.start_time_ms,
+        "End Time (ms)": location_analyzer.last_time_ms,
+        "Elapsed Time": (location_analyzer.last_time_ms - location_analyzer.start_time_ms) / 1000,
+        "Total Distance": location_analyzer.total_distance,
+        "Total Vertical Distance": location_analyzer.total_vertical,
+        "Average Speed": location_analyzer.avg_speed,
+        "Best 1K": location_analyzer.get_best_time(location_analyzer::BEST_1K),
+        "Best Mile": location_analyzer.get_best_time(location_analyzer::BEST_MILE),
+        "Best 5K": location_analyzer.get_best_time(location_analyzer::BEST_5K),
+        "Best 10K": location_analyzer.get_best_time(location_analyzer::BEST_10K),
+        "Best 15K": location_analyzer.get_best_time(location_analyzer::BEST_15K),
+        "Best Half Marathon": location_analyzer.get_best_time(location_analyzer::BEST_HALF_MARATHON),
+        "Best Marathon": location_analyzer.get_best_time(location_analyzer::BEST_MARATHON),
+        "Mile Splits": location_analyzer.mile_splits,
+        "KM Splits": location_analyzer.km_splits,
+        "Times": location_analyzer.speed_times,
+        "Speeds": location_analyzer.speed_graph,
+        "Altitude Readings": location_analyzer.altitude_graph,
+        "Gradient Curve": location_analyzer.gradient_curve,
+        "Latitude Readings": location_analyzer.latitude_readings,
+        "Longitude Readings": location_analyzer.longitude_readings,
         "Maximum Power": max_power,
         "Average Power": avg_power,
         "5 Second Power": best_5_sec_power,

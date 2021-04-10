@@ -351,6 +351,8 @@
         let hr = json_data["Heart Rate Readings"];
         let altitude = json_data["Altitude Readings"];
         let gradients = json_data["Gradient Curve"];
+        let latitudes = json_data["Latitude Readings"];
+        let longitudes = json_data["Longitude Readings"];
 
         let time_speed_data = times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
@@ -394,6 +396,8 @@
             });
             draw_graph(time_altitude_data, "Altitude", "meters", "PeachPuff");
         }
+
+        draw_map(latitudes, longitudes);
     }
 
     run();
@@ -423,6 +427,50 @@
 <section class="charts">
     <div id="charts"/>
 </section>
+
+<div id="map_canvas" class="map_canvas" style="display: none;">
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js" integrity="sha256-/SzuLhIQJr2lXrXlvjX3aLOEEt2UkhqSc8mmYblwqwc=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="../js/OpenStreetMap.js"></script>
+<script type="text/javascript">
+    function draw_map(latitudes, longitudes)
+    {
+        var map_div = document.getElementById('map_canvas');
+        map_div.style = "display: block;";
+
+        var projection = new OpenLayers.Projection("EPSG:4326");
+        var map = new OpenLayers.Map();
+
+        var osmLayer = new OpenLayers.Layer.OSM("OSM");
+        map.addLayer(osmLayer);
+
+        var center = new OpenLayers.LonLat(-71.6, -33.7).transform(projection, map.getProjectionObject());
+        map.setCenter(center,4); 
+
+        var points = new Array();
+        latitudes.map(function(e, i) {
+            points.push(new OpenLayers.Geometry.Point(longitudes[i], e));
+        });
+
+        var my_line = new OpenLayers.Geometry.LineString(points).transform(projection, map.getProjectionObject());
+        var my_line_style = { strokeColor: "red", strokeWidth: 3, strokeOpacity: 0.75 };
+        var my_feature = new OpenLayers.Feature.Vector(my_line, {}, my_line_style);
+        var my_vector = new OpenLayers.Layer.Vector("line test");
+
+        my_vector.addFeatures([my_feature]);
+        map.addLayers([my_vector]);
+
+        let lon = longitudes[0];
+        let lat = latitudes[0];
+        let zoom = 13;
+        let lon_lat = new OpenLayers.LonLat(lon, lat).transform(projection, map.getProjectionObject());
+
+        map.setCenter(lon_lat, zoom);
+        map.render(map_div);
+    }
+</script>
+
+</div>
 
 <!-- Scripts for loading the file and drawing the graphs -->
 <script type="text/javascript">
