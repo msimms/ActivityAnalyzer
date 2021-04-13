@@ -331,7 +331,7 @@
         if (json_data["1 Hour Power"] > 0)
             append_to_table(analysis_table, "1 Hour Power", json_data["1 Hour Power"].toFixed(2).toString() + " watts");
         if (json_data["Normalized Power"] > 0)
-            append_to_table(analysis_table, "Normalized Power", json_data["Normalized Power"].toFixed(2).toString() + " watts");
+            append_to_table(analysis_table, "Normalized Power\u00ae", json_data["Normalized Power"].toFixed(2).toString() + " watts");
         if (json_data["Maximum Cadence"] > 0)
             append_to_table(analysis_table, "Maximum Cadence", json_data["Maximum Cadence"].toFixed(2).toString() + " rpm");
         if (json_data["Average Cadence"] > 0)
