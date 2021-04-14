@@ -66,6 +66,7 @@ pub struct LocationAnalyzer {
     pub activity_type: String,
 
     pub significant_intervals: Vec<IntervalDescription>,
+    pub geo_analyzer: super::geo_json_reader::GeoJsonReader,
 
     speed_window_size: u64,
     last_speed_buf_update_time: u64,
@@ -78,7 +79,7 @@ impl LocationAnalyzer {
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(),
             mile_splits: Vec::new(), km_splits: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
-            speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: false};
+            geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: false};
         analyzer
     }
 

@@ -7,6 +7,7 @@ extern crate tcx;
 
 mod utils;
 mod cadence_analyzer;
+mod geo_json_reader;
 mod location_analyzer;
 mod power_analyzer;
 mod heart_rate_analyzer;
