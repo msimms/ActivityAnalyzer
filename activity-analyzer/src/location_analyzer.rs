@@ -1,8 +1,7 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
-use lib_math::{distance, peaks, statistics, signals};
+use lib_math::{distance, kmeans, peaks, statistics, signals};
 use std::collections::HashMap;
-use kmeans::*;
 
 const METERS_PER_KM: f64 = 1000.0;
 const METERS_PER_MILE: f64 = 1609.34;
@@ -29,6 +28,29 @@ pub struct IntervalDescription {
     pub end_time: u64,
     pub line_length_meters: f64,
     pub line_avg_speed: f64
+}
+
+impl IntervalDescription {
+    pub fn new() -> Self {
+        let interval = IntervalDescription{start_time: 0, end_time: 0, line_length_meters: 0.0, line_avg_speed: 0.0};
+        interval
+    }
+    fn copy(&self) -> Self {
+        IntervalDescription {
+            start_time: self.start_time,
+            end_time: self.end_time,
+            line_length_meters: self.line_length_meters,
+            line_avg_speed: self.line_avg_speed,
+        }
+    }
+    fn clone(&self) -> Self {
+        IntervalDescription {
+            start_time: self.start_time.clone(),
+            end_time: self.end_time.clone(),
+            line_length_meters: self.line_length_meters.clone(),
+            line_avg_speed: self.line_avg_speed.clone(),
+        }
+    }
 }
 
 struct DistanceNode {
@@ -244,10 +266,12 @@ impl LocationAnalyzer {
                     // Do a k-means analysis on a 2D the computed speed/pace blocks so we can get rid of any outliers.
                     let num_possible_intervals = filtered_interval_list.len();
                     if num_possible_intervals >= 2 {
+
+                        // Convert the interval description into something k-means can work with.
                         let sample_dimensions = 2;
-                        let mut samples = vec![0.0f64;sample_dimensions * num_possible_intervals];
+                        let mut samples = vec![0.0 as f64; sample_dimensions * num_possible_intervals];
                         let mut sample_index = 0;
-                        for interval in filtered_interval_list {
+                        for interval in &filtered_interval_list {
                             samples[sample_index] = interval.line_avg_speed;
                             sample_index = sample_index + 1;                        
                             samples[sample_index] = interval.line_length_meters;    
@@ -265,15 +289,12 @@ impl LocationAnalyzer {
                         let mut best_labels = Vec::<usize>::new();
                         let mut steepest_slope = 0.0;
                         let mut distortions = Vec::<f64>::new();
+                        let max_error = 1.0;
                         let max_iter = 100;
                         for k in 1..max_k {
-                            let kmean = KMeans::new(samples.to_vec(), num_possible_intervals, sample_dimensions);
-                            let conf = KMeansConfig::build()
-                                .init_done(&|_| println!(""))
-                                .iteration_done(&|_, _, _| println!(""))
-                                .build();
-                            let result = kmean.kmeans_lloyd(k, max_iter, KMeans::init_kmeanplusplus, &conf);
-                            let distortion = result.distsum / num_possible_intervals as f64;
+                            let (labels, distortion) = kmeans::kmeans_equally_space_centroids(samples.to_vec(), sample_dimensions, k, max_error, max_iter);
+
+                            // Store the error.
                             distortions.push(distortion);
 
                             // Use the elbow method to find the best value for k.
@@ -282,7 +303,7 @@ impl LocationAnalyzer {
 
                                 if best_k == 0 || slope > steepest_slope {
                                     best_k = k;
-                                    best_labels = result.assignments;
+                                    best_labels = labels;
                                     steepest_slope = slope;
                                 }
                             }
@@ -292,7 +313,8 @@ impl LocationAnalyzer {
                         let mut interval_index = 0;
                         for label in best_labels {
                             if label >= 1 {
-                                //self.significant_intervals.push(filtered_interval_list[interval_index]);
+                                let interval = filtered_interval_list[interval_index];
+                                self.significant_intervals.push(interval);
                             }
                             interval_index = interval_index + 1;
                         }

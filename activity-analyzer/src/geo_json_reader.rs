@@ -8,6 +8,10 @@ use serde::Deserialize;
 extern crate serde;
 
 #[derive(Debug, Deserialize)]
+struct Coordinates {
+}
+
+#[derive(Debug, Deserialize)]
 struct Properties {
     #[serde(rename="name")]
     name: String,
@@ -17,6 +21,8 @@ struct Properties {
 struct Geometry {
     #[serde(rename="type")]
     geo_type: String,
+    #[serde(rename="coordinates")]
+    coordinates: Coordinates,
 }
 
 #[derive(Debug, Deserialize)]
