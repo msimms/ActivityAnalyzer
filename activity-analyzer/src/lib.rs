@@ -103,6 +103,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
         "Gradient Curve": location_analyzer.gradient_curve,
         "Latitude Readings": location_analyzer.latitude_readings,
         "Longitude Readings": location_analyzer.longitude_readings,
+        "Intervals": location_analyzer.significant_intervals,
         "Maximum Power": max_power,
         "Average Power": avg_power,
         "5 Second Power": best_5_sec_power,

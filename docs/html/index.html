@@ -297,8 +297,11 @@
             pace_units = "mins/mile";
         }
 
-        append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(json_data["Start Time (ms)"]));
-        append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(json_data["End Time (ms)"]));
+        let start_time_ms = json_data["Start Time (ms)"];
+        let end_time_ms = json_data["End Time (ms)"];
+
+        append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
+        append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(end_time_ms));
         append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(json_data["Elapsed Time"]));
         append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, json_data["Total Distance"]));
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
@@ -353,6 +356,9 @@
         let gradients = json_data["Gradient Curve"];
         let latitudes = json_data["Latitude Readings"];
         let longitudes = json_data["Longitude Readings"];
+        let intervals = json_data["Intervals"];
+
+        draw_intervals_graph(start_time_ms, end_time_ms, intervals);
 
         let time_speed_data = times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
@@ -644,16 +650,16 @@
     }
 
     /// @function draw_intervals_graph
-    function draw_intervals_graph(interval_data)
+    function draw_intervals_graph(start_time_ms, end_time_ms, interval_data)
     {
         interval_graph = [];
 
         if (interval_data.length > 0)
         {
-            if (start_time > 0)
+            if (start_time_ms > 0)
             {
                 graph_node = {};
-                graph_node["date"] = new Date(start_time);
+                graph_node["date"] = new Date(start_time_ms);
                 graph_node["value"] = 0;
                 interval_graph.push(graph_node);
             }
@@ -661,11 +667,11 @@
             for (let i in interval_data)
             {
                 let interval = interval_data[i];
-                let start_interval_time = Number(interval[0]);
-                let end_interval_time = Number(interval[1]);
+                let start_interval_time = interval.start_time;
+                let end_interval_time = interval.end_time;
 
                 graph_node = {};
-                graph_node["date"] = new Date(start_interval_time-1000);
+                graph_node["date"] = new Date(start_interval_time - 1000);
                 graph_node["value"] = 0;
                 interval_graph.push(graph_node);
                 graph_node = {};
@@ -677,15 +683,15 @@
                 graph_node["value"] = 1;
                 interval_graph.push(graph_node);
                 graph_node = {};
-                graph_node["date"] = new Date(end_interval_time+1000);
+                graph_node["date"] = new Date(end_interval_time + 1000);
                 graph_node["value"] = 0;
                 interval_graph.push(graph_node);
             }
 
-            if (end_time > 0)
+            if (end_time_ms > 0)
             {
                 graph_node = {};
-                graph_node["date"] = new Date(end_time);
+                graph_node["date"] = new Date(end_time_ms);
                 graph_node["value"] = 0;
                 interval_graph.push(graph_node);
             }

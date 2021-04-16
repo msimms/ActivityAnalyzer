@@ -2,6 +2,7 @@
 
 use lib_math::{distance, kmeans, peaks, statistics, signals};
 use std::collections::HashMap;
+use serde::Serialize;
 
 const METERS_PER_KM: f64 = 1000.0;
 const METERS_PER_MILE: f64 = 1609.34;
@@ -22,7 +23,7 @@ const TYPE_UNSPECIFIED_ACTIVITY_KEY: &str = "Unknown";
 const TYPE_RUNNING_KEY: &str = "Running";
 const TYPE_CYCLING_KEY: &str = "Cycling";
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 pub struct IntervalDescription {
     pub start_time: u64,
     pub end_time: u64,
@@ -34,22 +35,6 @@ impl IntervalDescription {
     pub fn new() -> Self {
         let interval = IntervalDescription{start_time: 0, end_time: 0, line_length_meters: 0.0, line_avg_speed: 0.0};
         interval
-    }
-    fn copy(&self) -> Self {
-        IntervalDescription {
-            start_time: self.start_time,
-            end_time: self.end_time,
-            line_length_meters: self.line_length_meters,
-            line_avg_speed: self.line_avg_speed,
-        }
-    }
-    fn clone(&self) -> Self {
-        IntervalDescription {
-            start_time: self.start_time.clone(),
-            end_time: self.end_time.clone(),
-            line_length_meters: self.line_length_meters.clone(),
-            line_avg_speed: self.line_avg_speed.clone(),
-        }
     }
 }
 
@@ -101,7 +86,7 @@ impl LocationAnalyzer {
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(),
             mile_splits: Vec::new(), km_splits: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
-            geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: false};
+            geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: true};
         analyzer
     }
 
