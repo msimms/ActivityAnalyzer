@@ -17,5 +17,7 @@ An example implementation is available at https://activity-analyzer.app.
 
 # Version History
 
+* 0.8 - Added first cut at interval analysis.
+* 0.7 - Added split times.
 * 0.6 - Added TCX file support as well as power, cadence, and heart rate data from TCX files.
 * 0.5 - Basic functionality, minus interval detection and TCX file handling.
