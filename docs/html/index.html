@@ -254,7 +254,7 @@
 
 <!-- Note the usage of `type=module` here as this is an ES6 module -->
 <script type="module">
-    import init, { greet, analyze_gpx, analyze_tcx } from '../../activity-analyzer/pkg/activity_analyzer.js';
+    import init, { greet, analyze_gpx, analyze_tcx, analyze_fit } from '../../activity-analyzer/pkg/activity_analyzer.js';
 
     async function run() {
         await init();
@@ -264,10 +264,23 @@
         let ext = name.split('.').pop();
         let report = "";
 
-        if (ext == "gpx")
+        if (ext.toLowerCase() == "gpx")
+        {
             report = analyze_gpx(blob);
-        else
+        }
+        else if (ext.toLowerCase() == "tcx")
+        {
             report = analyze_tcx(blob);
+        }
+        else if (ext.toLowerCase() == "fit")
+        {
+            report = analyze_fit(blob);
+        }
+        else
+        {
+            alert("Unrecognized file extension. Must be tcx, gpx, or fit.");
+            return;
+        }
 
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
@@ -415,7 +428,7 @@
 <section class="settings">
     <div>
         <h1>Select a File</h1>
-        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx" name="file_picker" single>
+        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx,.fit" name="file_picker" single>
         <button type="button" class="modern_button" onclick="return analyze_selected_files()">Analyze File</button><br>
         <select id="units" onchange="on_units_changed()">
             <option value="Metric">Metric</option>
