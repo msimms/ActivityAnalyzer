@@ -284,6 +284,14 @@ pub fn analyze_tcx(s: &str) -> String {
     analysis_report_str
 }
 
+#[wasm_bindgen]
+pub fn analyze_fit(s: &str) -> String {
+    utils::set_panic_hook();
+
+//    let mut data = BufReader::new(s.as_bytes());
+    "".to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::Read;
