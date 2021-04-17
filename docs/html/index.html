@@ -300,6 +300,8 @@
         let start_time_ms = json_data["Start Time (ms)"];
         let end_time_ms = json_data["End Time (ms)"];
 
+        clear_all_graphs();
+
         append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
         append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(end_time_ms));
         append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(json_data["Elapsed Time"]));
@@ -403,6 +405,7 @@
             draw_graph(time_altitude_data, "Altitude", "meters", "PeachPuff");
         }
 
+        clear_map();
         draw_map(latitudes, longitudes);
     }
 
@@ -439,6 +442,13 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js" integrity="sha256-/SzuLhIQJr2lXrXlvjX3aLOEEt2UkhqSc8mmYblwqwc=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="../js/OpenStreetMap.js"></script>
 <script type="text/javascript">
+    /// @function clear_map
+    function clear_map()
+    {
+        $('#map_canvas').empty();
+    }
+
+    /// @function draw_map
     function draw_map(latitudes, longitudes)
     {
         var map_div = document.getElementById('map_canvas');
@@ -483,6 +493,12 @@
 
     var selected_file_list = [];
     var file_picker = document.getElementById('file_picker');
+
+    /// @function clear_all_graphs
+    function clear_all_graphs()
+    {
+        $('#charts').empty();
+    }
 
     /// @function draw_graph
     function draw_graph(data, title, units, color)
