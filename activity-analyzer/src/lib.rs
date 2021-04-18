@@ -133,6 +133,9 @@ pub fn analyze_gpx(s: &str) -> String {
     let res = gpx::read(data);
 
     match res {
+        Err(_e) => {
+            alert("Error parsing the GPX file.");
+        }
         Ok(gpx) => {
             let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
 
@@ -167,9 +170,6 @@ pub fn analyze_gpx(s: &str) -> String {
             // Copy items to the final report.
             analysis_report_str = make_final_report(&location_analyzer, None, None, None);
         }
-        Err(_e) => {
-            alert("Error parsing GPX file.");
-        }
     }
 
     analysis_report_str
@@ -187,80 +187,88 @@ pub fn analyze_tcx(s: &str) -> String {
     let mut cadence_analyzer = cadence_analyzer::CadenceAnalyzer::new();
     let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
 
-    let activities = res.activities;
-    match activities {
-        None => {
+    match res {
+        Err(e) => {
+            alert("Error parsing the TCX file.");
         }
-        Some(activities) => {
-            // A file can contain multiple activities.
-            for activity in activities.activities {
+        Ok(res) => {
+            let activities = res.activities;
+            match activities {
+                None => {
+                }
+                Some(activities) => {
+                    // A file can contain multiple activities.
+                    for activity in activities.activities {
 
-                // Iterate through the laps.
-                for lap in activity.laps {
+                        // Iterate through the laps.
+                        for lap in activity.laps {
 
-                    // Iterate through the tracks.
-                    for track in lap.tracks {
+                            // Iterate through the tracks.
+                            for track in lap.tracks {
 
-                        // Iterate through each point.
-                        for trackpoint in track.trackpoints {
-                            let time = trackpoint.time.timestamp() * 1000 + trackpoint.time.timestamp_subsec_millis() as i64;
+                                // Iterate through each point.
+                                for trackpoint in track.trackpoints {
+                                    let time = trackpoint.time.timestamp() * 1000 + trackpoint.time.timestamp_subsec_millis() as i64;
 
-                            // Get the position, including altitude.
-                            let position = trackpoint.position;
-                            match position {
-                                None => {
-                                }
-                                Some(position) => {
-                                    let altitude = trackpoint.altitude_meters;
-                                    match altitude {
+                                    // Get the position, including altitude.
+                                    let position = trackpoint.position;
+                                    match position {
                                         None => {
                                         }
-                                        Some(altitude) => {
-                                            location_analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
-                                            location_analyzer.update_speeds();
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Get the heart rate reading.
-                            let hr = trackpoint.heart_rate;
-                            match hr {
-                                None => {
-                                }
-                                Some(hr) => {
-                                    hr_analyzer.append_sensor_value(time as u64, hr.value as f64);
-                                }
-                            }
-
-                            // Get the cadence reading.
-                            let cadence = trackpoint.cadence;
-                            match cadence {
-                                None => {
-                                }
-                                Some(cadence) => {
-                                    cadence_analyzer.append_sensor_value(time as u64, cadence as f64);
-                                }
-                            }
-
-                            // Get the extensions.
-                            let extensions = trackpoint.extensions.as_ref();
-                            match extensions {
-                                None => {
-                                }
-                                Some(extensions) => {
-                                    // Get the power reading.
-                                    let tpx = extensions.tpx.as_ref();
-                                    match tpx {
-                                        None => {
-                                        }
-                                        Some(tpx) => {
-                                            let watts = tpx.watts;
-                                            match watts {
+                                        Some(position) => {
+                                            let altitude = trackpoint.altitude_meters;
+                                            match altitude {
                                                 None => {
                                                 }
-                                                Some(watts) => {
-                                                    power_analyzer.append_sensor_value(time as u64, watts as f64);
+                                                Some(altitude) => {
+                                                    location_analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
+                                                    location_analyzer.update_speeds();
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Get the heart rate reading.
+                                    let hr = trackpoint.heart_rate;
+                                    match hr {
+                                        None => {
+                                        }
+                                        Some(hr) => {
+                                            hr_analyzer.append_sensor_value(time as u64, hr.value as f64);
+                                        }
+                                    }
+
+                                    // Get the cadence reading.
+                                    let cadence = trackpoint.cadence;
+                                    match cadence {
+                                        None => {
+                                        }
+                                        Some(cadence) => {
+                                            cadence_analyzer.append_sensor_value(time as u64, cadence as f64);
+                                        }
+                                    }
+
+                                    // Get the extensions.
+                                    let extensions = trackpoint.extensions.as_ref();
+                                    match extensions {
+                                        None => {
+                                        }
+                                        Some(extensions) => {
+
+                                            // Get the power reading.
+                                            let tpx = extensions.tpx.as_ref();
+                                            match tpx {
+                                                None => {
+                                                }
+                                                Some(tpx) => {
+                                                    let watts = tpx.watts;
+                                                    match watts {
+                                                        None => {
+                                                        }
+                                                        Some(watts) => {
+                                                            power_analyzer.append_sensor_value(time as u64, watts as f64);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -271,12 +279,12 @@ pub fn analyze_tcx(s: &str) -> String {
                     }
                 }
             }
+
+            // For calculations that only make sense once all the points have been added.
+            location_analyzer.analyze();
+            power_analyzer.analyze();
         }
     }
-
-    // For calculations that only make sense once all the points have been added.
-    location_analyzer.analyze();
-    power_analyzer.analyze();
 
     // Copy items to the final report.
     let analysis_report_str = make_final_report(&location_analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
