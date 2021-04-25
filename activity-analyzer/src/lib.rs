@@ -4,6 +4,7 @@ extern crate gpx;
 extern crate serde;
 extern crate serde_json;
 extern crate tcx;
+extern crate fit_file;
 
 mod utils;
 mod cadence_analyzer;
@@ -296,8 +297,40 @@ pub fn analyze_tcx(s: &str) -> String {
 pub fn analyze_fit(s: &str) -> String {
     utils::set_panic_hook();
 
-//    let mut data = BufReader::new(s.as_bytes());
-    "".to_string()
+    let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
+    let mut hr_analyzer = heart_rate_analyzer::HeartRateAnalyzer::new();
+    let mut cadence_analyzer = cadence_analyzer::CadenceAnalyzer::new();
+    let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
+
+    /// Called for each FIT record message as it is processed.
+    fn callback(timestamp: u32, global_message_num: u16, local_msg_type: u8, fields: Vec<fit_file::fit_file::FitFieldValue>) {
+        if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
+            let msg = fit_file::fit_file::FitSessionMsg::new(fields);
+            let sport_names = fit_file::fit_file::init_sport_name_map();
+            let sport_id = msg.sport.unwrap();
+        }
+        else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
+        }
+    }
+
+    let mut data = BufReader::new(s.as_bytes());
+    let res = fit_file::fit_file::read(&mut data, callback);
+
+    match res {
+        Err(e) => {
+            alert("Error parsing the FIT file.");
+        }
+        Ok(res) => {
+            // For calculations that only make sense once all the points have been added.
+            location_analyzer.analyze();
+            power_analyzer.analyze();
+        }
+    }
+
+    // Copy items to the final report.
+    let analysis_report_str = make_final_report(&location_analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
+
+    analysis_report_str
 }
 
 #[cfg(test)]
@@ -338,8 +371,8 @@ mod tests {
     fn file1_test() {
         let local_file_name = "tests/20180810_zwift_innsbruckring_x2.tcx";
         let remote_file_name = "https://github.com/msimms/TestFilesForFitnessApps/raw/master/tcx/20180810_zwift_innsbruckring_x2.tcx";
-
         let result = test_file(local_file_name, remote_file_name);
+
         println!("{}", result);
     }
 }
