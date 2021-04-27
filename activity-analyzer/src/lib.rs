@@ -15,6 +15,7 @@ mod heart_rate_analyzer;
 
 use wasm_bindgen::prelude::*;
 use std::io::BufReader;
+use std::ffi::c_void;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global allocator.
 #[cfg(feature = "wee_alloc")]
@@ -83,6 +84,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
     }
 
     let analysis_report_str = serde_json::json!({
+        "Activity Type": location_analyzer.activity_type,
         "Start Time (ms)": location_analyzer.start_time_ms,
         "End Time (ms)": location_analyzer.last_time_ms,
         "Elapsed Time": (location_analyzer.last_time_ms - location_analyzer.start_time_ms) / 1000,
@@ -98,7 +100,8 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
         "Best Marathon": location_analyzer.get_best_time(location_analyzer::BEST_MARATHON),
         "Mile Splits": location_analyzer.mile_splits,
         "KM Splits": location_analyzer.km_splits,
-        "Times": location_analyzer.speed_times,
+        "Times": location_analyzer.times,
+        "Speed Times": location_analyzer.speed_times,
         "Speeds": location_analyzer.speed_graph,
         "Altitude Readings": location_analyzer.altitude_graph,
         "Gradient Curve": location_analyzer.gradient_curve,
@@ -200,6 +203,7 @@ pub fn analyze_tcx(s: &str) -> String {
                 Some(activities) => {
                     // A file can contain multiple activities.
                     for activity in activities.activities {
+                        location_analyzer.set_activity_type(activity.sport);
 
                         // Iterate through the laps.
                         for lap in activity.laps {
@@ -293,28 +297,57 @@ pub fn analyze_tcx(s: &str) -> String {
     analysis_report_str
 }
 
+/// Context structure. An instance of this will be passed to the parser and ultimately to the callback function so we can use it for whatever.
+struct AnalyzerContext {
+    pub location_analyzer: location_analyzer::LocationAnalyzer,
+    pub hr_analyzer: heart_rate_analyzer::HeartRateAnalyzer,
+    pub cadence_analyzer: cadence_analyzer::CadenceAnalyzer,
+    pub power_analyzer: power_analyzer::PowerAnalyzer,
+}
+
+impl AnalyzerContext {
+    pub fn new() -> Self {
+        let context = AnalyzerContext{
+            location_analyzer: location_analyzer::LocationAnalyzer::new(),
+            hr_analyzer: heart_rate_analyzer::HeartRateAnalyzer::new(),
+            cadence_analyzer: cadence_analyzer::CadenceAnalyzer::new(),
+            power_analyzer: power_analyzer::PowerAnalyzer::new() };
+        context
+    }
+}
+
+/// Called for each FIT record message as it is processed.
+fn callback(timestamp: u32, global_message_num: u16, local_msg_type: u8, fields: Vec<fit_file::fit_file::FitFieldValue>, context: *mut c_void) {
+    let callback_context: &mut AnalyzerContext = unsafe { &mut *(context as *mut AnalyzerContext) };
+
+    if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
+        let msg = fit_file::fit_file::FitSessionMsg::new(fields);
+        let sport_names = fit_file::fit_file::init_sport_name_map();
+        let sport_id = msg.sport.unwrap();
+
+        callback_context.location_analyzer.set_activity_type(sport_names.get(&sport_id).unwrap().to_string());
+    }
+    else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
+        let msg = fit_file::fit_file::FitRecordMsg::new(fields);
+        let timestamp_ms = timestamp as u64 * 1000;
+        let latitude = fit_file::fit_file::semicircles_to_degrees(msg.position_lat.unwrap());
+        let longitude = fit_file::fit_file::semicircles_to_degrees(msg.position_long.unwrap());
+        let altitude = msg.altitude.unwrap() as f64;
+
+        callback_context.location_analyzer.append_location(timestamp_ms, latitude, longitude, altitude);
+        callback_context.location_analyzer.update_speeds();
+    }
+}
+
 #[wasm_bindgen]
 pub fn analyze_fit(s: &str) -> String {
     utils::set_panic_hook();
 
-    let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
-    let mut hr_analyzer = heart_rate_analyzer::HeartRateAnalyzer::new();
-    let mut cadence_analyzer = cadence_analyzer::CadenceAnalyzer::new();
-    let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
-
-    /// Called for each FIT record message as it is processed.
-    fn callback(timestamp: u32, global_message_num: u16, local_msg_type: u8, fields: Vec<fit_file::fit_file::FitFieldValue>) {
-        if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
-            let msg = fit_file::fit_file::FitSessionMsg::new(fields);
-            let sport_names = fit_file::fit_file::init_sport_name_map();
-            let sport_id = msg.sport.unwrap();
-        }
-        else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
-        }
-    }
+    let mut context = AnalyzerContext::new();
+    let context_ptr: *mut c_void = &mut context as *mut _ as *mut c_void;
 
     let mut data = BufReader::new(s.as_bytes());
-    let res = fit_file::fit_file::read(&mut data, callback);
+    let res = fit_file::fit_file::read(&mut data, callback, context_ptr);
 
     match res {
         Err(e) => {
@@ -322,13 +355,13 @@ pub fn analyze_fit(s: &str) -> String {
         }
         Ok(res) => {
             // For calculations that only make sense once all the points have been added.
-            location_analyzer.analyze();
-            power_analyzer.analyze();
+            context.location_analyzer.analyze();
+            context.power_analyzer.analyze();
         }
     }
 
     // Copy items to the final report.
-    let analysis_report_str = make_final_report(&location_analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
+    let analysis_report_str = make_final_report(&context.location_analyzer, Some(&context.power_analyzer), Some(&context.cadence_analyzer), Some(&context.hr_analyzer));
 
     analysis_report_str
 }

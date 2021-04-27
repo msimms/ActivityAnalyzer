@@ -44,26 +44,27 @@ struct DistanceNode {
 }
 
 pub struct LocationAnalyzer {
-    pub start_time_ms: u64,
-    pub last_time_ms: u64,
-    last_lat: f64,
-    last_lon: f64,
-    last_alt: f64,
+    pub start_time_ms: u64, // First timestamp
+    pub last_time_ms: u64, // Most recent timestamp
+    last_lat: f64, // Most recent latitude reading
+    last_lon: f64, // Most recent longitude reading
+    last_alt: f64, // Most recent altitude reading
 
     distance_buf: Vec<DistanceNode>, // Holds the distance calculations; used for the current speed calcuations. Each item is an array of the form [date_time, meters_traveled, total_distance]
-    pub speed_times: Vec<u64>, // Holds the times associated with speed_graph
+    pub speed_times: Vec<u64>, // Holds the times associated with speed_graph, since the speed graph involves averaging, it might be missing some time values from the beginning of the event
     pub speed_graph: Vec<f64>, // Holds the current speed calculations
     pub total_distance: f64, // Distance traveled (in meters)
     pub total_vertical: f64, // Total ascent (in meters)
+
+    pub times: Vec<u64>, // Holds all timestamps (in milliseconds). Can be used to graph everything except speed/pace data.
+    pub latitude_readings: Vec<f64>,
+    pub longitude_readings: Vec<f64>,
     pub altitude_graph: Vec<f64>, // Holds all altitude readings
     pub gradient_curve: Vec<f64>, // Holds the gradient calculations
     pub gap_graph: Vec<u64>, // Holds the grade adjusted pace calculations
 
     pub mile_splits: Vec<f64>, // Mile split times
     pub km_splits: Vec<f64>, // Kilometer split times
-
-    pub latitude_readings: Vec<f64>,
-    pub longitude_readings: Vec<f64>,
 
     pub avg_speed: f64, // Average speed (in meters/second)
     pub current_speed: f64, // Current speed (in meters/second)
@@ -83,8 +84,8 @@ pub struct LocationAnalyzer {
 impl LocationAnalyzer {
     pub fn new() -> Self {
         let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
-            speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(),
-            mile_splits: Vec::new(), km_splits: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
+            speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
+            altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
             geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: true};
         analyzer
@@ -455,6 +456,7 @@ impl LocationAnalyzer {
             self.distance_buf.push(distance_node);
             self.total_distance = new_distance;
             self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
+            self.times.push(date_time_ms);
             self.latitude_readings.push(latitude);
             self.longitude_readings.push(longitude);
             self.altitude_graph.push(altitude);
