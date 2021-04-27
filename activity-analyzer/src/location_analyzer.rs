@@ -335,9 +335,6 @@ impl LocationAnalyzer {
             if total_seconds == self.speed_window_size {
                 self.current_speed = total_meters / total_seconds as f64;
 
-                if self.total_distance < 1000.0 {
-                    break;
-                }
                 if current_time_ms > self.last_speed_buf_update_time {
                     self.speed_times.push(current_time_ms);
                     self.speed_graph.push(self.current_speed);
@@ -447,6 +444,7 @@ impl LocationAnalyzer {
             if num_alts > 0 {
                 let prev_alt = self.altitude_graph[num_alts - 1];
                 let gradient = (altitude - prev_alt) / meters_traveled;
+
                 self.gradient_curve.push(gradient);
             }
 
