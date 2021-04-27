@@ -260,8 +260,7 @@
         await init();
     }
 
-    window.analyze_file_data = function analyze_file_data(name, blob) {
-        let ext = name.split('.').pop();
+    window.analyze_file_data = function analyze_file_data(name, ext, blob) {
         let report = "";
 
         if (ext.toLowerCase() == "gpx")
@@ -737,8 +736,9 @@
         {
             for (var i = 0; i < selected_file_list.length; i++)
             {
-                var selected_file_obj = selected_file_list[i];
-                var reader = new FileReader();
+                let selected_file_obj = selected_file_list[i];
+                let reader = new FileReader();
+                let ext = selected_file_obj.name.split('.').pop();
 
                 reader.onerror = function(event)
                 {
@@ -746,9 +746,22 @@
                 };
                 reader.onload = function(e)
                 {
-                    window.analyze_file_data(selected_file_obj.name, reader.result);
+                    window.analyze_file_data(selected_file_obj.name, ext, reader.result);
                 }
-                reader.readAsBinaryString(selected_file_obj);
+
+                if ((ext.toLowerCase() == "gpx") || (ext.toLowerCase() == "tcx"))
+                {
+                    reader.readAsText(selected_file_obj);
+                }
+                else if (ext.toLowerCase() == "fit")
+                {
+                    reader.readAsArrayBuffer(selected_file_obj);
+                }
+                else
+                {
+                    alert("Unrecognized file extension. Must be tcx, gpx, or fit.");
+                    return;
+                }
             }
         }
         else

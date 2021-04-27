@@ -340,13 +340,13 @@ fn callback(timestamp: u32, global_message_num: u16, local_msg_type: u8, fields:
 }
 
 #[wasm_bindgen]
-pub fn analyze_fit(s: &str) -> String {
+pub fn analyze_fit(s: &[u8]) -> String {
     utils::set_panic_hook();
 
     let mut context = AnalyzerContext::new();
     let context_ptr: *mut c_void = &mut context as *mut _ as *mut c_void;
 
-    let mut data = BufReader::new(s.as_bytes());
+    let mut data = BufReader::new(s);
     let res = fit_file::fit_file::read(&mut data, callback, context_ptr);
 
     match res {
