@@ -273,7 +273,8 @@
         }
         else if (ext.toLowerCase() == "fit")
         {
-            report = analyze_fit(blob);
+            let raw = new Uint8Array(blob);
+            report = analyze_fit(raw);
         }
         else
         {
