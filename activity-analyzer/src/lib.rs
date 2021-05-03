@@ -192,7 +192,7 @@ pub fn analyze_tcx(s: &str) -> String {
     let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
 
     match res {
-        Err(e) => {
+        Err(_e) => {
             alert("Error parsing the TCX file.");
         }
         Ok(res) => {
@@ -317,7 +317,7 @@ impl AnalyzerContext {
 }
 
 /// Called for each FIT record message as it is processed.
-fn callback(timestamp: u32, global_message_num: u16, local_msg_type: u8, fields: Vec<fit_file::fit_file::FitFieldValue>, context: *mut c_void) {
+fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _message_index: u16, fields: Vec<fit_file::fit_file::FitFieldValue>, context: *mut c_void) {
     let callback_context: &mut AnalyzerContext = unsafe { &mut *(context as *mut AnalyzerContext) };
 
     if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
@@ -330,9 +330,33 @@ fn callback(timestamp: u32, global_message_num: u16, local_msg_type: u8, fields:
     else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
         let msg = fit_file::fit_file::FitRecordMsg::new(fields);
         let timestamp_ms = timestamp as u64 * 1000;
-        let latitude = fit_file::fit_file::semicircles_to_degrees(msg.position_lat.unwrap());
-        let longitude = fit_file::fit_file::semicircles_to_degrees(msg.position_long.unwrap());
-        let altitude = msg.altitude.unwrap() as f64;
+        let mut latitude = 0.0;
+        let mut longitude = 0.0;
+        let mut altitude = 0.0;
+
+        match msg.position_lat {
+            Some(res) => {
+                latitude = fit_file::fit_file::semicircles_to_degrees(res);
+            }
+            None => {
+            }
+        }
+        match msg.position_long {
+            Some(res) => {
+                longitude = fit_file::fit_file::semicircles_to_degrees(res);
+            }
+            None => {
+            }
+        }
+
+        // Some devices don't have altitude data, so just zero it out in that case.
+        match msg.altitude {
+            Some(res) => {
+                altitude = res as f64;
+            }
+            None => {
+            }
+        }
 
         callback_context.location_analyzer.append_location(timestamp_ms, latitude, longitude, altitude);
         callback_context.location_analyzer.update_speeds();
@@ -350,10 +374,10 @@ pub fn analyze_fit(s: &[u8]) -> String {
     let res = fit_file::fit_file::read(&mut data, callback, context_ptr);
 
     match res {
-        Err(e) => {
+        Err(_e) => {
             alert("Error parsing the FIT file.");
         }
-        Ok(res) => {
+        Ok(_res) => {
             // For calculations that only make sense once all the points have been added.
             context.location_analyzer.analyze();
             context.power_analyzer.analyze();
