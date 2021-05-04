@@ -1,4 +1,5 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
+ #![allow(dead_code)]
 
 use lib_math::{graphics};
 use reqwest::*;
