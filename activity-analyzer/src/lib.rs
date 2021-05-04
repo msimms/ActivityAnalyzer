@@ -333,12 +333,14 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         let mut latitude = 0.0;
         let mut longitude = 0.0;
         let mut altitude = 0.0;
+        let mut valid = true;
 
         match msg.position_lat {
             Some(res) => {
                 latitude = fit_file::fit_file::semicircles_to_degrees(res);
             }
             None => {
+                valid = false;
             }
         }
         match msg.position_long {
@@ -346,6 +348,7 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
                 longitude = fit_file::fit_file::semicircles_to_degrees(res);
             }
             None => {
+                valid = false;
             }
         }
 
@@ -358,8 +361,10 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
             }
         }
 
-        callback_context.location_analyzer.append_location(timestamp_ms, latitude, longitude, altitude);
-        callback_context.location_analyzer.update_speeds();
+        if valid {
+            callback_context.location_analyzer.append_location(timestamp_ms, latitude, longitude, altitude);
+            callback_context.location_analyzer.update_speeds();
+        }
     }
 }
 
