@@ -1,0 +1,15 @@
+{
+  "name": "activity-analyzer",
+  "collaborators": [
+    "Mike Simms <msimms01@gmail.com>"
+  ],
+  "version": "0.9.0",
+  "files": [
+    "activity_analyzer_bg.wasm",
+    "activity_analyzer.js",
+    "activity_analyzer.d.ts"
+  ],
+  "module": "activity_analyzer.js",
+  "types": "activity_analyzer.d.ts",
+  "sideEffects": false
+}
