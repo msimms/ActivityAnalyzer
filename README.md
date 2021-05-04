@@ -1,6 +1,6 @@
 # ActivityAnalyzer
 
-Analyzes GPX and TCX files.  Automatically identifies intervals. Does not store any personal data, all calculations are performed in the browser using WebAssembly. Work in progress. Will eventually connect to Strava and perhaps other services.
+Analyzes GPX, TCX, and FIT files.  Automatically identifies intervals. Does not store any personal data, all calculations are performed in the browser using WebAssembly. Work in progress. Will eventually connect to Strava and perhaps other services.
 
 # Building
 
@@ -17,6 +17,7 @@ An example implementation is available at https://activity-analyzer.app.
 
 # Version History
 
+* 0.9 - Added FIT file support.
 * 0.8 - Added first cut at interval analysis.
 * 0.7 - Added split times.
 * 0.6 - Added TCX file support as well as power, cadence, and heart rate data from TCX files.
