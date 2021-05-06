@@ -578,12 +578,6 @@
             .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Add the title
-        svg.append("text")
-            .attr("transform", "translate(" + (width/2) + " ," + 0 + ")")
-            .style("text-anchor", "middle")
-            .text(title);
-
         // Add X axis --> it is a date format
         let x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
@@ -598,6 +592,13 @@
             .range([ height, 0 ]);
         let yAxis = svg.append("g")
             .call(d3.axisLeft(y));
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0-margin.left)
+            .attr("x",0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text(title);  
 
         // Add a clipPath: everything out of this area won't be drawn.
         let clip = svg.append("defs").append("svg:clipPath")
@@ -732,15 +733,13 @@
             .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis)
-            .selectAll("text")
-            .style("text-anchor", "end")
-            .attr("dx", "-.8em")
-            .attr("dy", "-.55em")
-            .attr("transform", "rotate(-90)" );
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0-margin.left)
+            .attr("x",0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text(title);  
         svg.append("g")
             .attr("class", "y axis")
             .call(yAxis)
@@ -748,10 +747,6 @@
             .attr("transform", "rotate(-90)")
             .attr("dy", ".71em")
             .style("text-anchor", "end");
-        svg.append("text")
-            .attr("transform", "translate(" + (width/2) + " ," + 0 + ")")
-            .style("text-anchor", "middle")
-            .text(title);
         svg.selectAll("bar")
             .data(data)
             .enter().append("rect")
