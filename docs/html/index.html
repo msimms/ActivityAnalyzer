@@ -33,13 +33,6 @@
         background-color: teal;
     }
 
-    path
-    {
-        stroke: steelblue;
-        stroke-width: 2;
-        fill: none;
-    }
-
     .axis path,
     .axis line
     {
@@ -52,7 +45,7 @@
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" integrity="sha256-dsOXGNHAo/syFnazt+KTBsCQeRmlcW1XKL0bCK4Baec=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js" integrity="sha512-RJJ1NNC88QhN7dwpCY8rm/6OxI+YdQP48DrLGe/eSAd+n+s1PXwQkkpzzAgoJe4cZFW2GALQoxox61gSY2yQfg==" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
     /// @function pad
@@ -387,37 +380,37 @@
         append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
         append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue");
-        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue");
-        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue");
+        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", true);
+        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", true);
+        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", true);
 
         if (power.length > 0)
         {
             let time_power_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen");
+            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", true);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen");
+            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", true);
         }
         if (hr.length > 0)
         {
             let time_hr_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick");
+            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", true);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff");
+            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", true);
         }
 
         clear_map();
@@ -516,7 +509,7 @@
     }
 
     /// @function draw_graph
-    function draw_graph(start_time_ms, end_time_ms, data, title, units, color)
+    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, show_ticks)
     {
         if (data.length <= 1)
         {
@@ -541,7 +534,7 @@
         
         // Need to zero out the first and last points or else the fill will look silly.
         data[0].value = 0.0;
-        data[data.length-1].value = 0.0;
+        data[data.length - 1].value = 0.0;
 
         let tooltip = d3.select("#charts")
             .append("div")
@@ -560,10 +553,13 @@
             let coordinates = d3.mouse(this);
             let x = coordinates[0];
 
-            tooltip
-                .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
-                .style("top", (event.pageY)+"px")
-                .style("left",(event.pageX)+"px")
+            if (x < data.length)
+            {
+                tooltip
+                    .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
+                    .style("top", (event.pageY)+"px")
+                    .style("left", (event.pageX)+"px")
+            }
         }
         let mouseleave = function() {
         }
@@ -571,16 +567,6 @@
         let margin = { top: 20, right: 20, bottom: 20, left: 50 },
             width = $("#charts").width() - margin.left - margin.right,
             height = 250 - margin.top - margin.bottom;
-
-        let x = d3.time.scale().range([0, width]);
-        let y = d3.scale.linear().range([height, 0]);
-
-        let xAxis = d3.svg.axis().scale(x).orient("bottom");
-        let yAxis = d3.svg.axis().scale(y).orient("left").ticks(5);
-
-        let valueline = d3.svg.line()
-            .x(function(d) { return x(d.date); })
-            .y(function(d) { return y(d.value); });
 
         let svg = d3.select("#charts")
             .append("svg")
@@ -592,28 +578,105 @@
             .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        x.domain(d3.extent(data, function(d) { return d.date; }));
-        y.domain(d3.extent(data, function(d) { return d.value; }));
-
-        svg.append("path")
-            .attr("class", "line")
-            .attr("d", valueline(data))
-            .style("fill", color)
-            .style("stroke", "LightSlateGray")
-            .style("stroke-width", 0.25);
-        svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis)
-            .append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("y", 6)
-            .attr("dy", ".71em")
-            .style("text-anchor", "end")
+        // Add the title
+        svg.append("text")
+            .attr("transform", "translate(" + (width/2) + " ," + 0 + ")")
+            .style("text-anchor", "middle")
             .text(title);
+
+        // Add X axis --> it is a date format
+        let x = d3.scaleTime()
+            .domain(d3.extent(data, function(d) { return d.date; }))
+            .range([ 0, width ]);
+        let xAxis = svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        // Add Y axis
+        let y = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return +d.value; })])
+            .range([ height, 0 ]);
+        let yAxis = svg.append("g")
+            .call(d3.axisLeft(y));
+
+        // Add a clipPath: everything out of this area won't be drawn.
+        let clip = svg.append("defs").append("svg:clipPath")
+            .attr("id", "clip")
+            .append("svg:rect")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("x", 0)
+            .attr("y", 0);
+
+        // Add brushing.
+        let brush = d3.brushX()                   // Add the brush feature using the d3.brush function
+            .extent( [ [0,0], [width, height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+            .on("end", updateChart)               // Each time the brush selection changes, trigger the 'updateChart' function
+
+        let line = svg.append('g')
+            .attr("clip-path", "url(#clip)");
+
+        // Add the line
+        line.append("path")
+            .datum(data)
+            .attr("class", "line")  // I add the class line to be able to modify this line later on.
+            .attr("fill", color)
+            .attr("stroke", color)
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.date) })
+                .y(function(d) { return y(d.value) })
+            )
+
+        // Add the brushing
+        line.append("g")
+            .attr("class", "brush")
+            .call(brush);
+
+        // A function that set idleTimeOut to null
+        var idleTimeout
+        function idled() { idleTimeout = null; }
+
+        // A function that update the chart for given boundaries
+        function updateChart() {
+
+            // What are the selected boundaries?
+            extent = d3.event.selection
+
+            // If no selection, back to initial coordinate. Otherwise, update X axis domain
+            if (!extent)
+            {
+                if (!idleTimeout)
+                    return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+                x.domain([4,8])
+            }
+            else
+            {
+                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
+                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
+            }
+
+            // Update axis and line position
+            xAxis.transition().duration(1000).call(d3.axisBottom(x))
+            line.select('.line')
+                .transition()
+                .duration(1000)
+                .attr("d", d3.line()
+                    .x(function(d) { return x(d.date) })
+                    .y(function(d) { return y(d.value) }))
+        }
+
+        // If user double click, reinitialize the chart
+        svg.on("dblclick",function() {
+            x.domain(d3.extent(data, function(d) { return d.date; }))
+            xAxis.transition().call(d3.axisBottom(x))
+            line.select('.line')
+                .transition()
+                .attr("d", d3.line()
+                .x(function(d) { return x(d.date) })
+                .y(function(d) { return y(d.value) })
+            )
+        });
     }
 
     /// @function draw_bar_chart
@@ -640,21 +703,21 @@
 
             tooltip
                 .html("<b>" + convert_seconds_to_hours_mins_secs(data[x]) + "</b>")
-                .style("top", (event.pageY)+"px")
-                .style("left",(event.pageX)+"px")
+                .style("top", (event.pageY) + "px")
+                .style("left",(event.pageX) + "px")
         }
         let mouseleave = function() {
         }
 
-        let margin = {top: 20, right: 20, bottom: 55, left: 50},
+        let margin = { top: 20, right: 20, bottom: 55, left: 50 },
             width = $("#charts").width() - margin.left - margin.right,
             height = 250 - margin.top - margin.bottom;
 
-        let x = d3.scale.ordinal().domain(xVals).rangeBands([0, width]);
-        let y = d3.scale.linear().domain([0, d3.max(data)]).range([height, 0]);
+        let x = d3.scaleBand().domain(d3.range(1, data.length + 1)).range([0, width])
+        let y = d3.scaleLinear().domain([0, d3.max(data)]).range([height, 0])
 
-        let xAxis = d3.svg.axis().scale(x).orient("bottom");
-        let yAxis = d3.svg.axis().scale(y).orient("left").ticks(0);
+        let xAxis = d3.axisBottom(x);
+        let yAxis = d3.axisLeft(y).ticks(2);
 
         let svg = d3.select("#charts")
             .append("svg")
@@ -683,14 +746,14 @@
             .attr("dy", ".71em")
             .style("text-anchor", "end");
         svg.append("text")
-            .attr("transform", "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
+            .attr("transform", "translate(" + (width/2) + " ," + 0 + ")")
             .style("text-anchor", "middle")
             .text(title);
         svg.selectAll("bar")
             .data(data)
             .enter().append("rect")
             .style("fill", color)
-            .attr("width", x.rangeBand())
+            .attr("width", x.bandwidth())
             .attr("height", function(d) { return height - y(d); })
             .attr("x", function(d, i) { return x(i+1); })
             .attr("y", function(d) { return y(d); });
@@ -727,7 +790,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(start_time_ms, end_time_ms, interval_graph, "Intervals", "", "Black");
+            draw_graph(start_time_ms, end_time_ms, interval_graph, "Intervals", "", "Gray");
         }
     }
 
