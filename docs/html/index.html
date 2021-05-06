@@ -701,10 +701,13 @@
             let coordinates = d3.mouse(this);
             let x = Math.floor((coordinates[0] / width) * data.length);
 
-            tooltip
-                .html("<b>" + convert_seconds_to_hours_mins_secs(data[x]) + "</b>")
-                .style("top", (event.pageY) + "px")
-                .style("left",(event.pageX) + "px")
+            if (x < data.length)
+            {
+                tooltip
+                    .html("<b>" + convert_seconds_to_hours_mins_secs(data[x]) + "</b>")
+                    .style("top", (event.pageY) + "px")
+                    .style("left",(event.pageX) + "px")
+            }
         }
         let mouseleave = function() {
         }
@@ -794,6 +797,7 @@
         }
     }
 
+    /// @function analyze_selected_files
     function analyze_selected_files()
     {
         if (selected_file_list.length > 0)
@@ -834,6 +838,7 @@
         }
     }
 
+    /// @function get_cookie
     function get_cookie(cookie_name)
     {
         let name = cookie_name + "=";
