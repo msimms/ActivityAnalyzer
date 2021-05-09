@@ -41,12 +41,15 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
     let mut best_1_hour_power = 0.0;
     let mut normalized_power = 0.0;
     let mut power_readings = Vec::<f64>::new();
+    let mut power_times = Vec::<u64>::new();
     let mut max_cadence = 0.0;
     let mut avg_cadence = 0.0;
     let mut cadence_readings = Vec::<f64>::new();
+    let mut cadence_times = Vec::<u64>::new();
     let mut max_hr = 0.0;
     let mut avg_hr = 0.0;
     let mut hr_readings = Vec::<f64>::new();
+    let mut hr_times = Vec::<u64>::new();
 
     match power_analyzer {
         None => {
@@ -60,6 +63,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
             best_1_hour_power = power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER);
             normalized_power = power_analyzer.np;
             power_readings = power_analyzer.power_readings.clone();
+            power_times = power_analyzer.time_readings.clone();
         }
     }
 
@@ -70,6 +74,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
             max_cadence = cadence_analyzer.max_cadence;
             avg_cadence = cadence_analyzer.compute_average();
             cadence_readings = cadence_analyzer.readings.clone();
+            cadence_times = cadence_analyzer.time_readings.clone();
         }
     }
 
@@ -80,6 +85,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
             max_hr = hr_analyzer.max_hr;
             avg_hr = hr_analyzer.compute_average();
             hr_readings = hr_analyzer.readings.clone();
+            hr_times = hr_analyzer.time_readings.clone();
         }
     }
 
@@ -116,12 +122,15 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
         "1 Hour Power": best_1_hour_power,
         "Normalized Power": normalized_power,
         "Power Readings": power_readings,
+        "Power Times": power_times,
         "Maximum Cadence": max_cadence,
         "Average Cadence": avg_cadence,
         "Cadence Readings": cadence_readings,
+        "Cadence Times": cadence_times,
         "Maximum Heart Rate": max_hr,
         "Average Heart Rate": avg_hr,
-        "Heart Rate Readings": hr_readings
+        "Heart Rate Readings": hr_readings,
+        "Heart Rate Times": hr_times
     }).to_string();
 
     analysis_report_str
@@ -333,35 +342,78 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         let mut latitude = 0.0;
         let mut longitude = 0.0;
         let mut altitude = 0.0;
-        let mut valid = true;
+        let mut valid_location = true;
 
         match msg.position_lat {
             Some(res) => {
-                latitude = fit_file::fit_file::semicircles_to_degrees(res);
+
+                // Make sure we have a valid reading.
+                if res != 0x7FFFFFFF {
+                    latitude = fit_file::fit_file::semicircles_to_degrees(res);
+                }
+                else {
+                    valid_location = false;
+                }
             }
             None => {
-                valid = false;
+                valid_location = false;
             }
         }
         match msg.position_long {
             Some(res) => {
-                longitude = fit_file::fit_file::semicircles_to_degrees(res);
+
+                // Make sure we have a valid reading.
+                if res != 0x7FFFFFFF {
+                    longitude = fit_file::fit_file::semicircles_to_degrees(res);
+                }
+                else {
+                    valid_location = false;
+                }
             }
             None => {
-                valid = false;
+                valid_location = false;
             }
         }
 
         // Some devices don't have altitude data, so just zero it out in that case.
         match msg.altitude {
             Some(res) => {
-                altitude = res as f64;
+                
+                // Make sure we have a valid reading.
+                if res != 0xFFFF {
+                    // Apply scaling and offset.
+                    altitude = (res as f64 / 5.0) - 500.0;
+                }
             }
             None => {
             }
         }
 
-        if valid {
+        match msg.heart_rate {
+            Some(heart_rate) => {
+
+                // Make sure we have a valid reading.
+                if heart_rate < 255 {
+                    callback_context.hr_analyzer.append_sensor_value(timestamp_ms, heart_rate as f64);
+                }
+            }
+            None => {
+            }
+        }
+
+        match msg.power {
+            Some(watts) => {
+
+                // Make sure we have a valid reading.
+                if watts < 65535 {
+                    callback_context.power_analyzer.append_sensor_value(timestamp_ms, watts as f64);
+                }
+            }
+            None => {
+            }
+        }
+
+        if valid_location {
             callback_context.location_analyzer.append_location(timestamp_ms, latitude, longitude, altitude);
             callback_context.location_analyzer.update_speeds();
         }

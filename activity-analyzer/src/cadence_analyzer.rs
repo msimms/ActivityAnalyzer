@@ -2,12 +2,13 @@
 
 pub struct CadenceAnalyzer {
     pub readings: Vec<f64>, // All the readings
+    pub time_readings: Vec<u64>, // All the readings (time)
     pub max_cadence: f64,
 }
 
 impl CadenceAnalyzer {
     pub fn new() -> Self {
-        let analyzer = CadenceAnalyzer{readings: Vec::new(), max_cadence: 0.0};
+        let analyzer = CadenceAnalyzer{readings: Vec::new(), time_readings: Vec::new(), max_cadence: 0.0};
         analyzer
     }
 
@@ -22,10 +23,11 @@ impl CadenceAnalyzer {
     }
 
     /// Adds another reading to the analyzer.
-    pub fn append_sensor_value(&mut self, _date_time_ms: u64, value: f64) {
+    pub fn append_sensor_value(&mut self, date_time_ms: u64, value: f64) {
 
-        // Update average power.
+        // Update our state.
         self.readings.push(value);
+        self.time_readings.push(date_time_ms);
 
         // Update max power.
         if value > self.max_cadence {

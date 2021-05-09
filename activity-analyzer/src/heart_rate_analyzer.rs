@@ -2,12 +2,13 @@
 
 pub struct HeartRateAnalyzer {
     pub readings: Vec<f64>, // All the readings
+    pub time_readings: Vec<u64>, // All the readings (time)
     pub max_hr: f64
 }
 
 impl HeartRateAnalyzer {
     pub fn new() -> Self {
-        let analyzer = HeartRateAnalyzer{readings: Vec::new(), max_hr: 0.0};
+        let analyzer = HeartRateAnalyzer{readings: Vec::new(), time_readings: Vec::new(), max_hr: 0.0};
         analyzer
     }
 
@@ -22,10 +23,11 @@ impl HeartRateAnalyzer {
     }
 
     /// Adds another reading to the analyzer.
-    pub fn append_sensor_value(&mut self, _date_time_ms: u64, value: f64) {
+    pub fn append_sensor_value(&mut self, date_time_ms: u64, value: f64) {
 
-        // Update average heart rate.
+        // Update our state.
         self.readings.push(value);
+        self.time_readings.push(date_time_ms);
 
         // Update max heart rate.
         if value > self.max_hr {

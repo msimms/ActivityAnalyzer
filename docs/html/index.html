@@ -360,8 +360,11 @@
         let speed_times = json_data["Speed Times"];
         let speeds = json_data["Speeds"];
         let power = json_data["Power Readings"];
+        let power_times = json_data["Power Times"];
         let cadence = json_data["Cadence Readings"];
+        let cadence_times = json_data["Cadence Times"];
         let hr = json_data["Heart Rate Readings"];
+        let hr_times = json_data["Heart Rate Times"];
         let altitude = json_data["Altitude Readings"];
         let gradients = json_data["Gradient Curve"];
         let latitudes = json_data["Latitude Readings"];
@@ -386,21 +389,21 @@
 
         if (power.length > 0)
         {
-            let time_power_data = times.map(function(x, i) {
+            let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
             draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", true);
         }
         if (cadence.length > 0)
         {
-            let time_cadence_data = times.map(function(x, i) {
+            let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
             draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", true);
         }
         if (hr.length > 0)
         {
-            let time_hr_data = times.map(function(x, i) {
+            let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
             draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", true);
@@ -521,20 +524,16 @@
         {
             graph_node = {};
             graph_node["date"] = new Date(start_time_ms);
-            graph_node["value"] = 0;
+            graph_node["value"] = 0.0;
             data.unshift(graph_node);
         }
         if (end_time_ms > start_time_ms)
         {
             graph_node = {};
             graph_node["date"] = new Date(end_time_ms);
-            graph_node["value"] = 0;
+            graph_node["value"] = 0.0;
             data.push(graph_node);
         }
-        
-        // Need to zero out the first and last points or else the fill will look silly.
-        data[0].value = 0.0;
-        data[data.length - 1].value = 0.0;
 
         let tooltip = d3.select("#charts")
             .append("div")

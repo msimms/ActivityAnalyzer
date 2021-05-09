@@ -72,6 +72,8 @@ pub struct LocationAnalyzer {
     pub speed_variance: f64,
 
     pub bests: HashMap<String, u64>,
+    pub max_altitude: f64,
+
     pub activity_type: String,
 
     pub significant_intervals: Vec<IntervalDescription>,
@@ -87,7 +89,7 @@ impl LocationAnalyzer {
         let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
             altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
-            speed_variance: 0.0, bests: HashMap::new(), activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
+            speed_variance: 0.0, bests: HashMap::new(), max_altitude: 0.0, activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
             geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: true};
         analyzer
     }
@@ -451,7 +453,7 @@ impl LocationAnalyzer {
 
             // Update totals and averages.
             let new_distance = self.total_distance + meters_traveled;
-            let distance_node = DistanceNode{date_time_ms: date_time_ms, total_distance: new_distance};
+            let distance_node = DistanceNode{ date_time_ms: date_time_ms, total_distance: new_distance };
             self.distance_buf.push(distance_node);
             self.total_distance = new_distance;
             self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
@@ -464,6 +466,11 @@ impl LocationAnalyzer {
             // Update the split calculations.
             self.do_km_split_check(elapsed_seconds);
             self.do_mile_split_check(elapsed_seconds);
+
+            // Update max altitude.
+            if altitude > self.max_altitude {
+                self.max_altitude = altitude;
+            }
         }
 
         self.last_time_ms = date_time_ms;
