@@ -456,7 +456,10 @@ impl LocationAnalyzer {
             let distance_node = DistanceNode{ date_time_ms: date_time_ms, total_distance: new_distance };
             self.distance_buf.push(distance_node);
             self.total_distance = new_distance;
-            self.total_vertical = self.total_vertical + (altitude - self.last_alt).abs();
+            let vertical = altitude - self.last_alt;
+            if vertical > 0.0 {
+                self.total_vertical = self.total_vertical + vertical;
+            }
             self.times.push(date_time_ms);
             self.latitude_readings.push(latitude);
             self.longitude_readings.push(longitude);
