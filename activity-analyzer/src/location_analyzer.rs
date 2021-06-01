@@ -81,7 +81,6 @@ pub struct LocationAnalyzer {
 
     speed_window_size: u64,
     last_speed_buf_update_time: u64,
-    search_for_intervals: bool
 }
 
 impl LocationAnalyzer {
@@ -90,7 +89,7 @@ impl LocationAnalyzer {
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
             altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), max_altitude: 0.0, activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
-            geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0, search_for_intervals: true};
+            geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
     }
 
@@ -218,11 +217,13 @@ impl LocationAnalyzer {
         let line_avg_speed = statistics::average_f64(&speeds.to_vec());
         let desc = IntervalDescription{start_time: start_time, end_time: end_time, line_length_meters: line_length_meters, line_avg_speed: line_avg_speed};
         let result: Option::<IntervalDescription> = Some(desc);
+
         result
     }
 
-    pub fn analyze(&mut self) {
-        // Do a speed/pace analysis.
+    /// Performs a k-means analysis on peaks extracted from the speed/pace data to look for intervals.
+    fn search_for_intervals(&mut self) {
+
         if self.speed_graph.len() > 1 {
 
             // Compute the speed/pace variation. This will tell us how consistent the pace was.
@@ -230,7 +231,7 @@ impl LocationAnalyzer {
 
             // Don't look for peaks unless the variance was high. Cutoff selected via experimentation.
             // Also, don't search if the feature has been disabled.
-            if self.search_for_intervals && self.speed_variance > 0.25 {
+            if self.speed_variance > 0.25 {
 
                 // Smooth the speed graph to take out some of the GPS jitter.
                 let smoothed_graph = signals::smooth(&self.speed_graph, 4);
@@ -262,9 +263,9 @@ impl LocationAnalyzer {
                         let mut sample_index = 0;
                         for interval in &filtered_interval_list {
                             samples[sample_index] = interval.line_avg_speed;
-                            sample_index = sample_index + 1;                        
-                            samples[sample_index] = interval.line_length_meters;    
-                            sample_index = sample_index + 1;                        
+                            sample_index = sample_index + 1;
+                            samples[sample_index] = interval.line_length_meters;
+                            sample_index = sample_index + 1;
                         }
 
                         // Determine the maximum value of k.
@@ -311,6 +312,11 @@ impl LocationAnalyzer {
                 }
             }
         }
+    }
+
+    /// Called after all data is loaded.
+    pub fn analyze(&mut self) {
+        self.search_for_intervals();
     }
 
     /// Computes the average speed over the last mile. Called by 'append_location'.

@@ -42,6 +42,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
     let mut normalized_power = 0.0;
     let mut power_readings = Vec::<f64>::new();
     let mut power_times = Vec::<u64>::new();
+    let mut power_intervals = Vec::<power_analyzer::PowerIntervalDescription>::new();
     let mut max_cadence = 0.0;
     let mut avg_cadence = 0.0;
     let mut cadence_readings = Vec::<f64>::new();
@@ -56,7 +57,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
         }
         Some(power_analyzer) => {
             max_power = power_analyzer.max_power;
-            avg_power = power_analyzer.compute_average();
+            avg_power = power_analyzer.avg_power;
             best_5_sec_power = power_analyzer.get_best_power(power_analyzer::BEST_5_SEC_POWER);
             best_12_min_power = power_analyzer.get_best_power(power_analyzer::BEST_12_MIN_POWER);
             best_20_min_power = power_analyzer.get_best_power(power_analyzer::BEST_20_MIN_POWER);
@@ -64,6 +65,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
             normalized_power = power_analyzer.np;
             power_readings = power_analyzer.power_readings.clone();
             power_times = power_analyzer.time_readings.clone();
+            power_intervals = power_analyzer.significant_intervals.clone();
         }
     }
 
@@ -97,13 +99,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
         "Total Distance": location_analyzer.total_distance,
         "Total Vertical Distance": location_analyzer.total_vertical,
         "Average Speed": location_analyzer.avg_speed,
-        "Best 1K": location_analyzer.get_best_time(location_analyzer::BEST_1K),
-        "Best Mile": location_analyzer.get_best_time(location_analyzer::BEST_MILE),
-        "Best 5K": location_analyzer.get_best_time(location_analyzer::BEST_5K),
-        "Best 10K": location_analyzer.get_best_time(location_analyzer::BEST_10K),
-        "Best 15K": location_analyzer.get_best_time(location_analyzer::BEST_15K),
-        "Best Half Marathon": location_analyzer.get_best_time(location_analyzer::BEST_HALF_MARATHON),
-        "Best Marathon": location_analyzer.get_best_time(location_analyzer::BEST_MARATHON),
+        "Bests": location_analyzer.bests,
         "Mile Splits": location_analyzer.mile_splits,
         "KM Splits": location_analyzer.km_splits,
         "Times": location_analyzer.times,
@@ -123,6 +119,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
         "Normalized Power": normalized_power,
         "Power Readings": power_readings,
         "Power Times": power_times,
+        "Power Intervals": power_intervals,
         "Maximum Cadence": max_cadence,
         "Average Cadence": avg_cadence,
         "Cadence Readings": cadence_readings,
