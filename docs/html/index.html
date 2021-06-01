@@ -316,20 +316,22 @@
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
         append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, json_data["Average Speed"]));
 
-        if (json_data["Best 1K"] > 0)
-            append_to_table(analysis_table, "Best 1K", convert_seconds_to_hours_mins_secs(json_data["Best 1K"]));
-        if (json_data["Best Mile"] > 0)
-            append_to_table(analysis_table, "Best Mile", convert_seconds_to_hours_mins_secs(json_data["Best Mile"]));
-        if (json_data["Best 5K"] > 0)
-            append_to_table(analysis_table, "Best 5K", convert_seconds_to_hours_mins_secs(json_data["Best 5K"]));
-        if (json_data["Best 10K"] > 0)
-            append_to_table(analysis_table, "Best 10K", convert_seconds_to_hours_mins_secs(json_data["Best 10K"]));
-        if (json_data["Best 15K"] > 0)
-            append_to_table(analysis_table, "Best 15K", convert_seconds_to_hours_mins_secs(json_data["Best 15K"]));
-        if (json_data["Best Half Marathon"] > 0)
-            append_to_table(analysis_table, "Best Half Marathon", convert_seconds_to_hours_mins_secs(json_data["Best Half Marathon"]));
-        if (json_data["Best Marathon"] > 0)
-            append_to_table(analysis_table, "Best Marathon", convert_seconds_to_hours_mins_secs(json_data["Best Marathon"]));
+        let bests = json_data["Bests"];
+
+        if (bests["Best 1K"] > 0)
+            append_to_table(analysis_table, "Best 1K", convert_seconds_to_hours_mins_secs(bests["Best 1K"]));
+        if (bests["Best Mile"] > 0)
+            append_to_table(analysis_table, "Best Mile", convert_seconds_to_hours_mins_secs(bests["Best Mile"]));
+        if (bests["Best 5K"] > 0)
+            append_to_table(analysis_table, "Best 5K", convert_seconds_to_hours_mins_secs(bests["Best 5K"]));
+        if (bests["Best 10K"] > 0)
+            append_to_table(analysis_table, "Best 10K", convert_seconds_to_hours_mins_secs(bests["Best 10K"]));
+        if (bests["Best 15K"] > 0)
+            append_to_table(analysis_table, "Best 15K", convert_seconds_to_hours_mins_secs(bests["Best 15K"]));
+        if (bests["Best Half Marathon"] > 0)
+            append_to_table(analysis_table, "Best Half Marathon", convert_seconds_to_hours_mins_secs(bests["Best Half Marathon"]));
+        if (bests["Best Marathon"] > 0)
+            append_to_table(analysis_table, "Best Marathon", convert_seconds_to_hours_mins_secs(bests["Best Marathon"]));
         if (json_data["Maximum Power"] > 0)
             append_to_table(analysis_table, "Maximum Power", json_data["Maximum Power"].toFixed(2).toString() + " watts");
         if (json_data["Average Power"] > 0)
@@ -370,8 +372,10 @@
         let latitudes = json_data["Latitude Readings"];
         let longitudes = json_data["Longitude Readings"];
         let intervals = json_data["Intervals"];
+        let power_intervals = json_data["Power Intervals"];
 
-        draw_intervals_graph(start_time_ms, end_time_ms, intervals);
+        draw_intervals_graph(start_time_ms, end_time_ms, intervals, "Intervals");
+        draw_intervals_graph(start_time_ms, end_time_ms, power_intervals, "Power Intervals");
 
         let time_speed_data = speed_times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
@@ -757,7 +761,7 @@
     }
 
     /// @function draw_intervals_graph
-    function draw_intervals_graph(start_time_ms, end_time_ms, interval_data)
+    function draw_intervals_graph(start_time_ms, end_time_ms, interval_data, title)
     {
         interval_graph = [];
 
@@ -787,7 +791,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(start_time_ms, end_time_ms, interval_graph, "Intervals", "", "Gray");
+            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray");
         }
     }
 
