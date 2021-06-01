@@ -434,6 +434,7 @@ impl LocationAnalyzer {
     }
 
     pub fn append_location(&mut self, date_time_ms: u64, latitude: f64, longitude: f64, altitude: f64) {
+
         // Not much we can do with the first location other than note the start time.
         if self.start_time_ms == 0 {
             self.start_time_ms = date_time_ms;

@@ -386,6 +386,20 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
             }
         }
 
+        // Prefer enhanced altitude over regular altitude.
+        match msg.enhanced_altitude {
+            Some(res) => {
+                
+                // Make sure we have a valid reading.
+                if res != 0xFFFF {
+                    // Apply scaling and offset.
+                    altitude = (res as f64 / 5.0) - 500.0;
+                }
+            }
+            None => {
+            }
+        }
+
         match msg.heart_rate {
             Some(heart_rate) => {
 
