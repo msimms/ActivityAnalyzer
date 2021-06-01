@@ -17,6 +17,7 @@ An example implementation is available at https://activity-analyzer.app.
 
 # Version History
 
+* 1.0 - Fixed FIT file altitude readings and added first cut at power interval analysis.
 * 0.9 - Added FIT file support.
 * 0.8 - Added first cut at interval analysis.
 * 0.7 - Added split times.
