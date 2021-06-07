@@ -7,11 +7,13 @@ extern crate tcx;
 extern crate fit_file;
 
 mod utils;
+mod analyzer_context;
 mod cadence_analyzer;
 mod geo_json_reader;
 mod location_analyzer;
 mod power_analyzer;
 mod heart_rate_analyzer;
+mod exporter;
 
 use wasm_bindgen::prelude::*;
 use std::io::BufReader;
@@ -32,102 +34,45 @@ pub fn greet() {
     alert("Copyright (c) 2021 Michael J. Simms. All rights reserved.");
 }
 
-fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, power_analyzer: Option<&power_analyzer::PowerAnalyzer>, cadence_analyzer: Option<&cadence_analyzer::CadenceAnalyzer>, hr_analyzer: Option<&heart_rate_analyzer::HeartRateAnalyzer>) -> String {
-    let mut max_power = 0.0;
-    let mut avg_power = 0.0;
-    let mut best_5_sec_power = 0.0;
-    let mut best_12_min_power = 0.0;
-    let mut best_20_min_power = 0.0;
-    let mut best_1_hour_power = 0.0;
-    let mut normalized_power = 0.0;
-    let mut power_readings = Vec::<f64>::new();
-    let mut power_times = Vec::<u64>::new();
-    let mut power_intervals = Vec::<power_analyzer::PowerIntervalDescription>::new();
-    let mut max_cadence = 0.0;
-    let mut avg_cadence = 0.0;
-    let mut cadence_readings = Vec::<f64>::new();
-    let mut cadence_times = Vec::<u64>::new();
-    let mut max_hr = 0.0;
-    let mut avg_hr = 0.0;
-    let mut hr_readings = Vec::<f64>::new();
-    let mut hr_times = Vec::<u64>::new();
-
-    match power_analyzer {
-        None => {
-        }
-        Some(power_analyzer) => {
-            max_power = power_analyzer.max_power;
-            avg_power = power_analyzer.avg_power;
-            best_5_sec_power = power_analyzer.get_best_power(power_analyzer::BEST_5_SEC_POWER);
-            best_12_min_power = power_analyzer.get_best_power(power_analyzer::BEST_12_MIN_POWER);
-            best_20_min_power = power_analyzer.get_best_power(power_analyzer::BEST_20_MIN_POWER);
-            best_1_hour_power = power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER);
-            normalized_power = power_analyzer.np;
-            power_readings = power_analyzer.power_readings.clone();
-            power_times = power_analyzer.time_readings.clone();
-            power_intervals = power_analyzer.significant_intervals.clone();
-        }
-    }
-
-    match cadence_analyzer {
-        None => {
-        }
-        Some(cadence_analyzer) => {
-            max_cadence = cadence_analyzer.max_cadence;
-            avg_cadence = cadence_analyzer.compute_average();
-            cadence_readings = cadence_analyzer.readings.clone();
-            cadence_times = cadence_analyzer.time_readings.clone();
-        }
-    }
-
-    match hr_analyzer {
-        None => {
-        }
-        Some(hr_analyzer) => {
-            max_hr = hr_analyzer.max_hr;
-            avg_hr = hr_analyzer.compute_average();
-            hr_readings = hr_analyzer.readings.clone();
-            hr_times = hr_analyzer.time_readings.clone();
-        }
-    }
+fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
 
     let analysis_report_str = serde_json::json!({
-        "Activity Type": location_analyzer.activity_type,
-        "Start Time (ms)": location_analyzer.start_time_ms,
-        "End Time (ms)": location_analyzer.last_time_ms,
-        "Elapsed Time": (location_analyzer.last_time_ms - location_analyzer.start_time_ms) / 1000,
-        "Total Distance": location_analyzer.total_distance,
-        "Total Vertical Distance": location_analyzer.total_vertical,
-        "Average Speed": location_analyzer.avg_speed,
-        "Bests": location_analyzer.bests,
-        "Mile Splits": location_analyzer.mile_splits,
-        "KM Splits": location_analyzer.km_splits,
-        "Times": location_analyzer.times,
-        "Speed Times": location_analyzer.speed_times,
-        "Speeds": location_analyzer.speed_graph,
-        "Altitude Readings": location_analyzer.altitude_graph,
-        "Gradient Curve": location_analyzer.gradient_curve,
-        "Latitude Readings": location_analyzer.latitude_readings,
-        "Longitude Readings": location_analyzer.longitude_readings,
-        "Intervals": location_analyzer.significant_intervals,
-        "Maximum Power": max_power,
-        "Average Power": avg_power,
-        "5 Second Power": best_5_sec_power,
-        "12 Minute Power": best_12_min_power,
-        "20 Minute Power": best_20_min_power,
-        "1 Hour Power": best_1_hour_power,
-        "Normalized Power": normalized_power,
-        "Power Readings": power_readings,
-        "Power Times": power_times,
-        "Power Intervals": power_intervals,
-        "Maximum Cadence": max_cadence,
-        "Average Cadence": avg_cadence,
-        "Cadence Readings": cadence_readings,
-        "Cadence Times": cadence_times,
-        "Maximum Heart Rate": max_hr,
-        "Average Heart Rate": avg_hr,
-        "Heart Rate Readings": hr_readings,
-        "Heart Rate Times": hr_times
+        "Activity Type": context.location_analyzer.activity_type,
+        "Start Time (ms)": context.location_analyzer.start_time_ms,
+        "End Time (ms)": context.location_analyzer.last_time_ms,
+        "Elapsed Time": (context.location_analyzer.last_time_ms - context.location_analyzer.start_time_ms) / 1000,
+        "Total Distance": context.location_analyzer.total_distance,
+        "Total Vertical Distance": context.location_analyzer.total_vertical,
+        "Average Speed": context.location_analyzer.avg_speed,
+        "Bests": context.location_analyzer.bests,
+        "Mile Splits": context.location_analyzer.mile_splits,
+        "KM Splits": context.location_analyzer.km_splits,
+        "Times": context.location_analyzer.times,
+        "Speed Times": context.location_analyzer.speed_times,
+        "Speeds": context.location_analyzer.speed_graph,
+        "Altitude Readings": context.location_analyzer.altitude_graph,
+        "Gradient Curve": context.location_analyzer.gradient_curve,
+        "Latitude Readings": context.location_analyzer.latitude_readings,
+        "Longitude Readings": context.location_analyzer.longitude_readings,
+        "Intervals": context.location_analyzer.significant_intervals,
+        "Maximum Power": context.power_analyzer.max_power,
+        "Average Power": context.power_analyzer.avg_power,
+        "5 Second Power": context.power_analyzer.get_best_power(power_analyzer::BEST_5_SEC_POWER),
+        "12 Minute Power": context.power_analyzer.get_best_power(power_analyzer::BEST_12_MIN_POWER),
+        "20 Minute Power": context.power_analyzer.get_best_power(power_analyzer::BEST_20_MIN_POWER),
+        "1 Hour Power": context.power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER),
+        "Normalized Power": context.power_analyzer.np,
+        "Power Readings": context.power_analyzer.power_readings.clone(),
+        "Power Times": context.power_analyzer.significant_intervals.clone(),
+        "Power Intervals": context.power_analyzer.significant_intervals.clone(),
+        "Maximum Cadence": context.cadence_analyzer.max_cadence,
+        "Average Cadence": context.cadence_analyzer.compute_average(),
+        "Cadence Readings": context.cadence_analyzer.readings.clone(),
+        "Cadence Times": context.cadence_analyzer.time_readings.clone(),
+        "Maximum Heart Rate": context.hr_analyzer.max_hr,
+        "Average Heart Rate": context.hr_analyzer.compute_average(),
+        "Heart Rate Readings": context.hr_analyzer.readings.clone(),
+        "Heart Rate Times": context.hr_analyzer.time_readings.clone()
     }).to_string();
 
     analysis_report_str
@@ -137,6 +82,7 @@ fn make_final_report(location_analyzer: &location_analyzer::LocationAnalyzer, po
 pub fn analyze_gpx(s: &str) -> String {
     utils::set_panic_hook();
 
+    let mut context = analyzer_context::AnalyzerContext::new();
     let mut analysis_report_str = String::new();
 
     let data = BufReader::new(s.as_bytes());
@@ -147,14 +93,12 @@ pub fn analyze_gpx(s: &str) -> String {
             alert("Error parsing the GPX file.");
         }
         Ok(gpx) => {
-            let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
-
             // Iterate through the tracks.
             for track in gpx.tracks {
 
                 // Get the track name.
                 match &track._type {
-                    Some(activity_type) => location_analyzer.set_activity_type(activity_type.to_string()),
+                    Some(activity_type) => context.location_analyzer.set_activity_type(activity_type.to_string()),
                     _ => {},
                 }
 
@@ -168,17 +112,17 @@ pub fn analyze_gpx(s: &str) -> String {
                         let lon = point.point().x();
                         let alt = point.elevation.unwrap();
 
-                        location_analyzer.append_location((time * 1000) as u64, lat, lon, alt);
-                        location_analyzer.update_speeds();
+                        context.location_analyzer.append_location((time * 1000) as u64, lat, lon, alt);
+                        context.location_analyzer.update_speeds();
                     }
                 }
             }
 
             // For calculations that only make sense once all the points have been added.
-            location_analyzer.analyze();
+            context.location_analyzer.analyze();
 
             // Copy items to the final report.
-            analysis_report_str = make_final_report(&location_analyzer, None, None, None);
+            analysis_report_str = make_final_report(&context);
         }
     }
 
@@ -189,13 +133,9 @@ pub fn analyze_gpx(s: &str) -> String {
 pub fn analyze_tcx(s: &str) -> String {
     utils::set_panic_hook();
 
+    let mut context = analyzer_context::AnalyzerContext::new();
     let mut data = BufReader::new(s.as_bytes());
     let res = tcx::read(&mut data);
-
-    let mut location_analyzer = location_analyzer::LocationAnalyzer::new();
-    let mut hr_analyzer = heart_rate_analyzer::HeartRateAnalyzer::new();
-    let mut cadence_analyzer = cadence_analyzer::CadenceAnalyzer::new();
-    let mut power_analyzer = power_analyzer::PowerAnalyzer::new();
 
     match res {
         Err(_e) => {
@@ -209,7 +149,7 @@ pub fn analyze_tcx(s: &str) -> String {
                 Some(activities) => {
                     // A file can contain multiple activities.
                     for activity in activities.activities {
-                        location_analyzer.set_activity_type(activity.sport);
+                        context.location_analyzer.set_activity_type(activity.sport);
 
                         // Iterate through the laps.
                         for lap in activity.laps {
@@ -232,8 +172,8 @@ pub fn analyze_tcx(s: &str) -> String {
                                                 None => {
                                                 }
                                                 Some(altitude) => {
-                                                    location_analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
-                                                    location_analyzer.update_speeds();
+                                                    context.location_analyzer.append_location(time as u64, position.latitude, position.longitude, altitude);
+                                                    context.location_analyzer.update_speeds();
                                                 }
                                             }
                                         }
@@ -245,7 +185,7 @@ pub fn analyze_tcx(s: &str) -> String {
                                         None => {
                                         }
                                         Some(hr) => {
-                                            hr_analyzer.append_sensor_value(time as u64, hr.value as f64);
+                                            context.hr_analyzer.append_sensor_value(time as u64, hr.value as f64);
                                         }
                                     }
 
@@ -255,7 +195,7 @@ pub fn analyze_tcx(s: &str) -> String {
                                         None => {
                                         }
                                         Some(cadence) => {
-                                            cadence_analyzer.append_sensor_value(time as u64, cadence as f64);
+                                            context.cadence_analyzer.append_sensor_value(time as u64, cadence as f64);
                                         }
                                     }
 
@@ -277,7 +217,7 @@ pub fn analyze_tcx(s: &str) -> String {
                                                         None => {
                                                         }
                                                         Some(watts) => {
-                                                            power_analyzer.append_sensor_value(time as u64, watts as f64);
+                                                            context.power_analyzer.append_sensor_value(time as u64, watts as f64);
                                                         }
                                                     }
                                                 }
@@ -292,39 +232,20 @@ pub fn analyze_tcx(s: &str) -> String {
             }
 
             // For calculations that only make sense once all the points have been added.
-            location_analyzer.analyze();
-            power_analyzer.analyze();
+            context.location_analyzer.analyze();
+            context.power_analyzer.analyze();
         }
     }
 
     // Copy items to the final report.
-    let analysis_report_str = make_final_report(&location_analyzer, Some(&power_analyzer), Some(&cadence_analyzer), Some(&hr_analyzer));
+    let analysis_report_str = make_final_report(&context);
 
     analysis_report_str
 }
 
-/// Context structure. An instance of this will be passed to the parser and ultimately to the callback function so we can use it for whatever.
-struct AnalyzerContext {
-    pub location_analyzer: location_analyzer::LocationAnalyzer,
-    pub hr_analyzer: heart_rate_analyzer::HeartRateAnalyzer,
-    pub cadence_analyzer: cadence_analyzer::CadenceAnalyzer,
-    pub power_analyzer: power_analyzer::PowerAnalyzer,
-}
-
-impl AnalyzerContext {
-    pub fn new() -> Self {
-        let context = AnalyzerContext{
-            location_analyzer: location_analyzer::LocationAnalyzer::new(),
-            hr_analyzer: heart_rate_analyzer::HeartRateAnalyzer::new(),
-            cadence_analyzer: cadence_analyzer::CadenceAnalyzer::new(),
-            power_analyzer: power_analyzer::PowerAnalyzer::new() };
-        context
-    }
-}
-
 /// Called for each FIT record message as it is processed.
 fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _message_index: u16, fields: Vec<fit_file::fit_file::FitFieldValue>, context: *mut c_void) {
-    let callback_context: &mut AnalyzerContext = unsafe { &mut *(context as *mut AnalyzerContext) };
+    let callback_context: &mut analyzer_context::AnalyzerContext = unsafe { &mut *(context as *mut analyzer_context::AnalyzerContext) };
 
     if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
         let msg = fit_file::fit_file::FitSessionMsg::new(fields);
@@ -435,7 +356,7 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
 pub fn analyze_fit(s: &[u8]) -> String {
     utils::set_panic_hook();
 
-    let mut context = AnalyzerContext::new();
+    let mut context = analyzer_context::AnalyzerContext::new();
     let context_ptr: *mut c_void = &mut context as *mut _ as *mut c_void;
 
     let mut data = BufReader::new(s);
@@ -453,7 +374,7 @@ pub fn analyze_fit(s: &[u8]) -> String {
     }
 
     // Copy items to the final report.
-    let analysis_report_str = make_final_report(&context.location_analyzer, Some(&context.power_analyzer), Some(&context.cadence_analyzer), Some(&context.hr_analyzer));
+    let analysis_report_str = make_final_report(&context);
 
     analysis_report_str
 }
