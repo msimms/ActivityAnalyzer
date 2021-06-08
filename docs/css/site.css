@@ -128,7 +128,13 @@ h2 {
 
 .analysis tr:nth-child(even) { 
     background-color: LightSlateGray;
-} 
+}
+
+.export div {
+    margin: 0 auto;
+	background: white;
+    text-align: center;
+}
 
 .modern_button {
     background-color: #f2f2f2;

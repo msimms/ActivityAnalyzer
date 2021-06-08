@@ -9,11 +9,13 @@ extern crate fit_file;
 mod utils;
 mod analyzer_context;
 mod cadence_analyzer;
+mod exporter;
 mod geo_json_reader;
+mod gpx_writer;
 mod location_analyzer;
 mod power_analyzer;
 mod heart_rate_analyzer;
-mod exporter;
+mod tcx_writer;
 
 use wasm_bindgen::prelude::*;
 use std::io::BufReader;
@@ -23,6 +25,23 @@ use std::ffi::c_void;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+
+pub struct ContextList {
+    pub contexts: Vec<analyzer_context::AnalyzerContext>,
+}
+
+impl ContextList {
+    pub fn new() -> Self {
+        let list = ContextList{ contexts: Vec::new() };
+        list
+    }
+}
+
+static mut CONTEXT_LIST: ContextList = ContextList {
+    contexts: Vec::new()
+};
+
 
 #[wasm_bindgen]
 extern {
@@ -82,9 +101,8 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
 pub fn analyze_gpx(s: &str) -> String {
     utils::set_panic_hook();
 
-    let mut context = analyzer_context::AnalyzerContext::new();
     let mut analysis_report_str = String::new();
-
+    let mut context = analyzer_context::AnalyzerContext::new();
     let data = BufReader::new(s.as_bytes());
     let res = gpx::read(data);
 
@@ -124,6 +142,11 @@ pub fn analyze_gpx(s: &str) -> String {
             // Copy items to the final report.
             analysis_report_str = make_final_report(&context);
         }
+    }
+
+    // Remember this context in case we need it later.
+    unsafe {
+        CONTEXT_LIST.contexts.push(context);
     }
 
     analysis_report_str
@@ -239,6 +262,11 @@ pub fn analyze_tcx(s: &str) -> String {
 
     // Copy items to the final report.
     let analysis_report_str = make_final_report(&context);
+
+    // Remember this context in case we need it later.
+    unsafe {
+        CONTEXT_LIST.contexts.push(context);
+    }
 
     analysis_report_str
 }
@@ -376,7 +404,32 @@ pub fn analyze_fit(s: &[u8]) -> String {
     // Copy items to the final report.
     let analysis_report_str = make_final_report(&context);
 
+    // Remember this context in case we need it later.
+    unsafe {
+        CONTEXT_LIST.contexts.push(context);
+    }
+
     analysis_report_str
+}
+
+#[wasm_bindgen]
+pub fn export_data(format: &str) -> String {
+    utils::set_panic_hook();
+
+    let mut exported_data = String::new();
+
+    unsafe {
+        if  CONTEXT_LIST.contexts.len() > 0 {
+            let exporter = exporter::Exporter::new();
+            exported_data = exporter.export(CONTEXT_LIST.contexts.last().unwrap(), format);
+        }
+        else
+        {
+            alert("Nothing to export.");
+        }
+    }
+
+    exported_data
 }
 
 #[cfg(test)]

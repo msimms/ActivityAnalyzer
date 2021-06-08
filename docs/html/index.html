@@ -247,7 +247,7 @@
 
 <!-- Note the usage of `type=module` here as this is an ES6 module -->
 <script type="module">
-    import init, { greet, analyze_gpx, analyze_tcx, analyze_fit } from '../../activity-analyzer/pkg/activity_analyzer.js';
+    import init, { greet, analyze_gpx, analyze_tcx, analyze_fit, export_data } from '../../activity-analyzer/pkg/activity_analyzer.js';
 
     async function run() {
         await init();
@@ -283,14 +283,14 @@
         section.style = "display: block;";
 
         // Remove previous table contents, in case the user pressed the button twice.
-        analysis_table.innerHTML = ''
+        analysis_table.innerHTML = '';
 
         // The data is returned as a JSON string.
         let json_data = JSON.parse(report);
 
         // Which unit system are we using.
-        let speed_units = ""
-        let pace_units = ""
+        let speed_units = "";
+        let pace_units = "";
 
         if (units == "Metric")
         {
@@ -422,6 +422,15 @@
 
         clear_map();
         draw_map(latitudes, longitudes);
+
+        // Show the export section
+        section = document.getElementById('export');
+        section.style = "display: block;";
+    }
+
+    window.export_to_file = function export_to_file()
+    {
+        export_data("gpx");
     }
 
     run();
@@ -437,6 +446,12 @@
             <option value="Standard">Standard</option>
         </select>
         <h4>Only GPX, TCX, and FIT files are supported.<br>Cycling power and cadence data are only read from TCX and FIT files.</h4>
+    </div>
+</section>
+
+<section class="export" id="export" style="display: none;">
+    <div>
+        <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button><br>
     </div>
 </section>
 
