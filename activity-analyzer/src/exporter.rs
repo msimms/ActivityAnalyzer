@@ -24,9 +24,18 @@ impl Exporter {
         let mut writer = TcxWriter::new();
         writer.open();
         writer.start_activities();
-        writer.start_activity("");
+        writer.start_activity(&context.location_analyzer.activity_type);
+        writer.write_id(context.location_analyzer.start_time_ms);
         writer.start_lap();
         writer.start_track();
+        writer.start_trackpoint();
+
+        let loc_index = 0;
+        writer.store_time(context.location_analyzer.times[loc_index]);
+        writer.store_altitude_meters(context.location_analyzer.altitude_graph[loc_index]);
+        writer.store_position(context.location_analyzer.latitude_readings[loc_index], context.location_analyzer.longitude_readings[loc_index]);
+
+        writer.end_trackpoint();
         writer.end_track();
         writer.end_lap();
         writer.end_activity();

@@ -16,11 +16,18 @@ impl TcxWriter {
     pub fn open(&mut self) {
         self.writer.start_element("TrainingCenterDatabase");
     }
+    pub fn close(self) -> String {
+        let result = self.writer.end_document();
+        result
+    }
+
+    pub fn write_id(&mut self, start_time_ms: u64) {
+        self.writer.write_attribute("Id", &start_time_ms);
+    }
 
     pub fn start_activities(&mut self) {
         self.writer.start_element("Activities");
     }
-
     pub fn end_activities(&mut self) {
         self.writer.end_element();
     }
@@ -29,7 +36,6 @@ impl TcxWriter {
         self.writer.start_element("Activity");
         self.writer.write_attribute("Sport", description);
     }
-
     pub fn end_activity(&mut self) {
         self.writer.end_element();
     }
@@ -39,6 +45,18 @@ impl TcxWriter {
     }
     pub fn end_lap(&mut self) {
         self.writer.end_element();
+    }
+    pub fn store_lap_seconds(&mut self, time_ms: u64) {
+        self.writer.write_attribute("TotalTimeSeconds", &time_ms);
+    }
+    pub fn store_lap_distance(&mut self, distance_meters: f64) {
+        self.writer.write_attribute("DistanceMeters", &distance_meters);
+    }
+    pub fn store_lap_max_speed(&mut self, max_speed: f64) {
+        self.writer.write_attribute("MaximumSpeed", &max_speed);
+    }
+    pub fn store_lap_calories(&mut self, calories: u16) {
+        self.writer.write_attribute("Calories", &calories);
     }
 
     pub fn start_track(&mut self){
@@ -80,16 +98,12 @@ impl TcxWriter {
         self.writer.write_attribute("Cadence", &cadence_rpm);
     }
     pub fn store_power_in_watts(&mut self, power_watts: u32) {
+        self.writer.write_attribute("Watts", &power_watts);
     }
     pub fn store_position(&mut self, lat: f64, lon: f64) {
         self.writer.start_element("Position");
         self.writer.write_attribute("LatitudeDegrees", &lat);
         self.writer.write_attribute("LongitudeDegrees", &lon);
         self.writer.end_element();
-    }
-
-    pub fn close(self) -> String {
-        let result = self.writer.end_document();
-        result
     }
 }
