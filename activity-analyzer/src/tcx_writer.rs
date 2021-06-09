@@ -1,5 +1,8 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
+extern crate chrono;
+
+use chrono::*;
 use xmlwriter::*;
 
 pub struct TcxWriter {
@@ -81,7 +84,7 @@ impl TcxWriter {
     }
 
     pub fn store_time(&mut self, date_time_ms: u64) {
-        self.writer.write_attribute("Time", &date_time_ms);
+        self.writer.write_attribute("Time", &TcxWriter::format_timestamp(date_time_ms));
     }
     pub fn store_altitude_meters(&mut self, altitude_meters: f64) {
         self.writer.write_attribute("AltitudeMeters", &altitude_meters);
@@ -105,5 +108,17 @@ impl TcxWriter {
         self.writer.write_attribute("LatitudeDegrees", &lat);
         self.writer.write_attribute("LongitudeDegrees", &lon);
         self.writer.end_element();
+    }
+
+    fn format_timestamp(t: u64) -> String {
+        let sec  = t / 1000;
+        let ms = t % 1000;
+
+        let naive = NaiveDateTime::from_timestamp(sec as i64, 0);
+        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+
+        let buf1 = datetime.format("%Y-%m-%dT%H:%M:%S");
+        let buf2 = format!("{}.{:03}Z", buf1, ms);
+        buf2
     }
 }

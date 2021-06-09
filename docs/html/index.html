@@ -161,6 +161,13 @@
         document.cookie = "units=" + units;
     }
 
+    /// @function on_export_format_changed
+    function on_export_format_changed()
+    {
+        let export_format = document.getElementById('export_format').value;
+        document.cookie = "export_format=" + export_format;
+    }
+
     /// @function normalize_split_times
     function normalize_split_times(split_data)
     {
@@ -430,7 +437,9 @@
 
     window.export_to_file = function export_to_file()
     {
-        export_data("gpx");
+        let export_format = document.getElementById('export_format').value;
+        let data = export_data(export_format);
+        alert(data);
     }
 
     run();
@@ -449,9 +458,13 @@
     </div>
 </section>
 
-<section class="export" id="export" style="display: none;">
+<section class="settings" id="export" style="display: none;">
     <div>
         <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button><br>
+        <select id="export_format" onchange="on_export_format_changed()">
+            <option value="GPX">GPX</option>
+            <option value="TCX">TCX</option>
+        </select>
     </div>
 </section>
 
@@ -888,6 +901,13 @@
             document.getElementById('units').value = "Metric";
         else
             document.getElementById('units').value = units;
+
+        // Set the preferred export format.
+        let export_format = get_cookie("export_format");
+        if (export_format.length == 0)
+            document.getElementById('export_format').value = "GPX";
+        else
+            document.getElementById('export_format').value = export_format;
     });
 
 </script>

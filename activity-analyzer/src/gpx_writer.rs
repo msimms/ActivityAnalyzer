@@ -1,5 +1,8 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
+extern crate chrono;
+
+use chrono::*;
 use xmlwriter::*;
 
 pub struct GpxWriter {
@@ -42,6 +45,10 @@ impl GpxWriter {
 
     pub fn start_track_point(&mut self, lat: f64, lon: f64, alt: f64, time_ms: u64) {
         self.writer.start_element("trkpt");
+        self.writer.write_attribute("lat", &lat);
+        self.writer.write_attribute("lon", &lon);
+        self.writer.write_attribute("ele", &alt);
+        self.writer.write_attribute("time", &GpxWriter::format_timestamp(time_ms));
     }
     pub fn end_track_point(&mut self) {
         self.writer.end_element();
@@ -61,10 +68,25 @@ impl GpxWriter {
         self.writer.end_element();
     }
 
-    pub fn StoreHeartRateBpm(&mut self, heart_rate_bpm: u8) {
+    pub fn store_heart_rate_bpm(&mut self, heart_rate_bpm: u8) {
+        self.writer.write_attribute("gpxtpx:hr", &heart_rate_bpm);
     }
-    pub fn StoreCadenceRpm(&mut self, cadence_rpm: u8) {
+    pub fn store_cadence_rpm(&mut self, cadence_rpm: u8) {
+        self.writer.write_attribute("gpxtpx:cad", &cadence_rpm);
     }
-    pub fn StorePowerInWatts(&mut self, power_in_watts: u32) {
+    pub fn store_power_in_watts(&mut self, power_in_watts: u32) {
+        self.writer.write_attribute("power", &power_in_watts);
+    }
+
+    fn format_timestamp(t: u64) -> String {
+        let sec  = t / 1000;
+        let ms = t % 1000;
+
+        let naive = NaiveDateTime::from_timestamp(sec as i64, 0);
+        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+
+        let buf1 = datetime.format("%Y-%m-%dT%H:%M:%S");
+        let buf2 = format!("{}.{:03}Z", buf1, ms);
+        buf2
     }
 }

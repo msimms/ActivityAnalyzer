@@ -130,12 +130,6 @@ h2 {
     background-color: LightSlateGray;
 }
 
-.export div {
-    margin: 0 auto;
-	background: white;
-    text-align: center;
-}
-
 .modern_button {
     background-color: #f2f2f2;
     background-image: linear-gradient(to bottom, #f2f2f2, #f2f2f2);
