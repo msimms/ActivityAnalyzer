@@ -7,6 +7,7 @@ use crate::power_analyzer::PowerAnalyzer;
 
 /// Context structure. An instance of this will be passed to the parser and ultimately to the callback function so we can use it for whatever.
 pub struct AnalyzerContext {
+    pub name: String,
     pub location_analyzer: LocationAnalyzer,
     pub hr_analyzer: HeartRateAnalyzer,
     pub cadence_analyzer: CadenceAnalyzer,
@@ -16,6 +17,7 @@ pub struct AnalyzerContext {
 impl AnalyzerContext {
     pub fn new() -> Self {
         let context = AnalyzerContext{
+            name: "Unnamed".to_string(),
             location_analyzer: LocationAnalyzer::new(),
             hr_analyzer: HeartRateAnalyzer::new(),
             cadence_analyzer: CadenceAnalyzer::new(),

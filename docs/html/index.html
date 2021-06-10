@@ -246,6 +246,7 @@
             let gradient = gradient_list[i];
             let cost = (155.4 * (Math.pow(gradient, 5))) - (30.4 * Math.pow(gradient, 4)) - (43.4 * Math.pow(gradient, 3)) - (46.3 * (gradient * gradient)) - (19.5 * gradient) + 3.6;
             let value = x.value + (x.value - 3.6) / 3.6;
+
             return {"date": new Date(x.date), "value": value};
         });
         return gap_list;
@@ -435,11 +436,35 @@
         section.style = "display: block;";
     }
 
+    function create_local_file(data, filename, type)
+    {
+        let file = new Blob([data], {type: type});
+
+        if (window.navigator.msSaveOrOpenBlob)
+        {
+            window.navigator.msSaveOrOpenBlob(file, filename);
+        }
+        else
+        {
+            let a = document.createElement("a"), url = URL.createObjectURL(file);
+
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);  
+            }, 0); 
+        }
+    }
+
     window.export_to_file = function export_to_file()
     {
         let export_format = document.getElementById('export_format').value;
         let data = export_data(export_format);
-        alert(data);
+
+        create_local_file(data, "foo." + export_format.toLowerCase(), "text/plain;charset=utf-8");
     }
 
     run();
