@@ -58,6 +58,7 @@ pub struct LocationAnalyzer {
     pub total_vertical: f64, // Total ascent (in meters)
 
     pub times: Vec<u64>, // Holds all timestamps (in milliseconds). Can be used to graph everything except speed/pace data.
+    pub lap_times: Vec<u64>, // Holds all timestamps (in milliseconds) at which the lap button was pressed.
     pub latitude_readings: Vec<f64>,
     pub longitude_readings: Vec<f64>,
     pub altitude_graph: Vec<f64>, // Holds all altitude readings
@@ -86,11 +87,25 @@ pub struct LocationAnalyzer {
 impl LocationAnalyzer {
     pub fn new() -> Self {
         let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
-            speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
+            speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), lap_times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
             altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), max_altitude: 0.0, activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
             geo_analyzer: super::geo_json_reader::GeoJsonReader::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
         analyzer
+    }
+
+    /// Accessor methods for lap metadata.
+    pub fn get_lap_start_time(&self, lap_num: u8) -> u64 {
+        0
+    }
+    pub fn get_lap_seconds(&self, lap_num: u8) -> u64 {
+        0
+    }
+    pub fn get_lap_calories(&self, lap_num: u8) -> f64 {
+        0.0
+    }
+    pub fn get_lap_distance(&self, lap_num: u8) -> f64 {
+        0.0
     }
 
     /// Accessor for setting the activity type.

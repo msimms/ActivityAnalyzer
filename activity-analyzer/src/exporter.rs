@@ -40,20 +40,27 @@ impl Exporter {
     fn export_tcx(&self, context: &AnalyzerContext) -> String {
         let loc_data = &context.location_analyzer;
         let mut writer = TcxWriter::new();
+        let lap_num = 1;
 
         writer.open();
         writer.start_activities();
-        writer.start_activity(&context.location_analyzer.activity_type);
-        writer.write_id(context.location_analyzer.start_time_ms);
-        writer.start_lap();
+        writer.start_activity(&loc_data.activity_type);
+        writer.write_id(loc_data.start_time_ms);
+
+        writer.start_lap(loc_data.get_lap_start_time(lap_num));
+        writer.store_lap_seconds(loc_data.get_lap_seconds(lap_num));
+        writer.store_lap_distance(loc_data.get_lap_distance(lap_num));
+        writer.store_lap_calories(loc_data.get_lap_calories(lap_num) as u16);
+
         writer.start_track();
 
         let num_locs = loc_data.latitude_readings.len();
         for loc_index in 0..num_locs - 1 {
             writer.start_trackpoint();
             writer.store_time(loc_data.times[loc_index]);
-            writer.store_altitude_meters(loc_data.altitude_graph[loc_index]);
             writer.store_position(loc_data.latitude_readings[loc_index], loc_data.longitude_readings[loc_index]);
+            writer.store_altitude_meters(loc_data.altitude_graph[loc_index]);
+            writer.store_distance_meters(0.0);
             writer.end_trackpoint();
         }
         writer.end_track();

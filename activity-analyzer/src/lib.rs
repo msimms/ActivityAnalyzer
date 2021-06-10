@@ -158,11 +158,13 @@ pub fn analyze_tcx(s: &str) -> String {
 
     let mut context = analyzer_context::AnalyzerContext::new();
     let mut data = BufReader::new(s.as_bytes());
+    let mut error = false;
     let res = tcx::read(&mut data);
 
     match res {
         Err(_e) => {
             alert("Error parsing the TCX file.");
+            error = true;
         }
         Ok(res) => {
             let activities = res.activities;
@@ -260,12 +262,16 @@ pub fn analyze_tcx(s: &str) -> String {
         }
     }
 
-    // Copy items to the final report.
-    let analysis_report_str = make_final_report(&context);
+    let mut analysis_report_str = "".to_string();
+    
+    if error == false {
+        // Copy items to the final report.
+        analysis_report_str = make_final_report(&context);
 
-    // Remember this context in case we need it later.
-    unsafe {
-        CONTEXT_LIST.contexts.push(context);
+        // Remember this context in case we need it later.
+        unsafe {
+            CONTEXT_LIST.contexts.push(context);
+        }
     }
 
     analysis_report_str
@@ -390,9 +396,12 @@ pub fn analyze_fit(s: &[u8]) -> String {
     let mut data = BufReader::new(s);
     let res = fit_file::fit_file::read(&mut data, callback, context_ptr);
 
+    let mut error = false;
+
     match res {
         Err(_e) => {
             alert("Error parsing the FIT file.");
+            error = true;
         }
         Ok(_res) => {
             // For calculations that only make sense once all the points have been added.
@@ -401,12 +410,16 @@ pub fn analyze_fit(s: &[u8]) -> String {
         }
     }
 
-    // Copy items to the final report.
-    let analysis_report_str = make_final_report(&context);
+    let mut analysis_report_str = "".to_string();
+    
+    if error == false {
+        // Copy items to the final report.
+        analysis_report_str = make_final_report(&context);
 
-    // Remember this context in case we need it later.
-    unsafe {
-        CONTEXT_LIST.contexts.push(context);
+        // Remember this context in case we need it later.
+        unsafe {
+            CONTEXT_LIST.contexts.push(context);
+        }
     }
 
     analysis_report_str

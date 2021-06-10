@@ -18,6 +18,12 @@ impl TcxWriter {
 
     pub fn open(&mut self) {
         self.writer.start_element("TrainingCenterDatabase");
+        self.writer.write_attribute("xmlns", "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2");
+        self.writer.write_attribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
+        self.writer.write_attribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        self.writer.write_attribute("xmlns:tc2", "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2");
+        self.writer.write_attribute("targetNamespace", "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2");
+        self.writer.write_attribute("elementFormDefault", "qualified");
     }
     pub fn close(self) -> String {
         let result = self.writer.end_document();
@@ -25,7 +31,11 @@ impl TcxWriter {
     }
 
     pub fn write_id(&mut self, start_time_ms: u64) {
-        self.writer.write_attribute("Id", &start_time_ms);
+        self.writer.start_element("Id");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text(&TcxWriter::format_timestamp(start_time_ms));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
 
     pub fn start_activities(&mut self) {
@@ -43,23 +53,41 @@ impl TcxWriter {
         self.writer.end_element();
     }
 
-    pub fn start_lap(&mut self) {
+    pub fn start_lap(&mut self, start_time_ms: u64) {
         self.writer.start_element("Lap");
+        self.writer.write_attribute("StartTime", &TcxWriter::format_timestamp(start_time_ms));
     }
     pub fn end_lap(&mut self) {
         self.writer.end_element();
     }
     pub fn store_lap_seconds(&mut self, time_ms: u64) {
-        self.writer.write_attribute("TotalTimeSeconds", &time_ms);
+        let time_sec = time_ms as f64 / 1000.0;
+        self.writer.start_element("TotalTimeSeconds");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &time_sec));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_lap_distance(&mut self, distance_meters: f64) {
-        self.writer.write_attribute("DistanceMeters", &distance_meters);
-    }
-    pub fn store_lap_max_speed(&mut self, max_speed: f64) {
-        self.writer.write_attribute("MaximumSpeed", &max_speed);
+        self.writer.start_element("DistanceMeters");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &distance_meters));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_lap_calories(&mut self, calories: u16) {
-        self.writer.write_attribute("Calories", &calories);
+        self.writer.start_element("Calories");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &calories));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
+    }
+    pub fn store_lap_max_speed(&mut self, max_speed: f64) {
+        self.writer.start_element("MaximumSpeed");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &max_speed));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
 
     pub fn start_track(&mut self){
@@ -84,29 +112,64 @@ impl TcxWriter {
     }
 
     pub fn store_time(&mut self, date_time_ms: u64) {
-        self.writer.write_attribute("Time", &TcxWriter::format_timestamp(date_time_ms));
+        self.writer.start_element("Time");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text(&TcxWriter::format_timestamp(date_time_ms));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_altitude_meters(&mut self, altitude_meters: f64) {
-        self.writer.write_attribute("AltitudeMeters", &altitude_meters);
+        self.writer.start_element("AltitudeMeters");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &altitude_meters));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_distance_meters(&mut self, distance_meters: f64) {
-        self.writer.write_attribute("DistanceMeters", &distance_meters);
+        self.writer.start_element("DistanceMeters");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &distance_meters));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_heart_rate_bpm(&mut self, heart_rate_bpm: u8) {
         self.writer.start_element("HeartRateBpm");
-        self.writer.write_attribute("Value", &heart_rate_bpm);
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.start_element("Value");
+        self.writer.write_text_fmt(format_args!("{:?}", &heart_rate_bpm));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
         self.writer.end_element();
     }
     pub fn store_cadence_rpm(&mut self, cadence_rpm: u8) {
-        self.writer.write_attribute("Cadence", &cadence_rpm);
+        self.writer.start_element("Cadence");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &cadence_rpm));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_power_in_watts(&mut self, power_watts: u32) {
-        self.writer.write_attribute("Watts", &power_watts);
+        self.writer.start_element("Watts");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &power_watts));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_position(&mut self, lat: f64, lon: f64) {
         self.writer.start_element("Position");
-        self.writer.write_attribute("LatitudeDegrees", &lat);
-        self.writer.write_attribute("LongitudeDegrees", &lon);
+
+        self.writer.start_element("LatitudeDegrees");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &lat));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
+ 
+        self.writer.start_element("LongitudeDegrees");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &lon));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
+
         self.writer.end_element();
     }
 

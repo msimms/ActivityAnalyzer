@@ -283,6 +283,11 @@
             return;
         }
 
+        if (report.length == 0)
+        {
+            return;
+        }
+
         let units = document.getElementById('units').value;
         let analysis_table = document.getElementById('analysis_table');
 
@@ -485,11 +490,11 @@
 
 <section class="settings" id="export" style="display: none;">
     <div>
-        <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button><br>
         <select id="export_format" onchange="on_export_format_changed()">
             <option value="GPX">GPX</option>
             <option value="TCX">TCX</option>
-        </select>
+        </select><br>
+        <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button>
     </div>
 </section>
 
