@@ -96,15 +96,24 @@ impl LocationAnalyzer {
 
     /// Accessor methods for lap metadata.
     pub fn get_lap_start_time(&self, lap_num: u8) -> u64 {
+        if lap_num == 1 {
+            return self.start_time_ms;
+        }
         0
     }
     pub fn get_lap_seconds(&self, lap_num: u8) -> u64 {
+        if self.lap_times.len() == 0 {
+        }
         0
     }
     pub fn get_lap_calories(&self, lap_num: u8) -> f64 {
+        if self.lap_times.len() == 0 {
+        }
         0.0
     }
     pub fn get_lap_distance(&self, lap_num: u8) -> f64 {
+        if self.lap_times.len() == 0 {
+        }
         0.0
     }
 

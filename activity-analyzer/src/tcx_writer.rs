@@ -98,7 +98,7 @@ impl TcxWriter {
     }
 
     pub fn start_trackpoint(&mut self) {
-        self.writer.start_element("TrackPoint");
+        self.writer.start_element("Trackpoint");
     }
     pub fn end_trackpoint(&mut self) {
         self.writer.end_element();
