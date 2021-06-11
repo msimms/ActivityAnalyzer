@@ -134,8 +134,8 @@ impl TcxWriter {
     }
     pub fn store_heart_rate_bpm(&mut self, heart_rate_bpm: u8) {
         self.writer.start_element("HeartRateBpm");
-        self.writer.set_preserve_whitespaces(true);
         self.writer.start_element("Value");
+        self.writer.set_preserve_whitespaces(true);
         self.writer.write_text_fmt(format_args!("{:?}", &heart_rate_bpm));
         self.writer.end_element();
         self.writer.set_preserve_whitespaces(false);

@@ -103,13 +103,25 @@ impl GpxWriter {
     }
 
     pub fn store_heart_rate_bpm(&mut self, heart_rate_bpm: u8) {
-        self.writer.write_attribute("gpxtpx:hr", &heart_rate_bpm);
+        self.writer.start_element("gpxtpx:hr");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &heart_rate_bpm));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_cadence_rpm(&mut self, cadence_rpm: u8) {
-        self.writer.write_attribute("gpxtpx:cad", &cadence_rpm);
+        self.writer.start_element("gpxtpx:cad");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &cadence_rpm));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
     pub fn store_power_in_watts(&mut self, power_in_watts: u32) {
-        self.writer.write_attribute("power", &power_in_watts);
+        self.writer.start_element("power");
+        self.writer.set_preserve_whitespaces(true);
+        self.writer.write_text_fmt(format_args!("{:?}", &power_in_watts));
+        self.writer.end_element();
+        self.writer.set_preserve_whitespaces(false);
     }
 
     fn format_timestamp(t: u64) -> String {
