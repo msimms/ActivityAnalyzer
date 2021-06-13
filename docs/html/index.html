@@ -168,6 +168,16 @@
         document.cookie = "export_format=" + export_format;
     }
 
+    /// @function on_export_style_changed
+    function on_export_style_changed()
+    {
+        if (document.getElementById('export_style').value == "MultipleFiles")
+        {
+            let section = document.getElementById('export_splits');
+            section.style = "display: block;";
+        }
+    }
+
     /// @function normalize_split_times
     function normalize_split_times(split_data)
     {
@@ -464,10 +474,27 @@
         }
     }
 
+    function isNumber(n)
+    {
+        return !isNaN(n)
+    }
+
     window.export_to_file = function export_to_file()
     {
         let export_format = document.getElementById('export_format').value;
-        let data = export_data(export_format);
+        let split_time = 0;
+
+        if (document.getElementById('export_style').value == "MultipleFiles")
+        {
+            let split_time_value = document.getElementById('split_time').value;
+
+            if (isNumber(split_time_value))
+            {
+                split_time = Number(split_time_value);
+            }
+        }
+
+        let data = export_data(export_format, split_time);
 
         create_local_file(data, "foo." + export_format.toLowerCase(), "text/plain;charset=utf-8");
     }
@@ -494,6 +521,15 @@
             <option value="GPX">GPX</option>
             <option value="TCX">TCX</option>
         </select><br>
+        <select id="export_style" onchange="on_export_style_changed()">
+            <option value="SingleFile">Single File</option>
+            <option value="MultipleFiles">Multiple Files</option>
+        </select><br>
+        <div id="export_splits" style="display: none;">
+            <p>
+            Split at <input type="number" id="split_time" name="split_time" min="1"> seconds from the start of the activity
+            </p>
+        </div>
         <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button>
     </div>
 </section>

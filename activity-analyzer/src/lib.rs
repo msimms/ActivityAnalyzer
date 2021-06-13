@@ -426,7 +426,7 @@ pub fn analyze_fit(s: &[u8]) -> String {
 }
 
 #[wasm_bindgen]
-pub fn export_data(format: &str) -> String {
+pub fn export_data(format: &str, split_start: u32, split_end: u32) -> String {
     utils::set_panic_hook();
 
     let mut exported_data = String::new();
@@ -434,7 +434,7 @@ pub fn export_data(format: &str) -> String {
     unsafe {
         if  CONTEXT_LIST.contexts.len() > 0 {
             let exporter = exporter::Exporter::new();
-            exported_data = exporter.export(CONTEXT_LIST.contexts.last().unwrap(), format);
+            exported_data = exporter.export(CONTEXT_LIST.contexts.last().unwrap(), format, (split_start as u64) * 1000, (split_end as u64) * 1000);
         }
         else
         {
