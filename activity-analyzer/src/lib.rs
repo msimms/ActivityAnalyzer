@@ -82,7 +82,7 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
         "1 Hour Power": context.power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER),
         "Normalized Power": context.power_analyzer.np,
         "Power Readings": context.power_analyzer.power_readings.clone(),
-        "Power Times": context.power_analyzer.significant_intervals.clone(),
+        "Power Times": context.power_analyzer.time_readings.clone(),
         "Power Intervals": context.power_analyzer.significant_intervals.clone(),
         "Maximum Cadence": context.cadence_analyzer.max_cadence,
         "Average Cadence": context.cadence_analyzer.compute_average(),
