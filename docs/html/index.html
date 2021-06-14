@@ -142,6 +142,7 @@
 
         a.appendChild(link_text);
         a.title = text;
+
         cell.appendChild(a);
     }
 
@@ -451,9 +452,24 @@
         section.style = "display: block;";
     }
 
+    function create_download_link(data, filename, type)
+    {
+        let file = new Blob([data], { type: type });
+        let downloads_div = document.getElementById('downloads');
+        let a = document.createElement("a");
+        let url = URL.createObjectURL(file);
+
+        a.href = url;
+        a.text = "[" + filename + "]";
+        a.id = filename;
+        a.download = filename;
+
+        downloads_div.appendChild(a);
+    }
+
     function create_local_file(data, filename, type)
     {
-        let file = new Blob([data], {type: type});
+        let file = new Blob([data], { type: type });
 
         if (window.navigator.msSaveOrOpenBlob)
         {
@@ -461,12 +477,15 @@
         }
         else
         {
-            let a = document.createElement("a"), url = URL.createObjectURL(file);
+            let a = document.createElement("a");
+            let url = URL.createObjectURL(file);
 
             a.href = url;
+            a.id = filename;
             a.download = filename;
             document.body.appendChild(a);
             a.click();
+
             setTimeout(function() {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);  
@@ -481,8 +500,8 @@
 
     window.export_to_file = function export_to_file()
     {
-        let export_format = document.getElementById('export_format').value;
-        let split_time = 0;
+        let export_format = document.getElementById('export_format').value.toLowerCase();
+        let split_offset_secs = 0;
 
         if (document.getElementById('export_style').value == "MultipleFiles")
         {
@@ -490,13 +509,24 @@
 
             if (isNumber(split_time_value))
             {
-                split_time = Number(split_time_value);
+                split_offset_secs = Number(split_time_value);
             }
         }
 
-        let data = export_data(export_format, split_time);
+        if (split_offset_secs > 0)
+        {
+            let data1 = export_data(export_format, 0, split_offset_secs);
+            let data2 = export_data(export_format, split_offset_secs, 0);
 
-        create_local_file(data, "foo." + export_format.toLowerCase(), "text/plain;charset=utf-8");
+            create_download_link(data1, "foo1." + export_format, "text/plain;charset=utf-8");
+            create_download_link(data2, "foo2." + export_format, "text/plain;charset=utf-8");
+        }
+        else
+        {
+            let data = export_data(export_format, 0, 0);
+
+            create_local_file(data, "foo." + export_format, "text/plain;charset=utf-8");
+        }
     }
 
     run();
@@ -531,6 +561,9 @@
             </p>
         </div>
         <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button>
+        <div id="downloads">
+            <p></p>
+        </div>
     </div>
 </section>
 
