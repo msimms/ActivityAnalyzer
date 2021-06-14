@@ -172,10 +172,15 @@
     /// @function on_export_style_changed
     function on_export_style_changed()
     {
+        let section = document.getElementById('export_splits');
+
         if (document.getElementById('export_style').value == "MultipleFiles")
         {
-            let section = document.getElementById('export_splits');
             section.style = "display: block;";
+        }
+        else
+        {
+            section.style = "display: none;";
         }
     }
 
