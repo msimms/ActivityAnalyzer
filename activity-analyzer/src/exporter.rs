@@ -35,7 +35,7 @@ impl Exporter {
         let num_points = loc_data.latitude_readings.len();
         for point_index in 0..num_points - 1 {
             let ts = loc_data.times[point_index];
-            let mut use_data_point;
+            let use_data_point;
 
             if split_start_offset_ms == 0 && split_end_offset_ms == 0 {
                 use_data_point = true;
@@ -129,7 +129,7 @@ impl Exporter {
         let num_locs = loc_data.latitude_readings.len();
         for loc_index in 0..num_locs - 1 {
             let ts = loc_data.times[loc_index];
-            let mut use_data_point;
+            let use_data_point;
 
             if split_start_offset_ms == 0 && split_end_offset_ms == 0 {
                 use_data_point = true;
