@@ -1,6 +1,6 @@
 [package]
 name = "activity-analyzer"
-version = "0.9.1"
+version = "0.9.2"
 authors = ["Mike Simms <msimms01@gmail.com>"]
 edition = "2018"
 
