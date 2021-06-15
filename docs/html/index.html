@@ -416,37 +416,39 @@
         append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
         append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", true);
-        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", true);
-        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", true);
+        let fill = true;
+
+        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", true, fill);
+        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", true, fill);
+        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", true, fill);
 
         if (power.length > 0)
         {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", true);
+            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", true, fill);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", true);
+            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", true, fill);
         }
         if (hr.length > 0)
         {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", true);
+            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", true, fill);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", true);
+            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", true, fill);
         }
 
         clear_map();
@@ -648,7 +650,7 @@
     }
 
     /// @function draw_graph
-    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, show_ticks)
+    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, show_ticks, fill)
     {
         if (data.length <= 1)
         {
@@ -723,13 +725,13 @@
 
         // Add Y axis
         let y = d3.scaleLinear()
-            .domain([0, d3.max(data, function(d) { return +d.value; })])
+            .domain([ 0, d3.max(data, function(d) { return +d.value; }) ])
             .range([ height, 0 ]);
         let yAxis = svg.append("g")
             .call(d3.axisLeft(y));
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 0-margin.left)
+            .attr("y", 0 - margin.left)
             .attr("x",0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
@@ -745,41 +747,44 @@
             .attr("y", 0);
 
         // Add brushing.
-        let brush = d3.brushX()                   // Add the brush feature using the d3.brush function
-            .extent( [ [0,0], [width, height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-            .on("end", updateChart)               // Each time the brush selection changes, trigger the 'updateChart' function
+        let brush = d3.brushX()                     // Add the brush feature using the d3.brush function
+            .extent( [ [0,0], [ width, height ] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+            .on("end", updateChart)                 // Each time the brush selection changes, trigger the 'updateChart' function
 
         let line = svg.append('g')
             .attr("clip-path", "url(#clip)");
 
-        // Add the line
+        // Add the line.
+        let fill_color = "none";
+        if (fill)
+            fill_color = color;
         line.append("path")
             .datum(data)
             .attr("class", "line")  // I add the class line to be able to modify this line later on.
-            .attr("fill", color)
+            .attr("fill", fill_color)
             .attr("stroke", color)
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 0.25)
             .attr("d", d3.line()
                 .x(function(d) { return x(d.date) })
                 .y(function(d) { return y(d.value) })
             )
 
-        // Add the brushing
+        // Add the brushing.
         line.append("g")
             .attr("class", "brush")
             .call(brush);
 
-        // A function that set idleTimeOut to null
+        // A function that set idleTimeOut to null.
         var idleTimeout
         function idled() { idleTimeout = null; }
 
-        // A function that update the chart for given boundaries
+        // A function that update the chart for given boundaries.
         function updateChart() {
 
             // What are the selected boundaries?
-            extent = d3.event.selection
+            extent = d3.event.selection;
 
-            // If no selection, back to initial coordinate. Otherwise, update X axis domain
+            // If no selection, back to initial coordinate. Otherwise, update X axis domain.
             if (!extent)
             {
                 if (!idleTimeout)
@@ -792,7 +797,7 @@
                 line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
             }
 
-            // Update axis and line position
+            // Update axis and line position.
             xAxis.transition().duration(1000).call(d3.axisBottom(x))
             line.select('.line')
                 .transition()
@@ -802,7 +807,7 @@
                     .y(function(d) { return y(d.value) }))
         }
 
-        // If user double click, reinitialize the chart
+        // If user double click, reinitialize the chart.
         svg.on("dblclick",function() {
             x.domain(d3.extent(data, function(d) { return d.date; }))
             xAxis.transition().call(d3.axisBottom(x))
@@ -923,7 +928,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray");
+            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray", true, true);
         }
     }
 
