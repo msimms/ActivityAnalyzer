@@ -304,7 +304,11 @@
             return;
         }
 
-        // Create the table for this file.
+        let fill = total_num_files == 1;
+        let map_colors = ["red", "green", "blue"];
+        let map_color = map_colors[(file_num - 1) % map_colors.length];
+
+        // Create the table for this file's analysis summary.
         let analysis_section = document.getElementById('analysis_section');
         let analysis_div = document.createElement("div");
         let analysis_title = document.createElement("h1");
@@ -314,6 +318,7 @@
             analysis_title.innerHTML = "Analysis of File " + file_num.toString();
         else
             analysis_title.innerHTML = "Analysis";
+
         analysis_div.appendChild(analysis_title);
         analysis_div.appendChild(analysis_table);
         analysis_section.appendChild(analysis_div);
@@ -339,21 +344,6 @@
 
         let start_time_ms = json_data["Start Time (ms)"];
         let end_time_ms = json_data["End Time (ms)"];
-
-        let fill = true;
-        let map_colors = ["red", "green", "blue"];
-        let map_color = map_colors[0];
-
-        if (total_num_files == 1)
-        {
-            clear_all_graphs();
-            clear_map();
-        }
-        else
-        {
-            map_color = map_colors[(file_num - 1) % map_colors.length];
-            fill = false;
-        }
 
         append_to_table(analysis_table, "Activity Type", json_data["Activity Type"]);
         append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
@@ -608,6 +598,7 @@
     function clear_map()
     {
         $('#map_canvas').empty();
+        map = new OpenLayers.Map();
     }
 
     /// @function draw_map
@@ -656,6 +647,13 @@
 
     var selected_file_list = [];
     var file_picker = document.getElementById('file_picker');
+
+    /// @function clear_analysis_summary
+    function clear_analysis_summary()
+    {
+        let analysis_section = document.getElementById('analysis_section');
+        analysis_section.innerHTML = '';
+    }
 
     /// @function clear_all_graphs
     function clear_all_graphs()
@@ -953,6 +951,10 @@
 
         if (selected_file_list.length > 0)
         {
+            clear_analysis_summary();
+            clear_all_graphs();
+            clear_map();
+
             for (var i = 0; i < selected_file_list.length; i++)
             {
                 let selected_file_obj = selected_file_list[i];
@@ -966,6 +968,12 @@
                 reader.onload = function(e)
                 {
                     window.analyze_file_data(selected_file_obj.name, ext, reader.result, ++file_num, selected_file_list.length);
+
+                    // If we've processed the last file then clear the file list, in case the user loads more files without refreshing the page.
+                    if (file_num == selected_file_list.length)
+                    {
+                        selected_file_list = [];
+                    }
                 }
 
                 if ((ext.toLowerCase() == "gpx") || (ext.toLowerCase() == "tcx"))
