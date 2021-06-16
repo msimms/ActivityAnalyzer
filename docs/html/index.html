@@ -285,7 +285,19 @@
     let hr_graph = null;
     let altitude_graph = null;
 
-    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, total_num_files) {
+    window.clear_graph_data = function clear_graph_data()
+    {
+        speed_graph = null;
+        pace_graph = null;
+        gap_pace_graph = null;
+        power_graph = null;
+        cadence_graph = null;
+        hr_graph = null;
+        altitude_graph = null;
+    }
+
+    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, total_num_files)
+    {
         let report = "";
 
         if (ext.toLowerCase() == "gpx")
@@ -442,7 +454,7 @@
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            power_graph = draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", fill, power_graph);
+            power_graph = draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "Navy", fill, power_graph);
         }
         if (cadence.length > 0)
         {
@@ -666,6 +678,7 @@
     /// @function clear_all_graphs
     function clear_all_graphs()
     {
+        window.clear_graph_data();
         $('#charts').empty();
     }
 
