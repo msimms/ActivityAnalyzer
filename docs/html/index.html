@@ -277,6 +277,14 @@
         await init();
     }
 
+    let speed_graph = null;
+    let pace_graph = null;
+    let gap_pace_graph = null;
+    let power_graph = null;
+    let cadence_graph = null;
+    let hr_graph = null;
+    let altitude_graph = null;
+
     window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, total_num_files) {
         let report = "";
 
@@ -425,37 +433,37 @@
         append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
         append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill);
-        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill);
-        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", fill);
+        speed_graph = draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill, speed_graph);
+        pace_graph = draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill, pace_graph);
+        gap_pace_graph = draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", fill, gap_pace_graph);
 
         if (power.length > 0)
         {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", fill);
+            power_graph = draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", fill, power_graph);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", fill);
+            cadence_graph = draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "Tan", fill, cadence_graph);
         }
         if (hr.length > 0)
         {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", fill);
+            hr_graph = draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", fill, hr_graph);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", fill);
+            altitude_graph = draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "ForestGreen", fill, altitude_graph);
         }
 
         draw_map(latitudes, longitudes, map_color, distance_meters);
@@ -662,7 +670,8 @@
     }
 
     /// @function draw_graph
-    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, fill)
+    // if existing_graph is provided, a new line will be appended to that graph.
+    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, fill, existing_graph)
     {
         if (data.length <= 1)
         {
@@ -717,21 +726,25 @@
             width = $("#charts").width() - margin.left - margin.right,
             height = 250 - margin.top - margin.bottom;
 
-        let svg = d3.select("#charts")
-            .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .on('mouseover', mousemove)
-                .on('mousemove', mouseover)
-                .on('mouseleave', mouseleave)
-            .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        let svg = existing_graph;
+        if (existing_graph == null)
+        {
+            svg = d3.select("#charts")
+                .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .on('mouseover', mousemove)
+                    .on('mousemove', mouseover)
+                    .on('mouseleave', mouseleave)
+                .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        }
 
         // Add X axis --> it is a date format
         let x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
             .range([ 0, width ]);
-        let xAxis = svg.append("g")
+        let x_axis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
 
@@ -739,8 +752,11 @@
         let y = d3.scaleLinear()
             .domain([ 0, d3.max(data, function(d) { return +d.value; }) ])
             .range([ height, 0 ]);
-        let yAxis = svg.append("g")
-            .call(d3.axisLeft(y));
+        if (existing_graph == null)
+        {
+            let y_axis = svg.append("g")
+                .call(d3.axisLeft(y));
+        }
         svg.append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 0 - margin.left)
@@ -787,7 +803,7 @@
             .call(brush);
 
         // A function that set idleTimeOut to null.
-        var idleTimeout
+        var idleTimeout = null;
         function idled() { idleTimeout = null; }
 
         // A function that update the chart for given boundaries.
@@ -810,7 +826,7 @@
             }
 
             // Update axis and line position.
-            xAxis.transition().duration(1000).call(d3.axisBottom(x))
+            x_axis.transition().duration(1000).call(d3.axisBottom(x))
             line.select('.line')
                 .transition()
                 .duration(1000)
@@ -822,7 +838,7 @@
         // If user double click, reinitialize the chart.
         svg.on("dblclick",function() {
             x.domain(d3.extent(data, function(d) { return d.date; }))
-            xAxis.transition().call(d3.axisBottom(x))
+            x_axis.transition().call(d3.axisBottom(x))
             line.select('.line')
                 .transition()
                 .attr("d", d3.line()
@@ -830,6 +846,8 @@
                 .y(function(d) { return y(d.value) })
             )
         });
+
+        return svg;
     }
 
     /// @function draw_bar_chart
@@ -872,8 +890,8 @@
         let x = d3.scaleBand().domain(d3.range(1, data.length + 1)).range([0, width])
         let y = d3.scaleLinear().domain([0, d3.max(data)]).range([height, 0])
 
-        let xAxis = d3.axisBottom(x);
-        let yAxis = d3.axisLeft(y).ticks(2);
+        let x_axis = d3.axisBottom(x);
+        let y_axis = d3.axisLeft(y).ticks(2);
 
         let svg = d3.select("#charts")
             .append("svg")
@@ -891,10 +909,10 @@
             .attr("x",0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(title);  
+            .text(title);
         svg.append("g")
             .attr("class", "y axis")
-            .call(yAxis)
+            .call(y_axis)
             .append("text")
             .attr("transform", "rotate(-90)")
             .attr("dy", ".71em")
@@ -940,7 +958,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray", true);
+            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray", true, null);
         }
     }
 
