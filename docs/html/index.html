@@ -277,7 +277,7 @@
         await init();
     }
 
-    window.analyze_file_data = function analyze_file_data(name, ext, blob) {
+    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, total_num_files) {
         let report = "";
 
         if (ext.toLowerCase() == "gpx")
@@ -304,20 +304,25 @@
             return;
         }
 
-        let units = document.getElementById('units').value;
-        let analysis_table = document.getElementById('analysis_table');
+        // Create the table for this file.
+        let analysis_section = document.getElementById('analysis_section');
+        let analysis_div = document.createElement("div");
+        let analysis_title = document.createElement("h1");
+        let analysis_table = document.createElement("table");
 
-        // Show the section
-        let section = document.getElementById('analysis');
-        section.style = "display: block;";
-
-        // Remove previous table contents, in case the user pressed the button twice.
-        analysis_table.innerHTML = '';
+        if (total_num_files > 1)
+            analysis_title.innerHTML = "Analysis of File " + file_num.toString();
+        else
+            analysis_title.innerHTML = "Analysis";
+        analysis_div.appendChild(analysis_title);
+        analysis_div.appendChild(analysis_table);
+        analysis_section.appendChild(analysis_div);
 
         // The data is returned as a JSON string.
         let json_data = JSON.parse(report);
 
         // Which unit system are we using.
+        let units = document.getElementById('units').value;
         let speed_units = "";
         let pace_units = "";
 
@@ -335,13 +340,27 @@
         let start_time_ms = json_data["Start Time (ms)"];
         let end_time_ms = json_data["End Time (ms)"];
 
-        clear_all_graphs();
+        let fill = true;
+        let map_colors = ["red", "green", "blue"];
+        let map_color = map_colors[0];
+
+        if (total_num_files == 1)
+        {
+            clear_all_graphs();
+            clear_map();
+        }
+        else
+        {
+            map_color = map_colors[(file_num - 1) % map_colors.length];
+            fill = false;
+        }
 
         append_to_table(analysis_table, "Activity Type", json_data["Activity Type"]);
         append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
         append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(end_time_ms));
         append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(json_data["Elapsed Time"]));
-        append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, json_data["Total Distance"]));
+        let distance_meters = json_data["Total Distance"];
+        append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, distance_meters));
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
         append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, json_data["Average Speed"]));
 
@@ -416,8 +435,6 @@
         append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
         append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        let fill = true;
-
         draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", true, fill);
         draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", true, fill);
         draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", true, fill);
@@ -451,11 +468,10 @@
             draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", true, fill);
         }
 
-        clear_map();
-        draw_map(latitudes, longitudes);
+        draw_map(latitudes, longitudes, map_color, distance_meters);
 
         // Show the export section
-        section = document.getElementById('export');
+        let section = document.getElementById('export');
         section.style = "display: block;";
     }
 
@@ -542,8 +558,8 @@
 <section class="settings">
     <div>
         <h1>Select a File</h1>
-        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx,.fit" name="file_picker" single>
-        <button type="button" class="modern_button" onclick="return analyze_selected_files()">Analyze File</button><br>
+        <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx,.fit" name="file_picker" multiple>
+        <button type="button" class="modern_button" onclick="return analyze_selected_files()">Analyze File(s)</button><br>
         <select id="units" onchange="on_units_changed()">
             <option value="Metric">Metric</option>
             <option value="Standard">Standard</option>
@@ -574,12 +590,7 @@
     </div>
 </section>
 
-<section class="analysis" id="analysis" style="display: none;">
-    <div>
-        <h1>Analysis</h1>
-        <table id="analysis_table">
-        </table>
-    </div>
+<section class="analysis" id="analysis_section">
 </section>
 
 <section class="charts">
@@ -591,6 +602,8 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js" integrity="sha256-/SzuLhIQJr2lXrXlvjX3aLOEEt2UkhqSc8mmYblwqwc=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="../js/OpenStreetMap.js"></script>
 <script type="text/javascript">
+    let map = new OpenLayers.Map();
+
     /// @function clear_map
     function clear_map()
     {
@@ -598,36 +611,37 @@
     }
 
     /// @function draw_map
-    function draw_map(latitudes, longitudes)
+    function draw_map(latitudes, longitudes, color, extent_meters)
     {
-        var map_div = document.getElementById('map_canvas');
+        let map_div = document.getElementById('map_canvas');
         map_div.style = "display: block;";
 
-        var projection = new OpenLayers.Projection("EPSG:4326");
-        var map = new OpenLayers.Map();
+        let projection = new OpenLayers.Projection("EPSG:4326");
 
-        var osmLayer = new OpenLayers.Layer.OSM("OSM");
-        map.addLayer(osmLayer);
+        let osm_layer = new OpenLayers.Layer.OSM("OSM");
+        map.addLayer(osm_layer);
 
-        var center = new OpenLayers.LonLat(-71.6, -33.7).transform(projection, map.getProjectionObject());
-        map.setCenter(center,4); 
+        let center = new OpenLayers.LonLat(-71.6, -33.7).transform(projection, map.getProjectionObject());
+        map.setCenter(center, 4); 
 
-        var points = new Array();
+        let points = new Array();
         latitudes.map(function(e, i) {
             points.push(new OpenLayers.Geometry.Point(longitudes[i], e));
         });
 
-        var my_line = new OpenLayers.Geometry.LineString(points).transform(projection, map.getProjectionObject());
-        var my_line_style = { strokeColor: "red", strokeWidth: 3, strokeOpacity: 0.75 };
-        var my_feature = new OpenLayers.Feature.Vector(my_line, {}, my_line_style);
-        var my_vector = new OpenLayers.Layer.Vector("line test");
+        let my_line = new OpenLayers.Geometry.LineString(points).transform(projection, map.getProjectionObject());
+        let my_line_style = { strokeColor: color, strokeWidth: 3, strokeOpacity: 0.75 };
+        let my_feature = new OpenLayers.Feature.Vector(my_line, {}, my_line_style);
+        let my_vector = new OpenLayers.Layer.Vector("line test");
 
         my_vector.addFeatures([my_feature]);
         map.addLayers([my_vector]);
 
         let lon = longitudes[0];
         let lat = latitudes[0];
-        let zoom = 13;
+        let zoom = 17.0 - (extent_meters / 10000.0);
+        if (zoom < 10.0)
+            zoom = 10.0;
         let lon_lat = new OpenLayers.LonLat(lon, lat).transform(projection, map.getProjectionObject());
 
         map.setCenter(lon_lat, zoom);
@@ -935,6 +949,8 @@
     /// @function analyze_selected_files
     function analyze_selected_files()
     {
+        let file_num = 0;
+
         if (selected_file_list.length > 0)
         {
             for (var i = 0; i < selected_file_list.length; i++)
@@ -949,7 +965,7 @@
                 };
                 reader.onload = function(e)
                 {
-                    window.analyze_file_data(selected_file_obj.name, ext, reader.result);
+                    window.analyze_file_data(selected_file_obj.name, ext, reader.result, ++file_num, selected_file_list.length);
                 }
 
                 if ((ext.toLowerCase() == "gpx") || (ext.toLowerCase() == "tcx"))
