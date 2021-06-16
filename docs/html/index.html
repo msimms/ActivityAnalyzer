@@ -435,37 +435,37 @@
         append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
         append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", true, fill);
-        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", true, fill);
-        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", true, fill);
+        draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill);
+        draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill);
+        draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", fill);
 
         if (power.length > 0)
         {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", true, fill);
+            draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "ForestGreen", fill);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", true, fill);
+            draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "ForestGreen", fill);
         }
         if (hr.length > 0)
         {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", true, fill);
+            draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", fill);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", true, fill);
+            draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "PeachPuff", fill);
         }
 
         draw_map(latitudes, longitudes, map_color, distance_meters);
@@ -664,7 +664,7 @@
     }
 
     /// @function draw_graph
-    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, show_ticks, fill)
+    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, fill)
     {
         if (data.length <= 1)
         {
@@ -942,7 +942,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray", true, true);
+            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray", true);
         }
     }
 
