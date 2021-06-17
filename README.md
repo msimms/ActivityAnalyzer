@@ -17,6 +17,7 @@ An example implementation is available at https://activity-analyzer.app.
 
 # Version History
 
+* 1.2 - Initial support for file comparison.
 * 1.1 - Added export and split capabilities.
 * 1.0 - Fixed FIT file altitude readings and added first cut at power interval analysis.
 * 0.9 - Added FIT file support.
