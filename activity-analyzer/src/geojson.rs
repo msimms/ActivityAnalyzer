@@ -42,17 +42,22 @@ pub struct Features {
 }
 
 pub struct GeoJson {
-    pub features: Option<Features>,
+    pub world_features: Option<Features>,
+    pub us_features: Option<Features>,
 }
 
 impl GeoJson {
     pub fn new() -> Self {
-        let reader = GeoJson{ features: None };
+        let reader = GeoJson{ world_features: None, us_features: None };
         reader
     }
 
-    pub fn load(&mut self, s: &str) {
-        self.features = serde_json::from_str(s).unwrap();
+    pub fn load_world_data(&mut self, s: &str) {
+        self.world_features = serde_json::from_str(s).unwrap();
+    }
+
+    pub fn load_us_data(&mut self, s: &str) {
+        self.us_features = serde_json::from_str(s).unwrap();
     }
 
     /// Returns a dictionary that maps the name of the geo region to it's coordinates, as an array (or array of arrays) of lat/lon.

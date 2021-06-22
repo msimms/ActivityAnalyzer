@@ -26,6 +26,9 @@ use std::ffi::c_void;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+// Holds GeoJson data so lat/lon can be converted to a political description.
+static mut GEO: geojson::GeoJson = geojson::GeoJson{ world_features: None, us_features: None };
+
 
 pub struct ContextList {
     pub contexts: Vec<analyzer_context::AnalyzerContext>,
@@ -51,6 +54,24 @@ extern {
 #[wasm_bindgen]
 pub fn greet() {
     alert("Copyright (c) 2021 Michael J. Simms. All rights reserved.");
+}
+
+#[wasm_bindgen]
+pub fn set_world_data(s: &str) {
+    utils::set_panic_hook();
+
+    unsafe {
+        GEO.load_world_data(s);
+    }
+}
+
+#[wasm_bindgen]
+pub fn set_us_data(s: &str) {
+    utils::set_panic_hook();
+
+    unsafe {
+        GEO.load_us_data(s);
+    }
 }
 
 fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
