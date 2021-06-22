@@ -10,7 +10,7 @@ mod utils;
 mod analyzer_context;
 mod cadence_analyzer;
 mod exporter;
-mod geo_json_reader;
+mod geojson;
 mod gpx_writer;
 mod location_analyzer;
 mod power_analyzer;
