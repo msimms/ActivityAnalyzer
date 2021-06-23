@@ -4,6 +4,7 @@ use crate::location_analyzer::LocationAnalyzer;
 use crate::heart_rate_analyzer::HeartRateAnalyzer;
 use crate::cadence_analyzer::CadenceAnalyzer;
 use crate::power_analyzer::PowerAnalyzer;
+use crate::event::Event;
 
 /// Context structure. An instance of this will be passed to the parser and ultimately to the callback function so we can use it for whatever.
 pub struct AnalyzerContext {
@@ -12,6 +13,7 @@ pub struct AnalyzerContext {
     pub hr_analyzer: HeartRateAnalyzer,
     pub cadence_analyzer: CadenceAnalyzer,
     pub power_analyzer: PowerAnalyzer,
+    pub events: Vec<Event>,
 }
 
 impl AnalyzerContext {
@@ -21,7 +23,8 @@ impl AnalyzerContext {
             location_analyzer: LocationAnalyzer::new(),
             hr_analyzer: HeartRateAnalyzer::new(),
             cadence_analyzer: CadenceAnalyzer::new(),
-            power_analyzer: PowerAnalyzer::new() };
+            power_analyzer: PowerAnalyzer::new(),
+            events: Vec::new() };
         context
     }
 }

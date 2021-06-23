@@ -10,6 +10,7 @@ mod utils;
 mod analyzer_context;
 mod cadence_analyzer;
 mod exporter;
+mod event;
 mod geojson;
 mod gpx_route_reader;
 mod gpx_writer;
@@ -355,6 +356,7 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
     else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
         let msg = fit_file::fit_file::FitRecordMsg::new(fields);
         let timestamp_ms = timestamp as u64 * 1000;
+
         let mut latitude = 0.0;
         let mut longitude = 0.0;
         let mut altitude = 0.0;
@@ -446,6 +448,25 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         if valid_location {
             callback_context.location_analyzer.append_location(timestamp_ms, latitude, longitude, altitude);
             callback_context.location_analyzer.update_speeds();
+        }
+    }
+    else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_EVENT {
+        let msg = fit_file::fit_file::FitEventMsg::new(fields);
+        let timestamp_ms = timestamp as u64 * 1000;
+
+        match msg.event {
+            Some(event_num) => {
+                // Front gear change.
+                if event_num == 42 || event_num == 43 {
+                    let event = event::Event{ timestamp_ms: timestamp_ms, event_type: event_num, event_data: 0 };
+                    callback_context.events.push(event);
+                }
+                // Radar threat alert.
+                else if event_num == 75 {
+                }
+            }
+            None => {
+            }
         }
     }
 }
