@@ -11,6 +11,7 @@ mod analyzer_context;
 mod cadence_analyzer;
 mod exporter;
 mod geojson;
+mod gpx_route_reader;
 mod gpx_writer;
 mod location_analyzer;
 mod power_analyzer;
@@ -118,6 +119,42 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
     analysis_report_str
 }
 
+fn analyze_gpx_route(s: &str) -> String {
+    let mut context = analyzer_context::AnalyzerContext::new();
+    let mut route_data = BufReader::new(s.as_bytes());
+    let route_result = gpx_route_reader::read(&mut route_data);
+
+    match route_result {
+        Err(_e) => {
+            alert("Error parsing the GPX file.");
+        }
+        Ok(gpx) => {
+            // Iterate through the tracks.
+            for track in gpx.tracks {
+
+                // Iterate through the track segments.
+                for trackseg in track.segments {
+                    let mut fake_time = 0;
+
+                    // Iterate through the points.
+                    for point in trackseg.points {
+                        context.location_analyzer.append_location(fake_time, point.lat, point.lon, point.ele);
+                        fake_time = fake_time + 1;
+                    }
+                }
+            }
+
+            // For calculations that only make sense once all the points have been added.
+            context.location_analyzer.analyze();
+        }
+    }
+
+    // Copy items to the final report.
+    let analysis_report_str = make_final_report(&context);
+
+    analysis_report_str
+}
+
 #[wasm_bindgen]
 pub fn analyze_gpx(s: &str) -> String {
     utils::set_panic_hook();
@@ -129,7 +166,9 @@ pub fn analyze_gpx(s: &str) -> String {
 
     match res {
         Err(_e) => {
-            alert("Error parsing the GPX file.");
+            // The GPX parser being used sometimes fails on very simple GPX routes,
+            // so try again by running it through our own simple GPX route parser before totally giving up.
+            return analyze_gpx_route(s);
         }
         Ok(gpx) => {
             // Iterate through the tracks.
@@ -146,7 +185,11 @@ pub fn analyze_gpx(s: &str) -> String {
 
                     // Iterate through the points.
                     for point in trackseg.points {
-                        let time = point.time.unwrap().timestamp();
+                        let mut time = 0;
+                        match point.time {
+                            Some(temp_time) => { time = temp_time.timestamp(); }
+                            _ => { time = time + 1; }, // data is from a route so just make up a time that is greater than the previous one.
+                        }
                         let lat = point.point().y();
                         let lon = point.point().x();
                         let alt = point.elevation.unwrap();

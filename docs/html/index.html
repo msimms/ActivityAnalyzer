@@ -372,7 +372,8 @@
         let distance_meters = json_data["Total Distance"];
         append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, distance_meters));
         append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
-        append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, json_data["Average Speed"]));
+        if (json_data["Average Speed"] > 0)
+            append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, json_data["Average Speed"]));
 
         let bests = json_data["Bests"];
 
@@ -413,8 +414,10 @@
         if (json_data["Average Heart Rate"] > 0)
             append_to_table(analysis_table, "Average Heart Rate", json_data["Average Heart Rate"].toFixed(2).toString() + " bpm");
 
-        draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "LightSteelBlue");
-        draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Tomato");
+        if (bests["Best Mile"] > 0)
+            draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "LightSteelBlue");
+        if (bests["Best 1K"] > 0)
+            draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Tomato");
 
         let times = json_data["Times"];
         let speed_times = json_data["Speed Times"];
@@ -442,8 +445,10 @@
         let [ time_pace_data, min_pace ] = convert_speed_graph_to_pace_graph(units, time_speed_data);
         let gap_data = compute_grade_adjusted_pace(gradients, time_pace_data);
 
-        append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
-        append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
+        if (max_speed > 0)
+            append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
+        if (min_pace > 0)
+            append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
         speed_graph = draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill, speed_graph);
         pace_graph = draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill, pace_graph);
