@@ -637,9 +637,6 @@
         let osm_layer = new OpenLayers.Layer.OSM("OSM");
         map.addLayer(osm_layer);
 
-        let center = new OpenLayers.LonLat(-71.6, -33.7).transform(projection, map.getProjectionObject());
-        map.setCenter(center, 4); 
-
         let points = new Array();
         latitudes.map(function(e, i) {
             points.push(new OpenLayers.Geometry.Point(longitudes[i], e));
