@@ -434,6 +434,7 @@
         let longitudes = json_data["Longitude Readings"];
         let intervals = json_data["Intervals"];
         let power_intervals = json_data["Power Intervals"];
+        let events = json_data["Events"];
 
         draw_intervals_graph(start_time_ms, end_time_ms, intervals, "Intervals");
         draw_intervals_graph(start_time_ms, end_time_ms, power_intervals, "Power Intervals");

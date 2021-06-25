@@ -114,7 +114,8 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
         "Maximum Heart Rate": context.hr_analyzer.max_hr,
         "Average Heart Rate": context.hr_analyzer.compute_average(),
         "Heart Rate Readings": context.hr_analyzer.readings.clone(),
-        "Heart Rate Times": context.hr_analyzer.time_readings.clone()
+        "Heart Rate Times": context.hr_analyzer.time_readings.clone(),
+        "Events": context.events.clone()
     }).to_string();
 
     analysis_report_str
@@ -360,36 +361,30 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         let mut latitude = 0.0;
         let mut longitude = 0.0;
         let mut altitude = 0.0;
-        let mut valid_location = true;
+        let mut valid_location = false;
 
         match msg.position_lat {
-            Some(res) => {
+            Some(lat_semicircles) => {
 
                 // Make sure we have a valid reading.
-                if res != 0x7FFFFFFF {
-                    latitude = fit_file::fit_file::semicircles_to_degrees(res);
-                }
-                else {
-                    valid_location = false;
+                if lat_semicircles != 0x7FFFFFFF && lat_semicircles != 0 {
+                    latitude = fit_file::fit_file::semicircles_to_degrees(lat_semicircles);
+
+                    match msg.position_long {
+                        Some(lon_semicircles) => {
+
+                            // Make sure we have a valid reading.
+                            if lon_semicircles != 0x7FFFFFFF && lon_semicircles != 0 {
+                                longitude = fit_file::fit_file::semicircles_to_degrees(lon_semicircles);
+                                valid_location = true;
+                            }
+                        }
+                        None => {
+                        }
+                    }
                 }
             }
             None => {
-                valid_location = false;
-            }
-        }
-        match msg.position_long {
-            Some(res) => {
-
-                // Make sure we have a valid reading.
-                if res != 0x7FFFFFFF {
-                    longitude = fit_file::fit_file::semicircles_to_degrees(res);
-                }
-                else {
-                    valid_location = false;
-                }
-            }
-            None => {
-                valid_location = false;
             }
         }
 
@@ -456,7 +451,7 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
 
         match msg.event {
             Some(event_num) => {
-                // Front gear change.
+                // Front and rear gear change.
                 if event_num == 42 || event_num == 43 {
                     let event = event::Event{ timestamp_ms: timestamp_ms, event_type: event_num, event_data: 0 };
                     callback_context.events.push(event);
