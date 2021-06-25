@@ -483,8 +483,22 @@
             });
             altitude_graph = draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "ForestGreen", fill, altitude_graph);
         }
+        if (events.length > 0 && times.length > 0)
+        {
+            let new_events = events.map(function(event, i) {
+                let timestamp = event["timestamp_ms"];
+                let time_index = times.findIndex(function(val) { return val == timestamp; }, timestamp);
 
-        draw_map(latitudes, longitudes, map_color, distance_meters);
+                if (time_index != -1)
+                {
+                    return [ latitudes[time_index], longitudes[time_index], event["event_type"] ];
+                }
+                return [ latitudes[0], longitudes[0], event["event_type"] ];
+            });
+            events = new_events;
+        }
+
+        draw_map(latitudes, longitudes, map_color, distance_meters, events);
 
         // Show the export section
         let section = document.getElementById('export');
@@ -628,15 +642,49 @@
     }
 
     /// @function draw_map
-    function draw_map(latitudes, longitudes, color, extent_meters)
+    function draw_map(latitudes, longitudes, line_color, extent_meters, events)
     {
         let map_div = document.getElementById('map_canvas');
         map_div.style = "display: block;";
 
-        let projection = new OpenLayers.Projection("EPSG:4326");
-
         let osm_layer = new OpenLayers.Layer.OSM("OSM");
         map.addLayer(osm_layer);
+
+        let projection = new OpenLayers.Projection("EPSG:4326");
+        let project_to = map.getProjectionObject(); // The map projection (Spherical Mercator)
+
+        if (events.length > 0)
+        {
+            let marker_color_list = ["red", "black"];
+            let marker_layer_name = [events[0][2]];
+            let marker_style_array = [new OpenLayers.StyleMap({ pointRadius: 6, fillColor: marker_color_list[0], fillOpacity: 0.5 })];
+            let marker_vector_layer = [new OpenLayers.Layer.Vector(marker_layer_name[0], { styleMap: marker_style_array[0] })];
+
+            let j = 0;
+            for (var i = 1; i < events.length; i++)
+            {
+                if (!marker_layer_name.includes(events[i][2]))
+                {
+                    j++;
+                    marker_layer_name.push(events[i][2]); // If new layer name found it is created
+                    marker_style_array.push(new OpenLayers.StyleMap({ pointRadius: 6, fillColor: marker_color_list[j % marker_color_list.length], fillOpacity: 0.5 }));
+                    marker_vector_layer.push(new OpenLayers.Layer.Vector(marker_layer_name[j], { styleMap: marker_style_array[j] }));
+                }
+            }
+
+            for (var i = 0; i < events.length; i++)
+            {
+                let marker_lat = events[i][0];
+                let marker_lon = events[i][1];
+                let feature = new OpenLayers.Feature.Vector(
+                    new OpenLayers.Geometry.Point(marker_lon, marker_lat).transform(projection, project_to), { description: "marker number " + i });
+                marker_vector_layer[marker_layer_name.indexOf(events[i][2])].addFeatures(feature);
+            }
+
+            for (var i = 0; i < marker_layer_name.length; i++) {
+                map.addLayer(marker_vector_layer[i]);
+            }
+        }
 
         let points = new Array();
         latitudes.map(function(e, i) {
@@ -644,7 +692,7 @@
         });
 
         let my_line = new OpenLayers.Geometry.LineString(points).transform(projection, map.getProjectionObject());
-        let my_line_style = { strokeColor: color, strokeWidth: 3, strokeOpacity: 0.75 };
+        let my_line_style = { strokeColor: line_color, strokeWidth: 3, strokeOpacity: 0.75 };
         let my_feature = new OpenLayers.Feature.Vector(my_line, {}, my_line_style);
         let my_vector = new OpenLayers.Layer.Vector("line test");
 
@@ -653,11 +701,11 @@
 
         let lon = longitudes[0];
         let lat = latitudes[0];
+        let lon_lat = new OpenLayers.LonLat(lon, lat).transform(projection, map.getProjectionObject());
         let zoom = 17.0 - (extent_meters / 10000.0);
+
         if (zoom < 10.0)
             zoom = 10.0;
-        let lon_lat = new OpenLayers.LonLat(lon, lat).transform(projection, map.getProjectionObject());
-
         map.setCenter(lon_lat, zoom);
         map.render(map_div);
     }

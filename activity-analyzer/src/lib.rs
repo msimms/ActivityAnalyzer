@@ -367,14 +367,14 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
             Some(lat_semicircles) => {
 
                 // Make sure we have a valid reading.
-                if lat_semicircles != 0x7FFFFFFF && lat_semicircles != 0 {
+                if lat_semicircles != 0x7FFFFFFF {
                     latitude = fit_file::fit_file::semicircles_to_degrees(lat_semicircles);
 
                     match msg.position_long {
                         Some(lon_semicircles) => {
 
                             // Make sure we have a valid reading.
-                            if lon_semicircles != 0x7FFFFFFF && lon_semicircles != 0 {
+                            if lon_semicircles != 0x7FFFFFFF {
                                 longitude = fit_file::fit_file::semicircles_to_degrees(lon_semicircles);
                                 valid_location = true;
                             }
