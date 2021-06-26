@@ -824,7 +824,7 @@
         svg.append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 0 - margin.left)
-            .attr("x",0 - (height / 2))
+            .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
             .text(title);  
@@ -890,13 +890,13 @@
             }
 
             // Update axis and line position.
-            x_axis.transition().duration(1000).call(d3.axisBottom(x))
+            x_axis.transition().duration(1000).call(d3.axisBottom(x));
             line.select('.line')
                 .transition()
                 .duration(1000)
                 .attr("d", d3.line()
                     .x(function(d) { return x(d.date) })
-                    .y(function(d) { return y(d.value) }))
+                    .y(function(d) { return y(d.value) }));
         }
 
         // If user double click, reinitialize the chart.
@@ -917,7 +917,7 @@
     /// @function draw_bar_chart
     function draw_bar_chart(data, title, color)
     {
-        let xVals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
+        let x_vals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
 
         let tooltip = d3.select("#charts")
             .append("div")
@@ -941,7 +941,7 @@
                 tooltip
                     .html("<b>" + convert_seconds_to_hours_mins_secs(data[x]) + "</b>")
                     .style("top", (event.pageY) + "px")
-                    .style("left",(event.pageX) + "px")
+                    .style("left", (event.pageX) + "px")
             }
         }
         let mouseleave = function() {
@@ -969,8 +969,8 @@
 
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 0-margin.left)
-            .attr("x",0 - (height / 2))
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
             .text(title);
@@ -981,6 +981,9 @@
             .attr("transform", "rotate(-90)")
             .attr("dy", ".71em")
             .style("text-anchor", "end");
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
         svg.selectAll("bar")
             .data(data)
             .enter().append("rect")
