@@ -501,8 +501,13 @@
         draw_map(latitudes, longitudes, map_color, distance_meters, events);
 
         // Show the export section
-        let section = document.getElementById('export');
+        let section = document.getElementById("export");
         section.style = "display: block;";
+        if (total_num_files > 1)
+        {
+            let export_button = document.getElementById("export_button");
+            export_button.textContent = "Merge";
+        }
     }
 
     function create_download_link(data, filename, type)
@@ -553,32 +558,41 @@
 
     window.export_to_file = function export_to_file()
     {
-        let export_format = document.getElementById('export_format').value.toLowerCase();
-        let split_offset_secs = 0;
+        let export_button = document.getElementById("export_button");
 
-        if (document.getElementById('export_style').value == "MultipleFiles")
+        if (export_button.textContent == "Merge")
         {
-            let split_time_value = document.getElementById('split_time').value;
-
-            if (isNumber(split_time_value))
-            {
-                split_offset_secs = Number(split_time_value);
-            }
-        }
-
-        if (split_offset_secs > 0)
-        {
-            let data1 = export_data(export_format, 0, split_offset_secs);
-            let data2 = export_data(export_format, split_offset_secs, 0);
-
-            create_download_link(data1, "file1." + export_format, "text/plain;charset=utf-8");
-            create_download_link(data2, "file2." + export_format, "text/plain;charset=utf-8");
+            alert("Merge is not currently implemented.");
         }
         else
         {
-            let data = export_data(export_format, 0, 0);
+            let export_format = document.getElementById('export_format').value.toLowerCase();
+            let split_offset_secs = 0;
 
-            create_local_file(data, "file." + export_format, "text/plain;charset=utf-8");
+            if (document.getElementById('export_style').value == "MultipleFiles")
+            {
+                let split_time_value = document.getElementById('split_time').value;
+
+                if (isNumber(split_time_value))
+                {
+                    split_offset_secs = Number(split_time_value);
+                }
+            }
+
+            if (split_offset_secs > 0)
+            {
+                let data1 = export_data(export_format, 0, split_offset_secs);
+                let data2 = export_data(export_format, split_offset_secs, 0);
+
+                create_download_link(data1, "file1." + export_format, "text/plain;charset=utf-8");
+                create_download_link(data2, "file2." + export_format, "text/plain;charset=utf-8");
+            }
+            else
+            {
+                let data = export_data(export_format, 0, 0);
+
+                create_local_file(data, "file." + export_format, "text/plain;charset=utf-8");
+            }
         }
     }
 
@@ -613,7 +627,7 @@
             Split at <input type="number" id="split_time" name="split_time" min="1"> seconds from the start of the activity
             </p>
         </div>
-        <button type="button" class="modern_button" onclick="return window.export_to_file()">Export</button>
+        <button id="export_button" type="button" class="modern_button" onclick="return window.export_to_file()">Export</button>
         <div id="downloads">
             <p></p>
         </div>
