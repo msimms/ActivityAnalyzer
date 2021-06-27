@@ -571,14 +571,14 @@
             let data1 = export_data(export_format, 0, split_offset_secs);
             let data2 = export_data(export_format, split_offset_secs, 0);
 
-            create_download_link(data1, "foo1." + export_format, "text/plain;charset=utf-8");
-            create_download_link(data2, "foo2." + export_format, "text/plain;charset=utf-8");
+            create_download_link(data1, "file1." + export_format, "text/plain;charset=utf-8");
+            create_download_link(data2, "file2." + export_format, "text/plain;charset=utf-8");
         }
         else
         {
             let data = export_data(export_format, 0, 0);
 
-            create_local_file(data, "foo." + export_format, "text/plain;charset=utf-8");
+            create_local_file(data, "file." + export_format, "text/plain;charset=utf-8");
         }
     }
 
