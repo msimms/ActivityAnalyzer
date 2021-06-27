@@ -284,6 +284,8 @@
     let cadence_graph = null;
     let hr_graph = null;
     let altitude_graph = null;
+    let graph_start_time_ms = null;
+    let graph_end_time_ms = null;
 
     window.clear_graph_data = function clear_graph_data()
     {
@@ -365,6 +367,11 @@
         let start_time_ms = json_data["Start Time (ms)"];
         let end_time_ms = json_data["End Time (ms)"];
 
+        if (graph_start_time_ms == null || start_time_ms < graph_start_time_ms)
+            graph_start_time_ms = start_time_ms
+        if (graph_end_time_ms == null || end_time_ms > graph_end_time_ms)
+            graph_end_time_ms = end_time_ms
+
         append_to_table(analysis_table, "Activity Type", json_data["Activity Type"]);
         append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
         append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(end_time_ms));
@@ -436,8 +443,8 @@
         let power_intervals = json_data["Power Intervals"];
         let events = json_data["Events"];
 
-        draw_intervals_graph(start_time_ms, end_time_ms, intervals, "Intervals");
-        draw_intervals_graph(start_time_ms, end_time_ms, power_intervals, "Power Intervals");
+        draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, intervals, "Intervals");
+        draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, power_intervals, "Power Intervals");
 
         let time_speed_data = speed_times.map(function(x, i) {
             return {"date": new Date(x), "value": speeds[i]};
@@ -451,37 +458,37 @@
         if (min_pace > 0)
             append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        speed_graph = draw_graph(start_time_ms, end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill, speed_graph);
-        pace_graph = draw_graph(start_time_ms, end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill, pace_graph);
-        gap_pace_graph = draw_graph(start_time_ms, end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", fill, gap_pace_graph);
+        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill, speed_graph);
+        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill, pace_graph);
+        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", fill, gap_pace_graph);
 
         if (power.length > 0)
         {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            power_graph = draw_graph(start_time_ms, end_time_ms, time_power_data, "Power", "Watts", "Navy", fill, power_graph);
+            power_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_power_data, "Power", "Watts", "Navy", fill, power_graph);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            cadence_graph = draw_graph(start_time_ms, end_time_ms, time_cadence_data, "Cadence", "rpm", "Tan", fill, cadence_graph);
+            cadence_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_cadence_data, "Cadence", "rpm", "Tan", fill, cadence_graph);
         }
         if (hr.length > 0)
         {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            hr_graph = draw_graph(start_time_ms, end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", fill, hr_graph);
+            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", fill, hr_graph);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            altitude_graph = draw_graph(start_time_ms, end_time_ms, time_altitude_data, "Altitude", "meters", "ForestGreen", fill, altitude_graph);
+            altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_altitude_data, "Altitude", "meters", "ForestGreen", fill, altitude_graph);
         }
         if (events.length > 0 && times.length > 0)
         {
@@ -749,7 +756,7 @@
 
     /// @function draw_graph
     // if existing_graph is provided, a new line will be appended to that graph.
-    function draw_graph(start_time_ms, end_time_ms, data, title, units, color, fill, existing_graph)
+    function draw_graph(graph_start_time_ms, graph_end_time_ms, data, title, units, color, fill, existing_graph)
     {
         if (data.length <= 1)
         {
@@ -757,17 +764,17 @@
         }
 
         // To make all the graphs line up, make sure they have the same start and end time
-        if (start_time_ms > 0)
+        if (graph_start_time_ms > 0)
         {
             graph_node = {};
-            graph_node["date"] = new Date(start_time_ms);
+            graph_node["date"] = new Date(graph_start_time_ms);
             graph_node["value"] = 0.0;
             data.unshift(graph_node);
         }
-        if (end_time_ms > start_time_ms)
+        if (graph_end_time_ms > graph_start_time_ms)
         {
             graph_node = {};
-            graph_node["date"] = new Date(end_time_ms);
+            graph_node["date"] = new Date(graph_end_time_ms);
             graph_node["value"] = 0.0;
             data.push(graph_node);
         }
@@ -931,8 +938,6 @@
     /// @function draw_bar_chart
     function draw_bar_chart(data, title, color)
     {
-        let x_vals = Array.apply(null, Array(data.length)).map(function (x, i) { return i + 1; } );
-
         let tooltip = d3.select("#charts")
             .append("div")
                 .style("opacity", 0)
@@ -1009,7 +1014,7 @@
     }
 
     /// @function draw_intervals_graph
-    function draw_intervals_graph(start_time_ms, end_time_ms, interval_data, title)
+    function draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, interval_data, title)
     {
         interval_graph = [];
 
@@ -1039,7 +1044,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(start_time_ms, end_time_ms, interval_graph, title, "", "Gray", true, null);
+            draw_graph(graph_start_time_ms, end_time_ms, graph_end_time_ms, title, "", "Gray", true, null);
         }
     }
 
