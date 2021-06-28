@@ -286,6 +286,7 @@
     let altitude_graph = null;
     let graph_start_time_ms = null;
     let graph_end_time_ms = null;
+    let current_file_num = 0;
 
     window.clear_graph_data = function clear_graph_data()
     {
@@ -296,6 +297,9 @@
         cadence_graph = null;
         hr_graph = null;
         altitude_graph = null;
+        graph_start_time_ms = null;
+        graph_end_time_ms = null;
+        current_file_num = 0;
     }
 
     window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, total_num_files)
@@ -458,37 +462,45 @@
         if (min_pace > 0)
             append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
 
-        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, adjusted_time_speed_data, "Speed", speed_units, "DodgerBlue", fill, speed_graph);
-        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_pace_data, "Pace", pace_units, "SlateBlue", fill, pace_graph);
-        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, "SlateBlue", fill, gap_pace_graph);
+        let speed_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
+        let pace_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
+        let power_colors = [ "Navy", "Indigo" ];
+        let cadence_colors = [ "Tan", "DarkOrange" ];
+        let hr_colors = [ "FireBrick", "DeepPink" ];
+        let altitude_colors = [ "ForestGreen", "DarkSeaGreen" ];
+        let graph_color_index = current_file_num % speed_graph_colors.length;
+
+        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, adjusted_time_speed_data, "Speed", speed_units, speed_graph_colors[graph_color_index], fill, speed_graph);
+        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_pace_data, "Pace", pace_units, pace_graph_colors[graph_color_index], fill, pace_graph);
+        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, pace_graph_colors[graph_color_index], fill, gap_pace_graph);
 
         if (power.length > 0)
         {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            power_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_power_data, "Power", "Watts", "Navy", fill, power_graph);
+            power_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_power_data, "Power", "Watts", power_colors[graph_color_index], fill, power_graph);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            cadence_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_cadence_data, "Cadence", "rpm", "Tan", fill, cadence_graph);
+            cadence_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_cadence_data, "Cadence", "rpm", cadence_colors[graph_color_index], fill, cadence_graph);
         }
         if (hr.length > 0)
         {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_hr_data, "Heart Rate", "bpm", "FireBrick", fill, hr_graph);
+            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_hr_data, "Heart Rate", "bpm", hr_colors[graph_color_index], fill, hr_graph);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_altitude_data, "Altitude", "meters", "ForestGreen", fill, altitude_graph);
+            altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_altitude_data, "Altitude", "meters", altitude_colors[graph_color_index], fill, altitude_graph);
         }
         if (events.length > 0 && times.length > 0)
         {
@@ -515,6 +527,7 @@
             let export_button = document.getElementById("export_button");
             export_button.textContent = "Merge";
         }
+        current_file_num = current_file_num + 1;
     }
 
     function create_download_link(data, filename, type)
@@ -842,13 +855,18 @@
             let y_axis = svg.append("g")
                 .call(d3.axisLeft(y));
         }
+        else
+        {
+            let y_axis = svg.append("g")
+                .call(d3.axisRight(y));
+        }
         svg.append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 0 - margin.left)
             .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text(title);  
+            .text(title);
 
         // Add a clipPath: everything out of this area won't be drawn.
         let clip = svg.append("defs").append("svg:clipPath")
