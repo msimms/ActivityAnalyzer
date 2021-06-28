@@ -271,7 +271,7 @@
 
 <!-- Note the usage of `type=module` here as this is an ES6 module -->
 <script type="module">
-    import init, { greet, analyze_gpx, analyze_tcx, analyze_fit, export_data } from '../../activity-analyzer/pkg/activity_analyzer.js';
+    import init, { greet, analyze_gpx, analyze_tcx, analyze_fit, export_data, merge } from '../../activity-analyzer/pkg/activity_analyzer.js';
 
     async function run() {
         await init();
@@ -880,7 +880,7 @@
         // Add brushing.
         let brush = d3.brushX()                     // Add the brush feature using the d3.brush function
             .extent( [ [0,0], [ width, height ] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-            .on("end", updateChart)                 // Each time the brush selection changes, trigger the 'updateChart' function
+            .on("end", update_chart)                // Each time the brush selection changes, trigger the 'update_chart' function
 
         let line = svg.append('g')
             .attr("clip-path", "url(#clip)");
@@ -897,8 +897,7 @@
             .attr("stroke-width", 0.25)
             .attr("d", d3.line()
                 .x(function(d) { return x(d.date) })
-                .y(function(d) { return y(d.value) })
-            )
+                .y(function(d) { return y(d.value) }));
 
         // Add the brushing.
         line.append("g")
@@ -910,22 +909,22 @@
         function idled() { idleTimeout = null; }
 
         // A function that update the chart for given boundaries.
-        function updateChart() {
-
+        function update_chart()
+        {
             // What are the selected boundaries?
             extent = d3.event.selection;
 
             // If no selection, back to initial coordinate. Otherwise, update X axis domain.
-            if (!extent)
+            if (extent)
+            {
+                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
+                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
+            }
+            else
             {
                 if (!idleTimeout)
                     return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
                 x.domain([4,8])
-            }
-            else
-            {
-                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
-                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
             }
 
             // Update axis and line position.
@@ -945,9 +944,8 @@
             line.select('.line')
                 .transition()
                 .attr("d", d3.line()
-                .x(function(d) { return x(d.date) })
-                .y(function(d) { return y(d.value) })
-            )
+                    .x(function(d) { return x(d.date) })
+                    .y(function(d) { return y(d.value) }));
         });
 
         return svg;

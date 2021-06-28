@@ -15,6 +15,7 @@ mod geojson;
 mod gpx_route_reader;
 mod gpx_writer;
 mod location_analyzer;
+mod merge_tool;
 mod power_analyzer;
 mod heart_rate_analyzer;
 mod tcx_writer;
@@ -523,6 +524,25 @@ pub fn export_data(format: &str, split_start: u32, split_end: u32) -> String {
     }
 
     exported_data
+}
+
+#[wasm_bindgen]
+pub fn merge() -> String {
+    utils::set_panic_hook();
+
+    let mut merged_data = String::new();
+
+    unsafe {
+        if  CONTEXT_LIST.contexts.len() > 1 {
+            let merge_tool = merge_tool::MergeTool::new();
+        }
+        else
+        {
+            alert("Nothing to merge.");
+        }
+    }
+
+    merged_data
 }
 
 #[cfg(test)]
