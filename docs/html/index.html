@@ -263,6 +263,9 @@
             let cost = (155.4 * (Math.pow(gradient, 5))) - (30.4 * Math.pow(gradient, 4)) - (43.4 * Math.pow(gradient, 3)) - (46.3 * (gradient * gradient)) - (19.5 * gradient) + 3.6;
             let value = x.value + (x.value - 3.6) / 3.6;
 
+            if (value < 0.0)
+                value = 0.0;
+
             return {"date": new Date(x.date), "value": value};
         });
         return gap_list;
@@ -579,14 +582,16 @@
     window.export_to_file = function export_to_file()
     {
         let export_button = document.getElementById("export_button");
+        let export_format = document.getElementById('export_format').value.toLowerCase();
 
         if (export_button.textContent == "Merge")
         {
-            alert("Merge is not currently implemented.");
+            let data = merge(export_format);
+
+            create_local_file(data, "file." + export_format, "text/plain;charset=utf-8");
         }
         else
         {
-            let export_format = document.getElementById('export_format').value.toLowerCase();
             let split_offset_secs = 0;
 
             if (document.getElementById('export_style').value == "MultipleFiles")
@@ -848,7 +853,7 @@
 
         // Add Y axis
         let y = d3.scaleLinear()
-            .domain([ 0, d3.max(data, function(d) { return +d.value; }) ])
+            .domain([ d3.min(data, function(d) { return d.value; }), d3.max(data, function(d) { return d.value; }) ])
             .range([ height, 0 ]);
         if (existing_graph == null)
         {

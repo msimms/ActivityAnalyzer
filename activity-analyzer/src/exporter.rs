@@ -83,7 +83,7 @@ impl Exporter {
                         writer.start_track_point_extensions();
                         has_extensions = true;
                     }
-                    writer.store_power_in_watts(context.power_analyzer.power_readings[power_index] as u32);
+                    writer.store_power_in_watts(context.power_analyzer.readings[power_index] as u32);
                 }
 
                 if has_extensions {
@@ -166,7 +166,7 @@ impl Exporter {
                     writer.store_cadence_rpm(context.cadence_analyzer.readings[cad_index] as u8);
                 }
                 if num_power_readings > 0 && power_index < num_power_readings {
-                    writer.store_power_in_watts(context.power_analyzer.power_readings[power_index] as u32);
+                    writer.store_power_in_watts(context.power_analyzer.readings[power_index] as u32);
                 }
 
                 writer.end_trackpoint();

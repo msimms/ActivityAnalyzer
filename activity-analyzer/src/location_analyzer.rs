@@ -86,11 +86,11 @@ pub struct LocationAnalyzer {
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
+        let analyzer = LocationAnalyzer{ start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), lap_times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
             altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), max_altitude: 0.0, activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
-            geo_analyzer: super::geojson::GeoJson::new(), speed_window_size: 1, last_speed_buf_update_time: 0};
+            geo_analyzer: super::geojson::GeoJson::new(), speed_window_size: 1, last_speed_buf_update_time: 0 };
         analyzer
     }
 

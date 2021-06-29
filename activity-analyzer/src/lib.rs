@@ -105,7 +105,7 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
         "20 Minute Power": context.power_analyzer.get_best_power(power_analyzer::BEST_20_MIN_POWER),
         "1 Hour Power": context.power_analyzer.get_best_power(power_analyzer::BEST_1_HOUR_POWER),
         "Normalized Power": context.power_analyzer.np,
-        "Power Readings": context.power_analyzer.power_readings.clone(),
+        "Power Readings": context.power_analyzer.readings.clone(),
         "Power Times": context.power_analyzer.time_readings.clone(),
         "Power Intervals": context.power_analyzer.significant_intervals.clone(),
         "Maximum Cadence": context.cadence_analyzer.max_cadence,
@@ -527,7 +527,7 @@ pub fn export_data(format: &str, split_start: u32, split_end: u32) -> String {
 }
 
 #[wasm_bindgen]
-pub fn merge() -> String {
+pub fn merge(format: &str) -> String {
     utils::set_panic_hook();
 
     let mut merged_data = String::new();
@@ -535,6 +535,10 @@ pub fn merge() -> String {
     unsafe {
         if  CONTEXT_LIST.contexts.len() > 1 {
             let merge_tool = merge_tool::MergeTool::new();
+            let exporter = exporter::Exporter::new();
+            let merged_context = merge_tool.merge(&CONTEXT_LIST.contexts[0], &CONTEXT_LIST.contexts[1]);
+
+            merged_data = exporter.export(&merged_context, format, 0, 0);
         }
         else
         {

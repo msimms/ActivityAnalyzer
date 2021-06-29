@@ -24,7 +24,7 @@ impl PowerIntervalDescription {
 }
 
 pub struct PowerAnalyzer {
-    pub power_readings: Vec<f64>, // All the readings (power)
+    pub readings: Vec<f64>, // All the readings (power)
     pub time_readings: Vec<u64>, // All the readings (time)
     pub max_power: f64,
     pub avg_power: f64,
@@ -41,16 +41,16 @@ pub struct PowerAnalyzer {
 
 impl PowerAnalyzer {
     pub fn new() -> Self {
-        let analyzer = PowerAnalyzer{power_readings: Vec::new(), time_readings: Vec::new(), max_power: 0.0, avg_power: 0.0, np_buf: Vec::new(), np: 0.0, vi: 0.0,
-            current_30_sec_buf: Vec::new(), current_30_sec_buf_start_time: 0, bests: HashMap::new(), significant_intervals: Vec::new(), start_time_ms: 0, end_time_ms: 0};
+        let analyzer = PowerAnalyzer{ readings: Vec::new(), time_readings: Vec::new(), max_power: 0.0, avg_power: 0.0, np_buf: Vec::new(), np: 0.0, vi: 0.0,
+            current_30_sec_buf: Vec::new(), current_30_sec_buf_start_time: 0, bests: HashMap::new(), significant_intervals: Vec::new(), start_time_ms: 0, end_time_ms: 0 };
         analyzer
     }
 
     /// Computes the average value.
     pub fn compute_average(&self) -> f64 {
-        let count = self.power_readings.len();
+        let count = self.readings.len();
         if count > 0 {
-            let sum: f64 = Iterator::sum(self.power_readings.iter());
+            let sum: f64 = Iterator::sum(self.readings.iter());
             return f64::from(sum) / (count as f64);
         }
         0.0
@@ -82,7 +82,7 @@ impl PowerAnalyzer {
         }
         self.end_time_ms = date_time_ms;
         self.time_readings.push(date_time_ms);
-        self.power_readings.push(value);
+        self.readings.push(value);
 
         // Calculate the current activity duration.
         let duration_ms = self.end_time_ms - self.start_time_ms;
@@ -194,7 +194,7 @@ impl PowerAnalyzer {
             return result;
         }
 
-        let powers = &self.power_readings[start_index..end_index - 1];
+        let powers = &self.readings[start_index..end_index - 1];
         let avg_power = statistics::average_f64(&powers.to_vec());
         let desc = PowerIntervalDescription{start_time: start_time, end_time: end_time, avg_power: avg_power};
         let result: Option::<PowerIntervalDescription> = Some(desc);
@@ -205,17 +205,17 @@ impl PowerAnalyzer {
     /// Performs a k-means analysis on peaks extracted from the power data to look for intervals.
     fn search_for_intervals(&mut self) {
 
-        if self.power_readings.len() > 1 {
+        if self.readings.len() > 1 {
 
             // Compute the speed/pace variation. This will tell us how consistent the pace was.
-            let power_variance = statistics::variance_f64(&self.power_readings, self.avg_power);
+            let power_variance = statistics::variance_f64(&self.readings, self.avg_power);
 
             // Don't look for peaks unless the variance was high. Cutoff selected via experimentation.
             // Also, don't search if the feature has been disabled.
             if power_variance > 0.50 {
 
                 // Smooth the speed graph to take out some of the GPS jitter.
-                let smoothed_graph = signals::smooth(&self.power_readings, 4);
+                let smoothed_graph = signals::smooth(&self.readings, 4);
                 if smoothed_graph.len() > 1 {
 
                     // Find peaks in the speed graph. We're looking for intervals.
