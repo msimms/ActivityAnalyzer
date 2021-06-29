@@ -17,6 +17,7 @@ An example implementation is available at https://activity-analyzer.app.
 
 # Version History
 
+* 1.4 - Added first version of file merging.
 * 1.3 - Fixed issues with FIT files that have developer defined fields. Added ability to show gear shift data.
 * 1.2 - Initial support for file comparison.
 * 1.1 - Added export and split capabilities.
