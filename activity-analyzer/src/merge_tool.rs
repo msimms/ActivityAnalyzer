@@ -126,6 +126,65 @@ impl MergeTool {
         }
     }
 
+    fn merge_cadence(&self, context1: &AnalyzerContext, context2: &AnalyzerContext, merged_context: &mut AnalyzerContext) {
+        let data1 = &context1.cadence_analyzer;
+        let data2 = &context2.cadence_analyzer;
+
+        let num_points1 = data1.readings.len();
+        let num_points2 = data2.readings.len();
+
+        let mut point_index1 = 0;
+        let mut point_index2 = 0;
+
+        while point_index1 < num_points1 && point_index2 < num_points2 {
+            let ts1 = data1.time_readings[point_index1];
+            let ts2 = data2.time_readings[point_index2];
+
+            let time_diff: i64 = (ts1 - ts2) as i64;
+            let abs_time_diff = time_diff.abs();
+
+            let value1 = data1.readings[point_index1];
+            let value2 = data2.readings[point_index2];
+
+            // If the points are less than one second apart then average them together.
+            // Otherwise, use the earliest one.
+            if abs_time_diff < 1000 {
+                let new_ts = (ts1 + ts2) / 2;
+                let new_value = (value1 + value2) / 2.0;
+
+                merged_context.power_analyzer.append_sensor_value(new_ts, new_value);
+
+                point_index1 = point_index1 + 1;
+                point_index2 = point_index2 + 1;
+            }
+            else if ts1 < ts2 {
+                merged_context.power_analyzer.append_sensor_value(ts1, value1);
+                point_index1 = point_index1 + 1;
+            }
+            else
+            {
+                merged_context.power_analyzer.append_sensor_value(ts2, value2);
+                point_index2 = point_index2 + 1;
+            }
+        }
+
+        // Merge any leftover readings, as the files might not end at the same time.
+        while point_index1 < num_points1 {
+            let ts1 = data1.time_readings[point_index1];
+            let value1 = data1.readings[point_index1];
+
+            merged_context.power_analyzer.append_sensor_value(ts1, value1);
+            point_index1 = point_index1 + 1;
+        }
+        while point_index2 < num_points2 {
+            let ts2 = data1.time_readings[point_index2];
+            let value2 = data1.readings[point_index2];
+
+            merged_context.power_analyzer.append_sensor_value(ts2, value2);
+            point_index2 = point_index2 + 1;
+        }
+    }
+
     fn merge_power(&self, context1: &AnalyzerContext, context2: &AnalyzerContext, merged_context: &mut AnalyzerContext) {
         let data1 = &context1.power_analyzer;
         let data2 = &context2.power_analyzer;
@@ -190,6 +249,7 @@ impl MergeTool {
 
         self.merge_locations(context1, context2, &mut merged_context);
         self.merge_hr(context1, context2, &mut merged_context);
+        self.merge_cadence(context1, context2, &mut merged_context);
         self.merge_power(context1, context2, &mut merged_context);
 
         merged_context.location_analyzer.analyze();
