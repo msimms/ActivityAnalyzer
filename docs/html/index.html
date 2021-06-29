@@ -522,13 +522,15 @@
 
         draw_map(latitudes, longitudes, map_color, distance_meters, events);
 
-        // Show the export section
+        // Show the export section, which may be configured differently depending on whether or not we're analyzing multiple files.
         let section = document.getElementById("export");
         section.style = "display: block;";
         if (total_num_files > 1)
         {
             let export_button = document.getElementById("export_button");
             export_button.textContent = "Merge";
+            let export_style = document.getElementById("export_style");
+            export_style.style = "display: none;";
         }
         current_file_num = current_file_num + 1;
     }
