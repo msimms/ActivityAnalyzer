@@ -58,6 +58,14 @@ impl MergeTool {
                 point_index2 = point_index2 + 1;
             }
         }
+        while point_index1 < num_points1 {
+            merged_context.location_analyzer.append_location(loc_data1.times[point_index1], loc_data1.latitude_readings[point_index1], loc_data1.longitude_readings[point_index1], loc_data1.altitude_graph[point_index1]);
+            point_index1 = point_index1 + 1;
+        }
+        while point_index2 < num_points2 {
+            merged_context.location_analyzer.append_location(loc_data1.times[point_index2], loc_data2.latitude_readings[point_index2], loc_data2.longitude_readings[point_index2], loc_data2.altitude_graph[point_index2]);
+            point_index2 = point_index2 + 1;
+        }
     }
 
     fn merge_hr(&self, context1: &AnalyzerContext, context2: &AnalyzerContext, merged_context: &mut AnalyzerContext) {
@@ -99,6 +107,22 @@ impl MergeTool {
                 merged_context.hr_analyzer.append_sensor_value(ts2, value2);
                 point_index2 = point_index2 + 1;
             }
+        }
+
+        // Merge any leftover readings, as the files might not end at the same time.
+        while point_index1 < num_points1 {
+            let ts1 = data1.time_readings[point_index1];
+            let value1 = data1.readings[point_index1];
+
+            merged_context.hr_analyzer.append_sensor_value(ts1, value1);
+            point_index1 = point_index1 + 1;
+        }
+        while point_index2 < num_points2 {
+            let ts2 = data1.time_readings[point_index2];
+            let value2 = data1.readings[point_index2];
+
+            merged_context.hr_analyzer.append_sensor_value(ts2, value2);
+            point_index2 = point_index2 + 1;
         }
     }
 
@@ -142,6 +166,22 @@ impl MergeTool {
                 merged_context.power_analyzer.append_sensor_value(ts2, value2);
                 point_index2 = point_index2 + 1;
             }
+        }
+
+        // Merge any leftover readings, as the files might not end at the same time.
+        while point_index1 < num_points1 {
+            let ts1 = data1.time_readings[point_index1];
+            let value1 = data1.readings[point_index1];
+
+            merged_context.power_analyzer.append_sensor_value(ts1, value1);
+            point_index1 = point_index1 + 1;
+        }
+        while point_index2 < num_points2 {
+            let ts2 = data1.time_readings[point_index2];
+            let value2 = data1.readings[point_index2];
+
+            merged_context.power_analyzer.append_sensor_value(ts2, value2);
+            point_index2 = point_index2 + 1;
         }
     }
 
