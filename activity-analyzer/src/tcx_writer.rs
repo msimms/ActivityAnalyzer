@@ -106,8 +106,10 @@ impl TcxWriter {
 
     pub fn start_trackpoint_extensions(&mut self) {
         self.writer.start_element("Extensions");
+        self.writer.start_element("TPX");
     }
     pub fn end_trackpoint_extensions(&mut self) {
+        self.writer.end_element();
         self.writer.end_element();
     }
 

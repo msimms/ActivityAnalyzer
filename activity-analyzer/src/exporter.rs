@@ -166,7 +166,9 @@ impl Exporter {
                     writer.store_cadence_rpm(context.cadence_analyzer.readings[cad_index] as u8);
                 }
                 if num_power_readings > 0 && power_index < num_power_readings {
+                    writer.start_trackpoint_extensions();
                     writer.store_power_in_watts(context.power_analyzer.readings[power_index] as u32);
+                    writer.end_trackpoint_extensions();
                 }
 
                 writer.end_trackpoint();
