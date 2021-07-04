@@ -280,6 +280,7 @@
         await init();
     }
 
+    let reports = [];
     let speed_graph = null;
     let pace_graph = null;
     let gap_pace_graph = null;
@@ -291,48 +292,19 @@
     let graph_end_time_ms = null;
     let current_file_num = 0;
 
-    window.clear_graph_data = function clear_graph_data()
+    function find_graph_extents(json_data)
     {
-        speed_graph = null;
-        pace_graph = null;
-        gap_pace_graph = null;
-        power_graph = null;
-        cadence_graph = null;
-        hr_graph = null;
-        altitude_graph = null;
-        graph_start_time_ms = null;
-        graph_end_time_ms = null;
-        current_file_num = 0;
+        let start_time_ms = json_data["Start Time (ms)"];
+        let end_time_ms = json_data["End Time (ms)"];
+
+        if (graph_start_time_ms == null || start_time_ms < graph_start_time_ms)
+            graph_start_time_ms = start_time_ms
+        if (graph_end_time_ms == null || end_time_ms > graph_end_time_ms)
+            graph_end_time_ms = end_time_ms
     }
 
-    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, total_num_files)
+    function render(json_data, file_num, total_num_files)
     {
-        let report = "";
-
-        if (ext.toLowerCase() == "gpx")
-        {
-            report = analyze_gpx(blob);
-        }
-        else if (ext.toLowerCase() == "tcx")
-        {
-            report = analyze_tcx(blob);
-        }
-        else if (ext.toLowerCase() == "fit")
-        {
-            let raw = new Uint8Array(blob);
-            report = analyze_fit(raw);
-        }
-        else
-        {
-            alert("Unrecognized file extension. Must be tcx, gpx, or fit.");
-            return;
-        }
-
-        if (report.length == 0)
-        {
-            return;
-        }
-
         let fill = total_num_files == 1;
         let map_colors = ["red", "green", "blue"];
         let map_color = map_colors[(file_num - 1) % map_colors.length];
@@ -351,9 +323,6 @@
         analysis_div.appendChild(analysis_title);
         analysis_div.appendChild(analysis_table);
         analysis_section.appendChild(analysis_div);
-
-        // The data is returned as a JSON string.
-        let json_data = JSON.parse(report);
 
         // Which unit system are we using.
         let units = document.getElementById('units').value;
@@ -533,6 +502,74 @@
             export_style.style = "display: none;";
         }
         current_file_num = current_file_num + 1;
+    }
+
+    window.clear_graph_data = function clear_graph_data()
+    {
+        reports = [];
+        speed_graph = null;
+        pace_graph = null;
+        gap_pace_graph = null;
+        power_graph = null;
+        cadence_graph = null;
+        hr_graph = null;
+        altitude_graph = null;
+        graph_start_time_ms = null;
+        graph_end_time_ms = null;
+        current_file_num = 0;
+    }
+
+    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, num_files_selected)
+    {
+        let report = "";
+
+        if (ext.toLowerCase() == "gpx")
+        {
+            report = analyze_gpx(blob);
+        }
+        else if (ext.toLowerCase() == "tcx")
+        {
+            report = analyze_tcx(blob);
+        }
+        else if (ext.toLowerCase() == "fit")
+        {
+            let raw = new Uint8Array(blob);
+            report = analyze_fit(raw);
+        }
+        else
+        {
+            alert("Unrecognized file extension. Must be tcx, gpx, or fit.");
+            return;
+        }
+
+        if (report.length == 0)
+        {
+            return;
+        }
+
+        // The data is returned as a JSON string.
+        let json_data = JSON.parse(report);
+
+        // Add it to our collection of reports awaiting rendering.
+        reports.push(json_data);
+
+        // Once all the files have been processed then render them all at once.
+        // We need to do it like this so we can find the total extent (i.e. start time and end time)
+        // for the purpose of drawing the graphs correctly.
+        if (file_num == num_files_selected)
+        {
+            // Find the start and end time.
+            for (let i = 1; i <= reports.length; i++)
+            {
+                find_graph_extents(reports[i-1]);
+            }
+
+            // Render.
+            for (let i = 1; i <= reports.length; i++)
+            {
+                render(reports[i-1], i, num_files_selected);
+            }
+        }
     }
 
     function create_download_link(data, filename, type)
@@ -786,13 +823,29 @@
         // To make all the graphs line up, make sure they have the same start and end time
         if (graph_start_time_ms > 0)
         {
+            let first_point = data[0];
+
+            graph_node = {};
+            graph_node["date"] = new Date(first_point["date"] - 1);
+            graph_node["value"] = 0.0;
+            data.unshift(graph_node);
+
             graph_node = {};
             graph_node["date"] = new Date(graph_start_time_ms);
             graph_node["value"] = 0.0;
             data.unshift(graph_node);
         }
-        if (graph_end_time_ms > graph_start_time_ms)
+
+        let last_point = data[data.length - 1];
+        let last_ts = last_point["date"].getTime();
+
+        if (graph_end_time_ms >= last_ts)
         {
+            graph_node = {};
+            graph_node["date"] = new Date(last_ts + 1);
+            graph_node["value"] = 0.0;
+            data.push(graph_node);
+
             graph_node = {};
             graph_node["date"] = new Date(graph_end_time_ms);
             graph_node["value"] = 0.0;
