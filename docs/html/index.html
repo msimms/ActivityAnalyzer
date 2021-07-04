@@ -281,6 +281,8 @@
     }
 
     let reports = [];
+    let current_file_num = 0;
+
     let speed_graph = null;
     let pace_graph = null;
     let gap_pace_graph = null;
@@ -288,9 +290,13 @@
     let cadence_graph = null;
     let hr_graph = null;
     let altitude_graph = null;
+
     let graph_start_time_ms = null;
     let graph_end_time_ms = null;
-    let current_file_num = 0;
+    let max_power = null;
+    let max_cadence = null;
+    let max_hr = null;
+    let max_altitude = null;
 
     function find_graph_extents(json_data)
     {
@@ -301,6 +307,28 @@
             graph_start_time_ms = start_time_ms
         if (graph_end_time_ms == null || end_time_ms > graph_end_time_ms)
             graph_end_time_ms = end_time_ms
+
+        if (json_data["Maximum Power"] > 0)
+        {
+            let temp = json_data["Maximum Power"];
+
+            if (max_power == null || temp > max_power)
+                max_power = temp;
+        }
+        if (json_data["Maximum Cadence"] > 0)
+        {
+            let temp = json_data["Maximum Cadence"];
+
+            if (max_cadence == null || temp > max_cadence)
+                max_cadence = temp;
+        }
+        if (json_data["Maximum Heart Rate"] > 0)
+        {
+            let temp = json_data["Maximum Heart Rate"];
+
+            if (max_hr == null || temp > max_hr)
+                max_hr = temp;
+        }
     }
 
     function render(json_data, file_num, total_num_files)
@@ -374,6 +402,7 @@
             append_to_table(analysis_table, "Best Half Marathon", convert_seconds_to_hours_mins_secs(bests["Best Half Marathon"]));
         if (bests["Best Marathon"] > 0)
             append_to_table(analysis_table, "Best Marathon", convert_seconds_to_hours_mins_secs(bests["Best Marathon"]));
+
         if (json_data["Maximum Power"] > 0)
             append_to_table(analysis_table, "Maximum Power", json_data["Maximum Power"].toFixed(2).toString() + " watts");
         if (json_data["Average Power"] > 0)
@@ -442,37 +471,37 @@
         let altitude_colors = [ "ForestGreen", "DarkSeaGreen" ];
         let graph_color_index = current_file_num % speed_graph_colors.length;
 
-        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, adjusted_time_speed_data, "Speed", speed_units, speed_graph_colors[graph_color_index], fill, speed_graph);
-        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_pace_data, "Pace", pace_units, pace_graph_colors[graph_color_index], fill, pace_graph);
-        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, gap_data, "Grade Adjusted Pace", pace_units, pace_graph_colors[graph_color_index], fill, gap_pace_graph);
+        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, adjusted_time_speed_data, "Speed", speed_units, speed_graph_colors[graph_color_index], fill, speed_graph);
+        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_pace_data, "Pace", pace_units, pace_graph_colors[graph_color_index], fill, pace_graph);
+        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, gap_data, "Grade Adjusted Pace", pace_units, pace_graph_colors[graph_color_index], fill, gap_pace_graph);
 
         if (power.length > 0)
         {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
-            power_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_power_data, "Power", "Watts", power_colors[graph_color_index], fill, power_graph);
+            power_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, max_power, time_power_data, "Power", "Watts", power_colors[graph_color_index], fill, power_graph);
         }
         if (cadence.length > 0)
         {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
-            cadence_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_cadence_data, "Cadence", "rpm", cadence_colors[graph_color_index], fill, cadence_graph);
+            cadence_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, max_cadence, time_cadence_data, "Cadence", "rpm", cadence_colors[graph_color_index], fill, cadence_graph);
         }
         if (hr.length > 0)
         {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_hr_data, "Heart Rate", "bpm", hr_colors[graph_color_index], fill, hr_graph);
+            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, max_hr, time_hr_data, "Heart Rate", "bpm", hr_colors[graph_color_index], fill, hr_graph);
         }
         if (altitude.length > 0)
         {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
-            altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, time_altitude_data, "Altitude", "meters", altitude_colors[graph_color_index], fill, altitude_graph);
+            altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_altitude_data, "Altitude", "meters", altitude_colors[graph_color_index], fill, altitude_graph);
         }
         if (events.length > 0 && times.length > 0)
         {
@@ -507,6 +536,7 @@
     window.clear_graph_data = function clear_graph_data()
     {
         reports = [];
+        current_file_num = 0;
         speed_graph = null;
         pace_graph = null;
         gap_pace_graph = null;
@@ -516,7 +546,10 @@
         altitude_graph = null;
         graph_start_time_ms = null;
         graph_end_time_ms = null;
-        current_file_num = 0;
+        max_power = null;
+        max_cadence = null;
+        max_hr = null;
+        max_altitude = null;
     }
 
     window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, num_files_selected)
@@ -813,7 +846,7 @@
 
     /// @function draw_graph
     // if existing_graph is provided, a new line will be appended to that graph.
-    function draw_graph(graph_start_time_ms, graph_end_time_ms, data, title, units, color, fill, existing_graph)
+    function draw_graph(graph_start_time_ms, graph_end_time_ms, min_y, max_y, data, title, units, color, fill, existing_graph)
     {
         if (data.length <= 1)
         {
@@ -885,6 +918,7 @@
             height = 250 - margin.top - margin.bottom;
 
         let svg = existing_graph;
+
         if (existing_graph == null)
         {
             svg = d3.select("#charts")
@@ -907,22 +941,31 @@
             .call(d3.axisBottom(x));
 
         // Add Y axis
+        let y_axis = null;
+        let draw_y_axis = existing_graph == null || min_y == null || max_y == null;
+        if (min_y == null)
+            min_y = d3.min(data, function(d) { return d.value; });
+        if (max_y == null)
+            max_y = d3.max(data, function(d) { return d.value; });
         let y = d3.scaleLinear()
-            .domain([ d3.min(data, function(d) { return d.value; }), d3.max(data, function(d) { return d.value; }) ])
+            .domain([ min_y, max_y ])
             .range([ height, 0 ]);
-        if (existing_graph == null)
+        if (draw_y_axis)
         {
-            let y_axis = svg.append("g")
-                .call(d3.axisLeft(y));
-        }
-        else
-        {
-            let y_axis = svg.append("g")
-                .call(d3.axisRight(y));
+            if (existing_graph == null)
+            {
+                y_axis = svg.append("g")
+                    .call(d3.axisLeft(y));
+            }
+            else
+            {
+                y_axis = svg.append("g")
+                    .call(d3.axisRight(y));
+            }
         }
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 0 - margin.left)
+            .attr("y", 0 - (margin.left))
             .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
@@ -932,15 +975,15 @@
         let clip = svg.append("defs").append("svg:clipPath")
             .attr("id", "clip")
             .append("svg:rect")
-            .attr("width", width)
-            .attr("height", height)
-            .attr("x", 0)
-            .attr("y", 0);
+                .attr("width", width)
+                .attr("height", height)
+                .attr("x", 0)
+                .attr("y", 0);
 
         // Add brushing.
-        let brush = d3.brushX()                     // Add the brush feature using the d3.brush function
-            .extent( [ [0,0], [ width, height ] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-            .on("end", update_chart)                // Each time the brush selection changes, trigger the 'update_chart' function
+        let brush = d3.brushX()                        // Add the brush feature using the d3.brush function
+            .extent( [ [ 0, 0 ], [ width, height ] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+            .on("end", update_chart)                   // Each time the brush selection changes, trigger the 'update_chart' function
 
         let line = svg.append('g')
             .attr("clip-path", "url(#clip)");
@@ -998,7 +1041,7 @@
         }
 
         // If user double click, reinitialize the chart.
-        svg.on("dblclick",function() {
+        svg.on("dblclick", function() {
             x.domain(d3.extent(data, function(d) { return d.date; }))
             x_axis.transition().call(d3.axisBottom(x))
             line.select('.line')
@@ -1120,7 +1163,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(graph_start_time_ms, graph_end_time_ms, interval_graph, title, "", "Gray", true, null);
+            draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, interval_graph, title, "", "Gray", true, null);
         }
     }
 
