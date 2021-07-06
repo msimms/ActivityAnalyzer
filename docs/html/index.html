@@ -41,6 +41,11 @@
         stroke-width: 1;
         shape-rendering: crispEdges;
     }
+    .axis-grid line {
+        fill: none;
+        stroke: #def;
+        stroke-width: 1;
+    }
 </style>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
@@ -283,6 +288,8 @@
     let reports = [];
     let current_file_num = 0;
 
+    let intervals_graph = null;
+    let power_intervals_graph = null;
     let speed_graph = null;
     let pace_graph = null;
     let gap_pace_graph = null;
@@ -448,21 +455,6 @@
         let power_intervals = json_data["Power Intervals"];
         let events = json_data["Events"];
 
-        draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, intervals, "Intervals");
-        draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, power_intervals, "Power Intervals");
-
-        let time_speed_data = speed_times.map(function(x, i) {
-            return {"date": new Date(x), "value": speeds[i]};
-        });
-        let [ adjusted_time_speed_data, max_speed ] = convert_speed_graph_to_display_units(units, time_speed_data);
-        let [ time_pace_data, min_pace ] = convert_speed_graph_to_pace_graph(units, time_speed_data);
-        let gap_data = compute_grade_adjusted_pace(gradients, time_pace_data);
-
-        if (max_speed > 0)
-            append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
-        if (min_pace > 0)
-            append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
-
         let speed_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
         let pace_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
         let power_colors = [ "Navy", "Indigo" ];
@@ -471,9 +463,24 @@
         let altitude_colors = [ "ForestGreen", "DarkSeaGreen" ];
         let graph_color_index = current_file_num % speed_graph_colors.length;
 
-        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, adjusted_time_speed_data, "Speed", speed_units, speed_graph_colors[graph_color_index], fill, speed_graph);
-        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_pace_data, "Pace", pace_units, pace_graph_colors[graph_color_index], fill, pace_graph);
-        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, gap_data, "Grade Adjusted Pace", pace_units, pace_graph_colors[graph_color_index], fill, gap_pace_graph);
+        let time_speed_data = speed_times.map(function(x, i) {
+            return {"date": new Date(x), "value": speeds[i]};
+        });
+        let [ adjusted_time_speed_data, max_speed ] = convert_speed_graph_to_display_units(units, time_speed_data);
+        let [ time_pace_data, min_pace ] = convert_speed_graph_to_pace_graph(units, time_speed_data);
+        let gap_data = compute_grade_adjusted_pace(gradients, time_pace_data);
+
+        draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, intervals, "Speed Intervals", "Gray", intervals_graph);
+        draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, power_intervals, "Power Intervals", power_colors[graph_color_index], power_intervals_graph);
+
+        if (max_speed > 0)
+            append_to_table(analysis_table, "Maximum Speed", max_speed.toFixed(2).toString() + " " + speed_units);
+        if (min_pace > 0)
+            append_to_table(analysis_table, "Minimum Pace", min_pace.toFixed(2).toString() + " " + pace_units);
+
+        speed_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, null, adjusted_time_speed_data, "Speed", speed_units, speed_graph_colors[graph_color_index], fill, speed_graph);
+        pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, null, time_pace_data, "Pace", pace_units, pace_graph_colors[graph_color_index], fill, pace_graph);
+        gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, null, gap_data, "Grade Adjusted Pace", pace_units, pace_graph_colors[graph_color_index], fill, gap_pace_graph);
 
         if (power.length > 0)
         {
@@ -494,7 +501,7 @@
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
-            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, max_hr, time_hr_data, "Heart Rate", "bpm", hr_colors[graph_color_index], fill, hr_graph);
+            hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, max_hr, time_hr_data, "Heart Rate", "bpm", hr_colors[graph_color_index], fill, hr_graph);
         }
         if (altitude.length > 0)
         {
@@ -537,6 +544,8 @@
     {
         reports = [];
         current_file_num = 0;
+        intervals_graph = null;
+        power_intervals_graph = null;
         speed_graph = null;
         pace_graph = null;
         gap_pace_graph = null;
@@ -853,7 +862,15 @@
             return;
         }
 
-        // To make all the graphs line up, make sure they have the same start and end time
+        let draw_y_axis = existing_graph == null || min_y == null || max_y == null;
+
+        // If the y axis extents were not provided then calculate them now.
+        if (min_y == null)
+            min_y = d3.min(data, function(d) { return d.value; }) * 0.9;
+        if (max_y == null)
+            max_y = d3.max(data, function(d) { return d.value; });
+
+        // To make all the graphs line up, make sure they have the same start and end time.
         if (graph_start_time_ms > 0)
         {
             let first_point = data[0];
@@ -919,8 +936,19 @@
 
         let svg = existing_graph;
 
-        if (existing_graph == null)
+        // Create the x axis scale function, which is in date format.
+        let x = d3.scaleTime()
+            .domain(d3.extent(data, function(d) { return d.date; }))
+            .range([ 0, width ]);
+
+        // Create the y axis.
+        let y = d3.scaleLinear()
+            .domain([ min_y, max_y ])
+            .range([ height, 0 ]);
+
+        if (svg == null)
         {
+            // Create the graph.
             svg = d3.select("#charts")
                 .append("svg")
                     .attr("width", width + margin.left + margin.right)
@@ -930,26 +958,34 @@
                     .on('mouseleave', mouseleave)
                 .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            // Create and add the grid lines.
+            let x_axis_grid = d3.axisBottom(x)
+                .tickSize(-height)
+                .tickSizeOuter(0)
+                .tickFormat('')
+                .ticks(10);
+            let y_axis_grid = d3.axisLeft(y)
+                .tickSize(-width)
+                .tickSizeOuter(0)
+                .tickFormat('')
+                .ticks(10);
+            svg.append('g')
+                .attr('class', 'x axis-grid')
+                .attr('transform', 'translate(0,' + height + ')')
+                .call(x_axis_grid);
+            svg.append('g')
+                .attr('class', 'y axis-grid')
+                .call(y_axis_grid);
         }
 
-        // Add X axis --> it is a date format
-        let x = d3.scaleTime()
-            .domain(d3.extent(data, function(d) { return d.date; }))
-            .range([ 0, width ]);
+        // Add the x axis.
         let x_axis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
 
-        // Add Y axis
+        // Add the y axis.
         let y_axis = null;
-        let draw_y_axis = existing_graph == null || min_y == null || max_y == null;
-        if (min_y == null)
-            min_y = d3.min(data, function(d) { return d.value; });
-        if (max_y == null)
-            max_y = d3.max(data, function(d) { return d.value; });
-        let y = d3.scaleLinear()
-            .domain([ min_y, max_y ])
-            .range([ height, 0 ]);
         if (draw_y_axis)
         {
             if (existing_graph == null)
@@ -981,10 +1017,11 @@
                 .attr("y", 0);
 
         // Add brushing.
-        let brush = d3.brushX()                        // Add the brush feature using the d3.brush function
-            .extent( [ [ 0, 0 ], [ width, height ] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-            .on("end", update_chart)                   // Each time the brush selection changes, trigger the 'update_chart' function
+        let brush = d3.brushX()                        // Add the brush feature using the d3.brush function.
+            .extent( [ [ 0, 0 ], [ width, height ] ] ) // Initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area.
+            .on("end", update_chart)                   // Each time the brush selection changes, trigger the 'update_chart' function.
 
+        // Create the line.
         let line = svg.append('g')
             .attr("clip-path", "url(#clip)");
 
@@ -1007,9 +1044,9 @@
             .attr("class", "brush")
             .call(brush);
 
-        // A function that set idleTimeOut to null.
-        var idleTimeout = null;
-        function idled() { idleTimeout = null; }
+        // A function that set idle_time_out to null.
+        var idle_time_out = null;
+        function idled() { idle_time_out = null; }
 
         // A function that update the chart for given boundaries.
         function update_chart()
@@ -1017,20 +1054,20 @@
             // What are the selected boundaries?
             extent = d3.event.selection;
 
-            // If no selection, back to initial coordinate. Otherwise, update X axis domain.
+            // If no selection, back to initial coordinate. Otherwise, update x axis domain.
             if (extent)
             {
                 x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
-                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
+                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done.
             }
             else
             {
-                if (!idleTimeout)
-                    return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+                if (!idle_time_out)
+                    return idle_time_out = setTimeout(idled, 350); // This allows to wait a little bit.
                 x.domain([4,8])
             }
 
-            // Update axis and line position.
+            // Update the axis and line position.
             x_axis.transition().duration(1000).call(d3.axisBottom(x));
             line.select('.line')
                 .transition()
@@ -1040,7 +1077,7 @@
                     .y(function(d) { return y(d.value) }));
         }
 
-        // If user double click, reinitialize the chart.
+        // If the user double clicks, re-initialize the chart.
         svg.on("dblclick", function() {
             x.domain(d3.extent(data, function(d) { return d.date; }))
             x_axis.transition().call(d3.axisBottom(x))
@@ -1133,7 +1170,7 @@
     }
 
     /// @function draw_intervals_graph
-    function draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, interval_data, title)
+    function draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, interval_data, title, color, existing_graph)
     {
         interval_graph = [];
 
@@ -1163,7 +1200,7 @@
                 interval_graph.push(graph_node);
             }
 
-            draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, interval_graph, title, "", "Gray", true, null);
+            draw_graph(graph_start_time_ms, graph_end_time_ms, 0, 1, interval_graph, title, "", color, true, existing_graph);
         }
     }
 
