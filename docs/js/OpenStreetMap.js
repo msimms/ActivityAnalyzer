@@ -47,9 +47,9 @@ OpenLayers.Layer.OSM.CycleMap = OpenLayers.Class(OpenLayers.Layer.OSM, {
      */
     initialize: function(name, options) {
         var url = [
-            "http://a.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
-            "http://b.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
-            "http://c.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png"
+            "https://a.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
+            "https://b.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
+            "https://c.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png"
         ];
         options = OpenLayers.Util.extend({
             numZoomLevels: 19,
@@ -80,9 +80,9 @@ OpenLayers.Layer.OSM.TransportMap = OpenLayers.Class(OpenLayers.Layer.OSM, {
      */
     initialize: function(name, options) {
         var url = [
-            "http://a.tile2.opencyclemap.org/transport/${z}/${x}/${y}.png",
-            "http://b.tile2.opencyclemap.org/transport/${z}/${x}/${y}.png",
-            "http://c.tile2.opencyclemap.org/transport/${z}/${x}/${y}.png"
+            "https://a.tile2.opencyclemap.org/transport/${z}/${x}/${y}.png",
+            "https://b.tile2.opencyclemap.org/transport/${z}/${x}/${y}.png",
+            "https://c.tile2.opencyclemap.org/transport/${z}/${x}/${y}.png"
         ];
         options = OpenLayers.Util.extend({
             numZoomLevels: 19,
