@@ -17,6 +17,7 @@ mod gpx_writer;
 mod location_analyzer;
 mod merge_tool;
 mod power_analyzer;
+mod temperature_analyzer;
 mod heart_rate_analyzer;
 mod tcx_writer;
 
@@ -116,6 +117,7 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
         "Average Heart Rate": context.hr_analyzer.compute_average(),
         "Heart Rate Readings": context.hr_analyzer.readings.clone(),
         "Heart Rate Times": context.hr_analyzer.time_readings.clone(),
+        "Temperature Readings": context.temperature_analyzer.readings.clone(),
         "Events": context.events.clone()
     }).to_string();
 
@@ -435,6 +437,18 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
                 // Make sure we have a valid reading.
                 if watts < 65535 {
                     callback_context.power_analyzer.append_sensor_value(timestamp_ms, watts as f64);
+                }
+            }
+            None => {
+            }
+        }
+
+        match msg.temperature {
+            Some(temp) => {
+
+                // Make sure we have a valid reading.
+                if temp < 127 {
+                    callback_context.temperature_analyzer.append_sensor_value(timestamp_ms, temp as f64);
                 }
             }
             None => {

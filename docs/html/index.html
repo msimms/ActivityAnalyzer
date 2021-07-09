@@ -297,6 +297,7 @@
     let cadence_graph = null;
     let hr_graph = null;
     let altitude_graph = null;
+    let temp_graph = null;
 
     let graph_start_time_ms = null;
     let graph_end_time_ms = null;
@@ -453,14 +454,16 @@
         let longitudes = json_data["Longitude Readings"];
         let intervals = json_data["Intervals"];
         let power_intervals = json_data["Power Intervals"];
+        let temp_readings = json_data["Temperature Readings"];
         let events = json_data["Events"];
 
         let speed_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
         let pace_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
         let power_colors = [ "Navy", "Indigo" ];
         let cadence_colors = [ "Tan", "DarkOrange" ];
-        let hr_colors = [ "FireBrick", "DeepPink" ];
+        let hr_colors = [ "Crimson", "DeepPink" ];
         let altitude_colors = [ "ForestGreen", "DarkSeaGreen" ];
+        let temp_colors = [ "FireBrick", "Cyan" ];
         let graph_color_index = current_file_num % speed_graph_colors.length;
 
         let time_speed_data = speed_times.map(function(x, i) {
@@ -510,6 +513,13 @@
             });
             altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_altitude_data, "Altitude", "meters", altitude_colors[graph_color_index], fill, altitude_graph);
         }
+        if (temp_readings.length > 0)
+        {
+            let time_temp_data = times.map(function(x, i) {
+                return {"date": new Date(x), "value": temp_readings[i]};
+            });
+            temp_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_temp_data, "Temperature", "C", temp_colors[graph_color_index], fill, temp_graph);
+        }
         if (events.length > 0 && times.length > 0)
         {
             let new_events = events.map(function(event, i) {
@@ -525,7 +535,10 @@
             events = new_events;
         }
 
-        draw_map(latitudes, longitudes, map_color, distance_meters, events);
+        if (latitudes.length > 0)
+        {
+            draw_map(latitudes, longitudes, map_color, distance_meters, events);
+        }
 
         // Show the export section, which may be configured differently depending on whether or not we're analyzing multiple files.
         let section = document.getElementById("export");
@@ -544,6 +557,7 @@
     {
         reports = [];
         current_file_num = 0;
+
         intervals_graph = null;
         power_intervals_graph = null;
         speed_graph = null;
@@ -553,6 +567,8 @@
         cadence_graph = null;
         hr_graph = null;
         altitude_graph = null;
+        temp_graph = null;
+
         graph_start_time_ms = null;
         graph_end_time_ms = null;
         max_power = null;
@@ -863,6 +879,9 @@
         }
 
         let draw_y_axis = existing_graph == null || min_y == null || max_y == null;
+        let first_point = data[0];
+        let last_point = data[data.length - 1];
+        let last_ts = last_point["date"].getTime();
 
         // If the y axis extents were not provided then calculate them now.
         if (min_y == null)
@@ -870,32 +889,29 @@
         if (max_y == null)
             max_y = d3.max(data, function(d) { return d.value; });
 
+        // Need the graphs to start at zero or the fill will look stupid.
+        graph_node = {};
+        graph_node["date"] = new Date(first_point["date"] - 1);
+        graph_node["value"] = 0.0;
+        data.unshift(graph_node);
+
         // To make all the graphs line up, make sure they have the same start and end time.
         if (graph_start_time_ms > 0)
         {
-            let first_point = data[0];
-
-            graph_node = {};
-            graph_node["date"] = new Date(first_point["date"] - 1);
-            graph_node["value"] = 0.0;
-            data.unshift(graph_node);
-
             graph_node = {};
             graph_node["date"] = new Date(graph_start_time_ms);
             graph_node["value"] = 0.0;
             data.unshift(graph_node);
         }
 
-        let last_point = data[data.length - 1];
-        let last_ts = last_point["date"].getTime();
+        // Need the graphs to start at zero or the fill will look stupid.
+        graph_node = {};
+        graph_node["date"] = new Date(last_ts + 1);
+        graph_node["value"] = 0.0;
+        data.push(graph_node);
 
         if (graph_end_time_ms >= last_ts)
         {
-            graph_node = {};
-            graph_node["date"] = new Date(last_ts + 1);
-            graph_node["value"] = 0.0;
-            data.push(graph_node);
-
             graph_node = {};
             graph_node["date"] = new Date(graph_end_time_ms);
             graph_node["value"] = 0.0;
