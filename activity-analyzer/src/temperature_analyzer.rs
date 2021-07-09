@@ -29,7 +29,7 @@ impl TemperatureAnalyzer {
         self.readings.push(value);
         self.time_readings.push(date_time_ms);
 
-        // Update max heart rate.
+        // Update max temperature.
         if value > self.max_temp {
             self.max_temp = value;
         }
