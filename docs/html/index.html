@@ -937,16 +937,16 @@
         let svg = existing_graph;
 
         // Create the x axis scale function, which is in date format.
-        let x = d3.scaleTime()
+        let x_scale = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
             .range([ 0, width ]);
 
         // Create the y axis.
-        let y = d3.scaleLinear()
+        let y_scale = d3.scaleLinear()
             .domain([ min_y, max_y ])
             .range([ height, 0 ]);
 
-        if (svg == null)
+        if (existing_graph == null)
         {
             // Create the graph.
             svg = d3.select("#charts")
@@ -960,12 +960,12 @@
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
             // Create and add the grid lines.
-            let x_axis_grid = d3.axisBottom(x)
+            let x_axis_grid = d3.axisBottom(x_scale)
                 .tickSize(-height)
                 .tickSizeOuter(0)
                 .tickFormat('')
                 .ticks(10);
-            let y_axis_grid = d3.axisLeft(y)
+            let y_axis_grid = d3.axisLeft(y_scale)
                 .tickSize(-width)
                 .tickSizeOuter(0)
                 .tickFormat('')
@@ -977,12 +977,74 @@
             svg.append('g')
                 .attr('class', 'y axis-grid')
                 .call(y_axis_grid);
-        }
 
-        // Add the x axis.
-        let x_axis = svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x));
+            // Add the x axis.
+            let x_axis = svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x_scale));
+
+            // If the user double clicks, re-initialize the chart.
+            svg.on("dblclick", function() {
+                x_scale.domain(d3.extent(data, function(d) { return d.date; }))
+                x_axis.transition().call(d3.axisBottom(x_scale))
+                line.select('.line')
+                    .transition()
+                    .attr("d", d3.line()
+                        .x(function(d) { return x_scale(d.date) })
+                        .y(function(d) { return y_scale(d.value) }));
+            });
+
+            // Add the title.
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - (margin.left))
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(title);
+
+            // Add a clipPath: everything out of this area won't be drawn.
+            let clip = svg.append("defs").append("svg:clipPath")
+                .attr("id", "clip")
+                .append("svg:rect")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("x", 0)
+                    .attr("y", 0);
+
+            // A function that set idle_time_out to null.
+            var idle_time_out = null;
+            function idled() { idle_time_out = null; }
+
+            // A function that update the chart for given boundaries.
+            function update_chart()
+            {
+                // What are the selected boundaries?
+                let extent = d3.event.selection;
+
+                // If no selection, back to initial coordinate. Otherwise, update x axis domain.
+                if (extent)
+                {
+                    x_scale.domain([ x_scale.invert(extent[0]), x_scale.invert(extent[1]) ]);
+                    line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done.
+                }
+                else
+                {
+                    if (!idle_time_out)
+                        return idle_time_out = setTimeout(idled, 350); // This allows to wait a little bit.
+                    x_scale.domain([4,8])
+                }
+
+                // Update the axis and line position.
+                x_axis.transition().duration(1000).call(d3.axisBottom(x_scale));
+                line.select('.line')
+                    .transition()
+                    .duration(1000)
+                    .attr("d", d3.line()
+                        .x(function(d) { return x_scale(d.date) })
+                        .y(function(d) { return y_scale(d.value) }));
+            }
+        }
 
         // Add the y axis.
         let y_axis = null;
@@ -991,35 +1053,14 @@
             if (existing_graph == null)
             {
                 y_axis = svg.append("g")
-                    .call(d3.axisLeft(y));
+                    .call(d3.axisLeft(y_scale));
             }
             else
             {
                 y_axis = svg.append("g")
-                    .call(d3.axisRight(y));
+                    .call(d3.axisRight(y_scale));
             }
         }
-        svg.append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("y", 0 - (margin.left))
-            .attr("x", 0 - (height / 2))
-            .attr("dy", "1em")
-            .style("text-anchor", "middle")
-            .text(title);
-
-        // Add a clipPath: everything out of this area won't be drawn.
-        let clip = svg.append("defs").append("svg:clipPath")
-            .attr("id", "clip")
-            .append("svg:rect")
-                .attr("width", width)
-                .attr("height", height)
-                .attr("x", 0)
-                .attr("y", 0);
-
-        // Add brushing.
-        let brush = d3.brushX()                        // Add the brush feature using the d3.brush function.
-            .extent( [ [ 0, 0 ], [ width, height ] ] ) // Initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area.
-            .on("end", update_chart)                   // Each time the brush selection changes, trigger the 'update_chart' function.
 
         // Create the line.
         let line = svg.append('g')
@@ -1036,57 +1077,16 @@
             .attr("stroke", color)
             .attr("stroke-width", 0.25)
             .attr("d", d3.line()
-                .x(function(d) { return x(d.date) })
-                .y(function(d) { return y(d.value) }));
+                .x(function(d) { return x_scale(d.date) })
+                .y(function(d) { return y_scale(d.value) }));
 
         // Add the brushing.
+        let brush = d3.brushX()                        // Add the brush feature using the d3.brush function.
+            .extent( [ [ 0, 0 ], [ width, height ] ] ) // Initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area.
+            .on("end", update_chart)                   // Each time the brush selection changes, trigger the 'update_chart' function.
         line.append("g")
             .attr("class", "brush")
             .call(brush);
-
-        // A function that set idle_time_out to null.
-        var idle_time_out = null;
-        function idled() { idle_time_out = null; }
-
-        // A function that update the chart for given boundaries.
-        function update_chart()
-        {
-            // What are the selected boundaries?
-            extent = d3.event.selection;
-
-            // If no selection, back to initial coordinate. Otherwise, update x axis domain.
-            if (extent)
-            {
-                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
-                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done.
-            }
-            else
-            {
-                if (!idle_time_out)
-                    return idle_time_out = setTimeout(idled, 350); // This allows to wait a little bit.
-                x.domain([4,8])
-            }
-
-            // Update the axis and line position.
-            x_axis.transition().duration(1000).call(d3.axisBottom(x));
-            line.select('.line')
-                .transition()
-                .duration(1000)
-                .attr("d", d3.line()
-                    .x(function(d) { return x(d.date) })
-                    .y(function(d) { return y(d.value) }));
-        }
-
-        // If the user double clicks, re-initialize the chart.
-        svg.on("dblclick", function() {
-            x.domain(d3.extent(data, function(d) { return d.date; }))
-            x_axis.transition().call(d3.axisBottom(x))
-            line.select('.line')
-                .transition()
-                .attr("d", d3.line()
-                    .x(function(d) { return x(d.date) })
-                    .y(function(d) { return y(d.value) }));
-        });
 
         return svg;
     }
