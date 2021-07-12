@@ -455,6 +455,7 @@
         let intervals = json_data["Intervals"];
         let power_intervals = json_data["Power Intervals"];
         let temp_readings = json_data["Temperature Readings"];
+        let temp_times = json_data["Temperature Times"];
         let events = json_data["Events"];
 
         let speed_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
@@ -515,7 +516,7 @@
         }
         if (temp_readings.length > 0)
         {
-            let time_temp_data = times.map(function(x, i) {
+            let time_temp_data = temp_times.map(function(x, i) {
                 return {"date": new Date(x), "value": temp_readings[i]};
             });
             temp_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_temp_data, "Temperature", "C", temp_colors[graph_color_index], fill, temp_graph);

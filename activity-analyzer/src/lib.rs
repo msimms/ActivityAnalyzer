@@ -118,6 +118,7 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
         "Heart Rate Readings": context.hr_analyzer.readings.clone(),
         "Heart Rate Times": context.hr_analyzer.time_readings.clone(),
         "Temperature Readings": context.temperature_analyzer.readings.clone(),
+        "Temperature Times": context.temperature_analyzer.time_readings.clone(),
         "Events": context.events.clone()
     }).to_string();
 
