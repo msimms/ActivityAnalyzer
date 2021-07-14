@@ -19,6 +19,7 @@ mod merge_tool;
 mod power_analyzer;
 mod temperature_analyzer;
 mod heart_rate_analyzer;
+mod swim_analyzer;
 mod tcx_writer;
 
 use wasm_bindgen::prelude::*;
@@ -119,6 +120,8 @@ fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
         "Heart Rate Times": context.hr_analyzer.time_readings.clone(),
         "Temperature Readings": context.temperature_analyzer.readings.clone(),
         "Temperature Times": context.temperature_analyzer.time_readings.clone(),
+        "Swim Stroke Readings": context.swim_analyzer.strokes.clone(),
+        "Swim Stroke Times": context.swim_analyzer.time_readings.clone(),
         "Events": context.events.clone()
     }).to_string();
 
@@ -353,10 +356,22 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
 
     if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
         let msg = fit_file::fit_file::FitSessionMsg::new(fields);
-        let sport_names = fit_file::fit_file::init_sport_name_map();
-        let sport_id = msg.sport.unwrap();
 
-        callback_context.location_analyzer.set_activity_type(sport_names.get(&sport_id).unwrap().to_string());
+        match msg.sport {
+            Some(sport_id) => {
+                let sport_names = fit_file::fit_file::init_sport_name_map();
+                callback_context.location_analyzer.set_activity_type(sport_names.get(&sport_id).unwrap().to_string());
+            }
+            None => {
+            }
+        }
+
+        match msg.pool_length {
+            Some(pool_length) => {
+            }
+            None => {
+            }
+        }
     }
     else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
         let msg = fit_file::fit_file::FitRecordMsg::new(fields);
@@ -467,13 +482,27 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
 
         match msg.event {
             Some(event_num) => {
-                // Front and rear gear change.
+                // Front and rear gear change (42 == rear gear change, 43 == front gear change).
                 if event_num == 42 || event_num == 43 {
                     let event = event::Event{ timestamp_ms: timestamp_ms, event_type: event_num, event_data: 0 };
                     callback_context.events.push(event);
                 }
                 // Radar threat alert.
                 else if event_num == 75 {
+                }
+            }
+            None => {
+            }
+        }
+    }
+    else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_LENGTH {
+        let msg = fit_file::fit_file::FitLengthMsg::new(fields);
+        let timestamp_ms = timestamp as u64 * 1000;
+
+        match msg.total_strokes {
+            Some(total_strokes) => {
+                if total_strokes < 65535 {
+                    callback_context.swim_analyzer.append_sensor_value(timestamp_ms, total_strokes);
                 }
             }
             None => {

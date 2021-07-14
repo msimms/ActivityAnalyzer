@@ -48,7 +48,7 @@
     }
 </style>
 
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js" integrity="sha512-RJJ1NNC88QhN7dwpCY8rm/6OxI+YdQP48DrLGe/eSAd+n+s1PXwQkkpzzAgoJe4cZFW2GALQoxox61gSY2yQfg==" crossorigin="anonymous"></script>
 
@@ -456,6 +456,7 @@
         let power_intervals = json_data["Power Intervals"];
         let temp_readings = json_data["Temperature Readings"];
         let temp_times = json_data["Temperature Times"];
+        let swim_strokes = json_data["Swim Stroke Readings"];
         let events = json_data["Events"];
 
         let speed_graph_colors = [ "DodgerBlue", "DarkSlateBlue" ];
@@ -520,6 +521,10 @@
                 return {"date": new Date(x), "value": temp_readings[i]};
             });
             temp_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_temp_data, "Temperature", "C", temp_colors[graph_color_index], fill, temp_graph);
+        }
+        if (swim_strokes.length > 0)
+        {
+            draw_bar_chart(swim_strokes, "Total Strokes", "LightSteelBlue");
         }
         if (events.length > 0 && times.length > 0)
         {
@@ -1341,7 +1346,7 @@
             <li>What data do you store? <p>Nothing. All processing is done in the browser. No data leaves the local machine.</p>
             <li>Can I connect this to Strava, etc.? <p>Not right now, but maybe in the future.</p>
             <li>Can I see the source code? <p>Yes, it is available on <a href="https://github.com/msimms/ActivityAnalyzer">GitHub</a>.</p>
-            <li>Is there any documentation? <p>Though this page is fairly self-explanatory, there is more documentation <a href="https://github.com/msimms/ActivityAnalyzer/wiki">here</a>.</p>
+            <li>Is there any documentation? <p>Though this page is fairly self-explanatory, there is more documentation <a href="https://github.com/msimms/ActivityAnalyzer/wiki">on the GitHub wiki page</a>.</p>
         </ul>
     </div>
 </section>
