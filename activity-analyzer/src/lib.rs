@@ -81,12 +81,25 @@ pub fn set_us_data(s: &str) {
 
 fn make_final_report(context: &analyzer_context::AnalyzerContext) -> String {
 
+    let mut start_time_ms = context.location_analyzer.start_time_ms;
+    let mut last_time_ms = context.location_analyzer.last_time_ms;
+    let mut total_distance = context.location_analyzer.total_distance;
+
+    // No time data from location sources? Maybe it's a swim.
+    if start_time_ms == 0 {
+        start_time_ms = context.swim_analyzer.get_start_time_ms();
+        last_time_ms = context.swim_analyzer.get_last_time_ms();
+    }
+    if total_distance < 0.01 {
+        total_distance = context.swim_analyzer.get_total_distance() as f64;
+    }
+
     let analysis_report_str = serde_json::json!({
         "Activity Type": context.location_analyzer.activity_type,
-        "Start Time (ms)": context.location_analyzer.start_time_ms,
-        "End Time (ms)": context.location_analyzer.last_time_ms,
-        "Elapsed Time": (context.location_analyzer.last_time_ms - context.location_analyzer.start_time_ms) / 1000,
-        "Total Distance": context.location_analyzer.total_distance,
+        "Start Time (ms)": start_time_ms,
+        "End Time (ms)": last_time_ms,
+        "Elapsed Time": (last_time_ms - start_time_ms) / 1000,
+        "Total Distance": total_distance,
         "Total Vertical Distance": context.location_analyzer.total_vertical,
         "Average Speed": context.location_analyzer.avg_speed,
         "Bests": context.location_analyzer.bests,
@@ -368,6 +381,7 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
 
         match msg.pool_length {
             Some(pool_length) => {
+                callback_context.swim_analyzer.set_pool_length(pool_length);
             }
             None => {
             }
