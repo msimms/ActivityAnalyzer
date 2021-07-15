@@ -435,9 +435,9 @@
             append_to_table(analysis_table, "Average Heart Rate", json_data["Average Heart Rate"].toFixed(2).toString() + " bpm");
 
         if (bests["Best Mile"] > 0)
-            draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "LightSteelBlue");
+            draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "Time", "LightSteelBlue");
         if (bests["Best 1K"] > 0)
-            draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Tomato");
+            draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Time", "Tomato");
 
         let times = json_data["Times"];
         let speed_times = json_data["Speed Times"];
@@ -524,7 +524,7 @@
         }
         if (swim_strokes.length > 0)
         {
-            draw_bar_chart(swim_strokes, "Total Strokes", "LightSteelBlue");
+            draw_bar_chart(swim_strokes, "Total Strokes", "Strokes", "LightSteelBlue");
         }
         if (events.length > 0 && times.length > 0)
         {
@@ -1114,7 +1114,7 @@
     }
 
     /// @function draw_bar_chart
-    function draw_bar_chart(data, title, color)
+    function draw_bar_chart(data, title, units, color)
     {
         let tooltip = d3.select("#charts")
             .append("div")
@@ -1135,8 +1135,12 @@
 
             if (x < data.length)
             {
+                let value = data[x];
+
+                if (units == "Time")
+                    value = convert_seconds_to_hours_mins_secs(value);
                 tooltip
-                    .html("<b>" + convert_seconds_to_hours_mins_secs(data[x]) + "</b>")
+                    .html("<b>" + value + "</b>")
                     .style("top", (event.pageY) + "px")
                     .style("left", (event.pageX) + "px")
             }
