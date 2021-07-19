@@ -435,9 +435,9 @@
             append_to_table(analysis_table, "Average Heart Rate", json_data["Average Heart Rate"].toFixed(2).toString() + " bpm");
 
         if (bests["Best Mile"] > 0)
-            draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Miles)", "Time", "LightSteelBlue");
+            draw_bar_chart(normalize_split_times(json_data["Mile Splits"]), "Split Times (Seconds / Mile)", "Time", "LightSteelBlue");
         if (bests["Best 1K"] > 0)
-            draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (KM)", "Time", "Tomato");
+            draw_bar_chart(normalize_split_times(json_data["KM Splits"]), "Split Times (Seconds / KM)", "Time", "Tomato");
 
         let times = json_data["Times"];
         let speed_times = json_data["Speed Times"];
