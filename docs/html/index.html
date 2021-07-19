@@ -378,6 +378,9 @@
 
         let start_time_ms = json_data["Start Time (ms)"];
         let end_time_ms = json_data["End Time (ms)"];
+        let elapsed_time = json_data["Elapsed Time"];
+        let distance_meters = json_data["Total Distance"];
+        let vertical_distance = json_data["Total Vertical Distance"];
 
         if (graph_start_time_ms == null || start_time_ms < graph_start_time_ms)
             graph_start_time_ms = start_time_ms
@@ -385,12 +388,17 @@
             graph_end_time_ms = end_time_ms
 
         append_to_table(analysis_table, "Activity Type", json_data["Activity Type"]);
-        append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
-        append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(end_time_ms));
-        append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(json_data["Elapsed Time"]));
-        let distance_meters = json_data["Total Distance"];
-        append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, distance_meters));
-        append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, json_data["Total Vertical Distance"]));
+
+        if (start_time_ms > 0)
+            append_to_table(analysis_table, "Start Time", unix_time_ms_to_local_string(start_time_ms));
+        if (end_time_ms > 0)
+            append_to_table(analysis_table, "End Time", unix_time_ms_to_local_string(end_time_ms));
+        if (elapsed_time > 0)
+            append_to_table(analysis_table, "Elapsed Time", convert_seconds_to_hours_mins_secs(elapsed_time));
+        if (distance_meters > 0)
+            append_to_table(analysis_table, "Total Distance", convert_distance_to_unit_system_str(units, distance_meters));
+        if (vertical_distance > 0)
+            append_to_table(analysis_table, "Total Vertical Distance", convert_vertical_distance_to_unit_system_str(units, vertical_distance));
         if (json_data["Average Speed"] > 0)
             append_to_table(analysis_table, "Average Speed", convert_speed_to_unit_system_str(units, json_data["Average Speed"]));
 
