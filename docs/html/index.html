@@ -266,7 +266,7 @@
         let gap_list = time_pace_data.map(function(x, i) {
             let gradient = gradient_list[i];
             let cost = (155.4 * (Math.pow(gradient, 5))) - (30.4 * Math.pow(gradient, 4)) - (43.4 * Math.pow(gradient, 3)) - (46.3 * (gradient * gradient)) - (19.5 * gradient) + 3.6;
-            let value = x.value + (x.value - 3.6) / 3.6;
+            let value = x.value + (cost - 3.6) / 3.6;
 
             if (value < 0.0)
                 value = 0.0;
@@ -1043,7 +1043,7 @@
                     .attr("y", 0);
 
             // A function that set idle_time_out to null.
-            var idle_time_out = null;
+            var idle_time_out;
             function idled() { idle_time_out = null; }
 
             // A function that update the chart for given boundaries.
