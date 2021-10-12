@@ -1,3 +1,5 @@
+[![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+
 # ActivityAnalyzer
 
 Analyzes GPX, TCX, and FIT files.  Automatically identifies intervals. Does not store any personal data, all calculations are performed in the browser using WebAssembly. Work in progress. Will eventually connect to Strava and perhaps other services.
