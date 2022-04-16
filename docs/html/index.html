@@ -739,7 +739,7 @@
     <div>
         <h1>Select a File</h1>
         <input type="file" id="file_picker" class="modern_button" accept=".gpx,.tcx,.fit" name="file_picker" multiple>
-        <button type="button" class="modern_button" onclick="return analyze_selected_files()">Analyze File(s)</button><br>
+        <button type="button" class="modern_button" onclick="analyze_selected_files()">Analyze File(s)</button><br>
         <select id="units" onchange="on_units_changed()">
             <option value="Metric">Metric</option>
             <option value="Standard">Standard</option>
@@ -753,6 +753,7 @@
         <select id="export_format" onchange="on_export_format_changed()">
             <option value="GPX">GPX</option>
             <option value="TCX">TCX</option>
+            <option value="CSV">CSV</option>
         </select><br>
         <select id="export_style" onchange="on_export_style_changed()">
             <option value="SingleFile">Single File</option>
@@ -763,7 +764,7 @@
             Split at <input type="number" id="split_time" name="split_time" min="1"> seconds from the start of the activity
             </p>
         </div>
-        <button id="export_button" type="button" class="modern_button" onclick="return window.export_to_file()">Export</button>
+        <button id="export_button" type="button" class="modern_button" onclick="window.export_to_file()">Export</button>
         <div id="downloads">
             <p></p>
         </div>

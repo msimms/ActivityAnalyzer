@@ -187,6 +187,67 @@ impl Exporter {
         "".to_string()
     }
 
+    fn export_csv(&self, context: &AnalyzerContext, split_start_offset_ms: u64, split_end_offset_ms: u64) -> String {
+        let mut result: String = "".to_string();
+        let loc_data = &context.location_analyzer;
+
+        let num_hr_readings = context.hr_analyzer.time_readings.len();
+        let num_cad_readings = context.cadence_analyzer.time_readings.len();
+        let num_power_readings = context.power_analyzer.time_readings.len();
+        let mut hr_index = 0;
+        let mut cad_index = 0;
+        let mut power_index = 0;
+
+        let num_points = loc_data.latitude_readings.len();
+        for point_index in 0..num_points - 1 {
+            let ts = loc_data.times[point_index];
+            let use_data_point;
+
+            if split_start_offset_ms == 0 && split_end_offset_ms == 0 {
+                use_data_point = true;
+            }
+            else if split_end_offset_ms == 0 {
+                use_data_point = ts >= loc_data.start_time_ms + split_start_offset_ms;
+            }
+            else {
+                use_data_point = ts >= loc_data.start_time_ms + split_start_offset_ms && ts < loc_data.start_time_ms + split_end_offset_ms;
+            }
+
+            if use_data_point {
+
+                let loc_str = format!("{},{},{},{},", ts, loc_data.latitude_readings[point_index], loc_data.longitude_readings[point_index], loc_data.altitude_graph[point_index]);
+                result.push_str(&loc_str);
+
+                while hr_index < num_hr_readings && context.hr_analyzer.time_readings[hr_index] < ts {
+                    hr_index = hr_index + 1;
+                }
+                while cad_index < num_cad_readings && context.cadence_analyzer.time_readings[cad_index] < ts {
+                    cad_index = cad_index + 1;
+                }
+                while power_index < num_power_readings && context.power_analyzer.time_readings[power_index] < ts {
+                    power_index = power_index + 1;
+                }
+
+                if num_hr_readings > 0 && hr_index < num_hr_readings {
+                    let hr_str = format!("{},", context.hr_analyzer.readings[hr_index] as u8);
+                    result.push_str(&hr_str);
+                }
+                if num_cad_readings > 0 && cad_index < num_cad_readings {
+                    let cad_str = format!("{},", context.cadence_analyzer.readings[hr_index] as u8);
+                    result.push_str(&cad_str);
+                }
+                if num_power_readings > 0 && power_index < num_power_readings {
+                    let power_str = format!("{},", context.power_analyzer.readings[hr_index] as u8);
+                    result.push_str(&power_str);
+                }
+            }
+
+            result.push_str("\n");
+        }
+
+        result
+    }
+
     pub fn export(&self, context: &AnalyzerContext, format: &str, split_start_offset_ms: u64, split_end_offset_ms: u64) -> String {
         let format_lower = format.to_lowercase();
 
@@ -198,6 +259,9 @@ impl Exporter {
         }
         if format_lower == "fit" {
             return self.export_fit(context, split_start_offset_ms, split_end_offset_ms);
+        }
+        if format_lower == "csv" {
+            return self.export_csv(context, split_start_offset_ms, split_end_offset_ms);
         }
 
         format_lower

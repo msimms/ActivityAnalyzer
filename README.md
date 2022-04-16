@@ -19,6 +19,7 @@ An example implementation is available at https://activity-analyzer.app.
 
 # Version History
 
+* 1.6 - [Issue 10](https://github.com/msimms/ActivityAnalyzer/issues/10) Added the ability to export data in CSV format.
 * 1.5 - [Issue 9](https://github.com/msimms/ActivityAnalyzer/issues/9) Added support for pool swim data, as read from FIT files.
 * 1.4 - [Issue 7](https://github.com/msimms/ActivityAnalyzer/issues/7) Added first version of file merging.
 * 1.3 - [Issue 8](https://github.com/msimms/ActivityAnalyzer/issues/8) Fixed issues with FIT files that have developer defined fields. Added ability to show gear shift data.
