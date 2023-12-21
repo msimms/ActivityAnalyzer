@@ -8,8 +8,7 @@ pub struct HeartRateAnalyzer {
 
 impl HeartRateAnalyzer {
     pub fn new() -> Self {
-        let analyzer = HeartRateAnalyzer{readings: Vec::new(), time_readings: Vec::new(), max_hr: 0.0};
-        analyzer
+        HeartRateAnalyzer{readings: Vec::new(), time_readings: Vec::new(), max_hr: 0.0}
     }
 
     /// Computes the average value.
@@ -17,7 +16,7 @@ impl HeartRateAnalyzer {
         let count = self.readings.len();
         if count > 0 {
             let sum: f64 = Iterator::sum(self.readings.iter());
-            return f64::from(sum) / (count as f64);
+            return sum / (count as f64);
         }
         0.0
     }
@@ -33,5 +32,11 @@ impl HeartRateAnalyzer {
         if value > self.max_hr {
             self.max_hr = value;
         }
+    }
+}
+
+impl Default for HeartRateAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

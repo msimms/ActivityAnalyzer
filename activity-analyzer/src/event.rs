@@ -10,8 +10,14 @@ pub struct Event {
 }
 
 impl Event {
+    /// Creates a new [`Event`].
     pub fn new() -> Self {
-        let evt = Event{ timestamp_ms: 0, event_type: 0, event_data: 0 };
-        evt
+        Event{ timestamp_ms: 0, event_type: 0, event_data: 0 }
+    }
+}
+
+impl Default for Event {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
 
-use serde_derive::{Deserialize};
+use serde_derive::Deserialize;
 use std::io::Read;
 use std::io::BufReader;
 
@@ -43,6 +43,5 @@ pub struct GpxRoute {
 }
 
 pub fn read<R: Read>(reader: &mut BufReader<R>) -> Result<GpxRoute, serde_xml_rs::Error> {
-    let gpx_route = serde_xml_rs::from_reader(reader);
-    gpx_route
+    serde_xml_rs::from_reader(reader)
 }

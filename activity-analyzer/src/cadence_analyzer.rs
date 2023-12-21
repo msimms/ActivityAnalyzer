@@ -7,9 +7,9 @@ pub struct CadenceAnalyzer {
 }
 
 impl CadenceAnalyzer {
+    /// Creates a new [`CadenceAnalyzer`].
     pub fn new() -> Self {
-        let analyzer = CadenceAnalyzer{readings: Vec::new(), time_readings: Vec::new(), max_cadence: 0.0};
-        analyzer
+        CadenceAnalyzer{ readings: Vec::new(), time_readings: Vec::new(), max_cadence: 0.0 }
     }
 
     /// Computes the average value.
@@ -17,7 +17,7 @@ impl CadenceAnalyzer {
         let count = self.readings.len();
         if count > 0 {
             let sum: f64 = Iterator::sum(self.readings.iter());
-            return f64::from(sum) / (count as f64);
+            return sum / (count as f64);
         }
         0.0
     }
@@ -33,5 +33,11 @@ impl CadenceAnalyzer {
         if value > self.max_cadence {
             self.max_cadence = value;
         }
+    }
+}
+
+impl Default for CadenceAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

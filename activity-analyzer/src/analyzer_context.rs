@@ -21,8 +21,9 @@ pub struct AnalyzerContext {
 }
 
 impl AnalyzerContext {
+    /// Creates a new [`AnalyzerContext`].
     pub fn new() -> Self {
-        let context = AnalyzerContext{
+        AnalyzerContext{
             name: "Unnamed".to_string(),
             location_analyzer: LocationAnalyzer::new(),
             hr_analyzer: HeartRateAnalyzer::new(),
@@ -30,7 +31,13 @@ impl AnalyzerContext {
             power_analyzer: PowerAnalyzer::new(),
             temperature_analyzer: TemperatureAnalyzer::new(),
             swim_analyzer: SwimAnalyzer::new(),
-            events: Vec::new() };
-        context
+            events: Vec::new()
+        }
+    }
+}
+
+impl Default for AnalyzerContext {
+    fn default() -> Self {
+        Self::new()
     }
 }

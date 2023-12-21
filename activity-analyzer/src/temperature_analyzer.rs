@@ -8,8 +8,7 @@ pub struct TemperatureAnalyzer {
 
 impl TemperatureAnalyzer {
     pub fn new() -> Self {
-        let analyzer = TemperatureAnalyzer{readings: Vec::new(), time_readings: Vec::new(), max_temp: 0.0};
-        analyzer
+        TemperatureAnalyzer{ readings: Vec::new(), time_readings: Vec::new(), max_temp: 0.0 }
     }
 
     /// Computes the average value.
@@ -17,7 +16,7 @@ impl TemperatureAnalyzer {
         let count = self.readings.len();
         if count > 0 {
             let sum: f64 = Iterator::sum(self.readings.iter());
-            return f64::from(sum) / (count as f64);
+            return sum / (count as f64);
         }
         0.0
     }
@@ -33,5 +32,11 @@ impl TemperatureAnalyzer {
         if value > self.max_temp {
             self.max_temp = value;
         }
+    }
+}
+
+impl Default for TemperatureAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

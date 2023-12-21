@@ -8,16 +8,15 @@ pub struct Exporter {
 }
 
 impl Exporter {
+    /// Creates a new [`Exporter`].
     pub fn new() -> Self {
-        let exporter = Exporter{};
-        exporter
+        Exporter{}
     }
 
     fn export_gpx(&self, context: &AnalyzerContext, split_start_offset_ms: u64, split_end_offset_ms: u64) -> String {
         let mut writer = GpxWriter::new();
         let loc_data = &context.location_analyzer;
 
-        let lap_num = 1;
         let num_hr_readings = context.hr_analyzer.time_readings.len();
         let num_cad_readings = context.cadence_analyzer.time_readings.len();
         let num_power_readings = context.power_analyzer.time_readings.len();
@@ -52,13 +51,13 @@ impl Exporter {
                 writer.start_track_point(loc_data.latitude_readings[point_index], loc_data.longitude_readings[point_index], loc_data.altitude_graph[point_index], ts);
 
                 while hr_index < num_hr_readings && context.hr_analyzer.time_readings[hr_index] < ts {
-                    hr_index = hr_index + 1;
+                    hr_index += 1;
                 }
                 while cad_index < num_cad_readings && context.cadence_analyzer.time_readings[cad_index] < ts {
-                    cad_index = cad_index + 1;
+                    cad_index += 1;
                 }
                 while power_index < num_power_readings && context.power_analyzer.time_readings[power_index] < ts {
-                    power_index = power_index + 1;
+                    power_index += 1;
                 }
 
                 let mut has_extensions = false;
@@ -97,9 +96,7 @@ impl Exporter {
 
         writer.end_track_segment();
         writer.end_track();
-
-        let result = writer.close();
-        result
+        writer.close()
     }
 
     fn export_tcx(&self, context: &AnalyzerContext, split_start_offset_ms: u64, split_end_offset_ms: u64) -> String {
@@ -178,12 +175,10 @@ impl Exporter {
         writer.end_lap();
         writer.end_activity();
         writer.end_activities();
-
-        let result = writer.close();
-        result
+        writer.close()
     }
 
-    fn export_fit(&self, context: &AnalyzerContext, split_start_offset_ms: u64, split_end_offset_ms: u64) -> String {
+    fn export_fit(&self, _context: &AnalyzerContext, _split_start_offset_ms: u64, _split_end_offset_ms: u64) -> String {
         "".to_string()
     }
 
@@ -219,13 +214,13 @@ impl Exporter {
                 result.push_str(&loc_str);
 
                 while hr_index < num_hr_readings && context.hr_analyzer.time_readings[hr_index] < ts {
-                    hr_index = hr_index + 1;
+                    hr_index += 1;
                 }
                 while cad_index < num_cad_readings && context.cadence_analyzer.time_readings[cad_index] < ts {
-                    cad_index = cad_index + 1;
+                    cad_index += 1;
                 }
                 while power_index < num_power_readings && context.power_analyzer.time_readings[power_index] < ts {
-                    power_index = power_index + 1;
+                    power_index += 1;
                 }
 
                 if num_hr_readings > 0 && hr_index < num_hr_readings {
@@ -242,7 +237,7 @@ impl Exporter {
                 }
             }
 
-            result.push_str("\n");
+            result.push('\n');
         }
 
         result

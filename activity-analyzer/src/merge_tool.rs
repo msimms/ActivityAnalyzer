@@ -7,8 +7,7 @@ pub struct MergeTool {
 
 impl MergeTool {
     pub fn new() -> Self {
-        let merge_tool = MergeTool{};
-        merge_tool
+        MergeTool{}
     }
 
     fn merge_locations(&self, context1: &AnalyzerContext, context2: &AnalyzerContext, merged_context: &mut AnalyzerContext) {
@@ -46,25 +45,25 @@ impl MergeTool {
 
                 merged_context.location_analyzer.append_location(new_ts, new_lat, new_lon, new_alt);
 
-                point_index1 = point_index1 + 1;
-                point_index2 = point_index2 + 1;
+                point_index1 += 1;
+                point_index2 += 1;
             }
             else if ts1 < ts2 {
                 merged_context.location_analyzer.append_location(ts1, loc_data1.latitude_readings[point_index1], loc_data1.longitude_readings[point_index1], loc_data1.altitude_graph[point_index1]);
-                point_index1 = point_index1 + 1;
+                point_index1 += 1;
             }
             else {
                 merged_context.location_analyzer.append_location(ts2, loc_data2.latitude_readings[point_index2], loc_data2.longitude_readings[point_index2], loc_data2.altitude_graph[point_index2]);
-                point_index2 = point_index2 + 1;
+                point_index2 += 1;
             }
         }
         while point_index1 < num_points1 {
             merged_context.location_analyzer.append_location(loc_data1.times[point_index1], loc_data1.latitude_readings[point_index1], loc_data1.longitude_readings[point_index1], loc_data1.altitude_graph[point_index1]);
-            point_index1 = point_index1 + 1;
+            point_index1 += 1;
         }
         while point_index2 < num_points2 {
             merged_context.location_analyzer.append_location(loc_data2.times[point_index2], loc_data2.latitude_readings[point_index2], loc_data2.longitude_readings[point_index2], loc_data2.altitude_graph[point_index2]);
-            point_index2 = point_index2 + 1;
+            point_index2 += 1;
         }
     }
 
@@ -96,16 +95,16 @@ impl MergeTool {
 
                 merged_context.hr_analyzer.append_sensor_value(new_ts, new_value);
 
-                point_index1 = point_index1 + 1;
-                point_index2 = point_index2 + 1;
+                point_index1 += 1;
+                point_index2 += 1;
             }
             else if ts1 < ts2 {
                 merged_context.hr_analyzer.append_sensor_value(ts1, value1);
-                point_index1 = point_index1 + 1;
+                point_index1 += 1;
             }
             else {
                 merged_context.hr_analyzer.append_sensor_value(ts2, value2);
-                point_index2 = point_index2 + 1;
+                point_index2 += 1;
             }
         }
 
@@ -115,14 +114,14 @@ impl MergeTool {
             let value1 = data1.readings[point_index1];
 
             merged_context.hr_analyzer.append_sensor_value(ts1, value1);
-            point_index1 = point_index1 + 1;
+            point_index1 += 1;
         }
         while point_index2 < num_points2 {
             let ts2 = data2.time_readings[point_index2];
             let value2 = data2.readings[point_index2];
 
             merged_context.hr_analyzer.append_sensor_value(ts2, value2);
-            point_index2 = point_index2 + 1;
+            point_index2 += 1;
         }
     }
 
@@ -154,17 +153,17 @@ impl MergeTool {
 
                 merged_context.power_analyzer.append_sensor_value(new_ts, new_value);
 
-                point_index1 = point_index1 + 1;
-                point_index2 = point_index2 + 1;
+                point_index1 += 1;
+                point_index2 += 1;
             }
             else if ts1 < ts2 {
                 merged_context.power_analyzer.append_sensor_value(ts1, value1);
-                point_index1 = point_index1 + 1;
+                point_index1 += 1;
             }
             else
             {
                 merged_context.power_analyzer.append_sensor_value(ts2, value2);
-                point_index2 = point_index2 + 1;
+                point_index2 += 1;
             }
         }
 
@@ -174,14 +173,14 @@ impl MergeTool {
             let value1 = data1.readings[point_index1];
 
             merged_context.power_analyzer.append_sensor_value(ts1, value1);
-            point_index1 = point_index1 + 1;
+            point_index1 += 1;
         }
         while point_index2 < num_points2 {
             let ts2 = data2.time_readings[point_index2];
             let value2 = data2.readings[point_index2];
 
             merged_context.power_analyzer.append_sensor_value(ts2, value2);
-            point_index2 = point_index2 + 1;
+            point_index2 += 1;
         }
     }
 
@@ -213,17 +212,16 @@ impl MergeTool {
 
                 merged_context.power_analyzer.append_sensor_value(new_ts, new_value);
 
-                point_index1 = point_index1 + 1;
-                point_index2 = point_index2 + 1;
+                point_index1 += 1;
+                point_index2 += 1;
             }
             else if ts1 < ts2 {
                 merged_context.power_analyzer.append_sensor_value(ts1, value1);
-                point_index1 = point_index1 + 1;
+                point_index1 += 1;
             }
-            else
-            {
+            else {
                 merged_context.power_analyzer.append_sensor_value(ts2, value2);
-                point_index2 = point_index2 + 1;
+                point_index2 += 1;
             }
         }
 
@@ -233,14 +231,14 @@ impl MergeTool {
             let value1 = data1.readings[point_index1];
 
             merged_context.power_analyzer.append_sensor_value(ts1, value1);
-            point_index1 = point_index1 + 1;
+            point_index1 += 1;
         }
         while point_index2 < num_points2 {
             let ts2 = data2.time_readings[point_index2];
             let value2 = data2.readings[point_index2];
 
             merged_context.power_analyzer.append_sensor_value(ts2, value2);
-            point_index2 = point_index2 + 1;
+            point_index2 += 1;
         }
     }
 

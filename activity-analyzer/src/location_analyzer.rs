@@ -34,8 +34,13 @@ pub struct IntervalDescription {
 
 impl IntervalDescription {
     pub fn new() -> Self {
-        let interval = IntervalDescription{start_time: 0, end_time: 0, line_length_meters: 0.0, line_avg_speed: 0.0};
-        interval
+        IntervalDescription{start_time: 0, end_time: 0, line_length_meters: 0.0, line_avg_speed: 0.0}
+    }
+}
+
+impl Default for IntervalDescription {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -86,12 +91,11 @@ pub struct LocationAnalyzer {
 
 impl LocationAnalyzer {
     pub fn new() -> Self {
-        let analyzer = LocationAnalyzer{ start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
+        LocationAnalyzer{ start_time_ms: 0, last_time_ms: 0, last_lat: 0.0, last_lon: 0.0, last_alt: 0.0, distance_buf: Vec::new(), speed_times: Vec::new(),
             speed_graph: Vec::new(), total_distance: 0.0, total_vertical: 0.0, times: Vec::new(), lap_times: Vec::new(), latitude_readings: Vec::new(), longitude_readings: Vec::new(),
             altitude_graph: Vec::new(), gradient_curve: Vec::new(), gap_graph: Vec::new(), mile_splits: Vec::new(), km_splits: Vec::new(), avg_speed: 0.0, current_speed: 0.0,
             speed_variance: 0.0, bests: HashMap::new(), max_altitude: 0.0, activity_type: TYPE_UNSPECIFIED_ACTIVITY_KEY.to_string(), significant_intervals: Vec::new(),
-            geo_analyzer: super::geojson::GeoJson::new(), speed_window_size: 1, last_speed_buf_update_time: 0 };
-        analyzer
+            geo_analyzer: super::geojson::GeoJson::new(), speed_window_size: 1, last_speed_buf_update_time: 0 }
     }
 
     /// Accessor methods for lap metadata.
@@ -101,19 +105,13 @@ impl LocationAnalyzer {
         }
         0
     }
-    pub fn get_lap_seconds(&self, lap_num: u8) -> u64 {
-        if self.lap_times.len() == 0 {
-        }
+    pub fn get_lap_seconds(&self, _lap_num: u8) -> u64 {
         0
     }
-    pub fn get_lap_calories(&self, lap_num: u8) -> f64 {
-        if self.lap_times.len() == 0 {
-        }
+    pub fn get_lap_calories(&self, _lap_num: u8) -> f64 {
         0.0
     }
-    pub fn get_lap_distance(&self, lap_num: u8) -> f64 {
-        if self.lap_times.len() == 0 {
-        }
+    pub fn get_lap_distance(&self, _lap_num: u8) -> f64 {
         0.0
     }
 
@@ -141,8 +139,8 @@ impl LocationAnalyzer {
     /// Returns the time associated with the specified record, or None if not found.
     pub fn get_best_time(&self, record_name: &str) -> u64 {
         match self.bests.get(record_name) {
-            Some(&number) => return number,
-            _ => return 0,
+            Some(&number) => number,
+            _ => 0,
         }
     }
 
@@ -188,8 +186,7 @@ impl LocationAnalyzer {
 
     fn compute_grade_adjusted_pace(gradient: f64, pace: f64) -> f64 {
         let cost = (155.4 * (f64::powf(gradient, 5.0))) - (30.4 * f64::powf(gradient, 4.0)) - (43.4 * f64::powf(gradient, 3.0)) - (46.3 * (gradient * gradient)) - (19.5 * gradient) + 3.6;
-        let gap = pace + (cost - 3.6) / 3.6;
-        gap
+        pace + (cost - 3.6) / 3.6
     }
 
     fn examine_interval_peak(&mut self, start_index: usize, end_index: usize) -> Option<IntervalDescription> {
@@ -356,7 +353,7 @@ impl LocationAnalyzer {
             // Convert time from ms to seconds - seconds from this point to the end of the activity.
             let current_time_ms = time_distance_node.date_time_ms;
             let total_seconds = (self.last_time_ms - current_time_ms) / 1000;
-            if total_seconds <= 0 {
+            if total_seconds == 0 {
                 continue;
             }
 
@@ -489,7 +486,7 @@ impl LocationAnalyzer {
             self.total_distance = new_distance;
             let vertical = altitude - self.last_alt;
             if vertical > 0.0 {
-                self.total_vertical = self.total_vertical + vertical;
+                self.total_vertical += vertical;
             }
             self.times.push(date_time_ms);
             self.latitude_readings.push(latitude);
@@ -511,5 +508,11 @@ impl LocationAnalyzer {
         self.last_lat = latitude;
         self.last_lon = longitude;
         self.last_alt = altitude;
+    }
+}
+
+impl Default for LocationAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

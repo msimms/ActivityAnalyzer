@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Michael J. Simms. All rights reserved.
  #![allow(dead_code)]
 
-use lib_math::{graphics};
+use lib_math::graphics;
 use std::collections::HashMap;
 use serde::Deserialize;
 
@@ -48,8 +48,7 @@ pub struct GeoJson {
 
 impl GeoJson {
     pub fn new() -> Self {
-        let reader = GeoJson{ world_features: None, us_features: None };
-        reader
+        GeoJson{ world_features: None, us_features: None }
     }
 
     pub fn load_world_data(&mut self, s: &str) {
@@ -66,5 +65,11 @@ impl GeoJson {
         /*for feature in features.features {
         }*/
         geomap
+    }
+}
+
+impl Default for GeoJson {
+    fn default() -> Self {
+        Self::new()
     }
 }

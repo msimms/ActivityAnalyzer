@@ -12,8 +12,7 @@ pub struct GpxWriter {
 impl GpxWriter {
     pub fn new() -> Self {
         let opt = Options { use_single_quote: true, attributes_indent: Indent::Spaces(2), indent: Indent::Spaces(2) };
-        let writer = GpxWriter{ writer: XmlWriter::new(opt) };
-        writer
+        GpxWriter{ writer: XmlWriter::new(opt) }
     }
 
     pub fn open(&mut self) {
@@ -27,8 +26,7 @@ impl GpxWriter {
         self.writer.write_attribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
     }
     pub fn close(self) -> String {
-        let result = self.writer.end_document();
-        result
+        self.writer.end_document()
     }
 
     pub fn write_metadata(&mut self, start_time_ms: u64) {
@@ -128,9 +126,7 @@ impl GpxWriter {
         let sec  = t / 1000;
         let ms = t % 1000;
 
-        let naive = NaiveDateTime::from_timestamp(sec as i64, 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-
+        let datetime = DateTime::<Utc>::from_timestamp(sec as i64, 0).unwrap();
         let buf1 = datetime.format("%Y-%m-%dT%H:%M:%S");
         let buf2 = format!("{}.{:03}Z", buf1, ms);
         buf2

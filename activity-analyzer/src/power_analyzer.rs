@@ -18,8 +18,13 @@ pub struct PowerIntervalDescription {
 
 impl PowerIntervalDescription {
     pub fn new() -> Self {
-        let interval = PowerIntervalDescription{start_time: 0, end_time: 0, avg_power: 0.0};
-        interval
+        PowerIntervalDescription{ start_time: 0, end_time: 0, avg_power: 0.0 }
+    }
+}
+
+impl Default for PowerIntervalDescription {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -41,9 +46,8 @@ pub struct PowerAnalyzer {
 
 impl PowerAnalyzer {
     pub fn new() -> Self {
-        let analyzer = PowerAnalyzer{ readings: Vec::new(), time_readings: Vec::new(), max_power: 0.0, avg_power: 0.0, np_buf: Vec::new(), np: 0.0, vi: 0.0,
-            current_30_sec_buf: Vec::new(), current_30_sec_buf_start_time: 0, bests: HashMap::new(), significant_intervals: Vec::new(), start_time_ms: 0, end_time_ms: 0 };
-        analyzer
+        PowerAnalyzer{ readings: Vec::new(), time_readings: Vec::new(), max_power: 0.0, avg_power: 0.0, np_buf: Vec::new(), np: 0.0, vi: 0.0,
+            current_30_sec_buf: Vec::new(), current_30_sec_buf_start_time: 0, bests: HashMap::new(), significant_intervals: Vec::new(), start_time_ms: 0, end_time_ms: 0 }
     }
 
     /// Computes the average value.
@@ -51,7 +55,7 @@ impl PowerAnalyzer {
         let count = self.readings.len();
         if count > 0 {
             let sum: f64 = Iterator::sum(self.readings.iter());
-            return f64::from(sum) / (count as f64);
+            return sum / (count as f64);
         }
         0.0
     }
@@ -94,9 +98,9 @@ impl PowerAnalyzer {
 
         // Update the buffers needed for the normalized power calculation.
         if date_time_ms - self.current_30_sec_buf_start_time > 30000 {
-            if self.current_30_sec_buf.len() > 0 {
+            if !self.current_30_sec_buf.is_empty() {
                 let sum_norm_power: f64 = Iterator::sum(self.current_30_sec_buf.iter());
-                let avg_norm_power = f64::from(sum_norm_power) / self.current_30_sec_buf.len() as f64;
+                let avg_norm_power = sum_norm_power / self.current_30_sec_buf.len() as f64;
 
                 self.np_buf.push(avg_norm_power);
                 self.current_30_sec_buf = Vec::new();
@@ -158,16 +162,16 @@ impl PowerAnalyzer {
 
             // Needs this for the variability index calculation.
             let sum_norm_power: f64 = Iterator::sum(self.np_buf.iter());
-            let avg_norm_power = f64::from(sum_norm_power) / self.np_buf.len() as f64;
+            let avg_norm_power = sum_norm_power / self.np_buf.len() as f64;
 
             // Raise all items to the fourth power.
             let mut sum_norm_power2 = 0.0;
             for item in self.np_buf.iter() {
-                sum_norm_power2 = sum_norm_power2 + item.powf(4.0);
+                sum_norm_power2 += item.powf(4.0);
             }
 
             // Average the values that were raised to the fourth.
-            let avg_norm_power2 = f64::from(sum_norm_power2) / self.np_buf.len() as f64;
+            let avg_norm_power2 = sum_norm_power2 / self.np_buf.len() as f64;
 
             // Take the fourth root.
             self.np = avg_norm_power2.powf(0.25);
@@ -240,13 +244,13 @@ impl PowerAnalyzer {
 
                         // Convert the interval description into something k-means can work with.
                         let sample_dimensions = 2;
-                        let mut samples = vec![0.0 as f64; sample_dimensions * num_possible_intervals];
+                        let mut samples = vec![0.0_f64; sample_dimensions * num_possible_intervals];
                         let mut sample_index = 0;
                         for interval in &filtered_interval_list {
                             samples[sample_index] = interval.avg_power;
-                            sample_index = sample_index + 1;
+                            sample_index += 1;
                             samples[sample_index] = (interval.end_time - interval.start_time) as f64;
-                            sample_index = sample_index + 1;
+                            sample_index += 1;
                         }
 
                         // Determine the maximum value of k.
@@ -287,7 +291,7 @@ impl PowerAnalyzer {
                                 let interval = filtered_interval_list[interval_index];
                                 self.significant_intervals.push(interval);
                             }
-                            interval_index = interval_index + 1;
+                            interval_index += 1;
                         }
                     }
                 }
@@ -300,5 +304,11 @@ impl PowerAnalyzer {
         self.avg_power = self.compute_average();
         self.compute_normalized_power();
         self.search_for_intervals();
+    }
+}
+
+impl Default for PowerAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }
