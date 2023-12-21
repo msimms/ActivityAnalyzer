@@ -200,10 +200,8 @@ impl PowerAnalyzer {
 
         let powers = &self.readings[start_index..end_index - 1];
         let avg_power = statistics::average_f64(&powers.to_vec());
-        let desc = PowerIntervalDescription{start_time: start_time, end_time: end_time, avg_power: avg_power};
-        let result: Option::<PowerIntervalDescription> = Some(desc);
-
-        result
+        let desc = PowerIntervalDescription{start_time, end_time, avg_power};
+        Some(desc)
     }
 
     /// Performs a k-means analysis on peaks extracted from the power data to look for intervals.
@@ -234,7 +232,7 @@ impl PowerAnalyzer {
                             Some(interval) => {
                                 filtered_interval_list.push(interval);
                             }
-                            _ => {},
+                            None => {},
                         }
                     }
 

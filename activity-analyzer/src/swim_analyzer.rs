@@ -9,18 +9,17 @@ pub struct SwimAnalyzer {
 
 impl SwimAnalyzer {
     pub fn new() -> Self {
-        let analyzer = SwimAnalyzer{pool_length: 0, pool_length_units: 0, strokes: Vec::new(), time_readings: Vec::new()};
-        analyzer
+        SwimAnalyzer{ pool_length: 0, pool_length_units: 0, strokes: Vec::new(), time_readings: Vec::new() }
     }
 
     pub fn get_start_time_ms(&self) -> u64 {
-        if self.time_readings.len() > 0 {
+        if !self.time_readings.is_empty() {
             return self.time_readings[0];
         }
         0
     }
     pub fn get_last_time_ms(&self) -> u64 {
-        if self.time_readings.len() > 0 {
+        if !self.time_readings.is_empty() {
             return *self.time_readings.last().unwrap();
         }
         0
@@ -43,5 +42,11 @@ impl SwimAnalyzer {
         // Update our state.
         self.strokes.push(value);
         self.time_readings.push(date_time_ms);
+    }
+}
+
+impl Default for SwimAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

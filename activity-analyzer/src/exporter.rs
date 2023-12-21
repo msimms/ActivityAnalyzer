@@ -147,13 +147,13 @@ impl Exporter {
                 writer.store_distance_meters(0.0);
 
                 while hr_index < num_hr_readings && context.hr_analyzer.time_readings[hr_index] < ts {
-                    hr_index = hr_index + 1;
+                    hr_index += 1;
                 }
                 while cad_index < num_cad_readings && context.cadence_analyzer.time_readings[cad_index] < ts {
-                    cad_index = cad_index + 1;
+                    cad_index += 1;
                 }
                 while power_index < num_power_readings && context.power_analyzer.time_readings[power_index] < ts {
-                    power_index = power_index + 1;
+                    power_index += 1;
                 }
 
                 if num_hr_readings > 0 && hr_index < num_hr_readings {
