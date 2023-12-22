@@ -210,33 +210,26 @@ impl LocationAnalyzer {
 
         let mut start_distance_rec: Option<&DistanceNode> = None;
         let mut end_distance_rec: Option<&DistanceNode> = None;
-
         let mut line_length_meters = 0.0;
 
         for rec in self.distance_buf.iter() {
             if rec.date_time_ms == start_time {
-                start_distance_rec = Some(&rec);
+                start_distance_rec = Some(rec);
             }
             if rec.date_time_ms == end_time {
-                end_distance_rec = Some(&rec);
+                end_distance_rec = Some(rec);
                 break;
             }
         }
 
-        match start_distance_rec {
-            Some(start_rec) => {
-                match end_distance_rec {
-                    Some(end_rec) => {
-                        line_length_meters = end_rec.total_distance - start_rec.total_distance;
-                    },
-                    _ => {},
-                }
-            },
-            _ => {},
+        if let Some(start_rec) = start_distance_rec {
+            if let Some(end_rec) = end_distance_rec {
+                line_length_meters = end_rec.total_distance - start_rec.total_distance;
+            }
         }
 
         let line_avg_speed = statistics::average_f64(&speeds.to_vec());
-        let desc = IntervalDescription{start_time: start_time, end_time: end_time, line_length_meters: line_length_meters, line_avg_speed: line_avg_speed};
+        let desc = IntervalDescription{start_time, end_time, line_length_meters, line_avg_speed};
         let result: Option::<IntervalDescription> = Some(desc);
 
         result
@@ -266,11 +259,8 @@ impl LocationAnalyzer {
                     let mut filtered_interval_list = Vec::new();
                     for peak in peak_list {
                         let interval = self.examine_interval_peak(peak.left_trough.x, peak.right_trough.x);
-                        match interval {
-                            Some(interval) => {
-                                filtered_interval_list.push(interval);
-                            }
-                            _ => {},
+                        if let Some(interval) = interval {
+                            filtered_interval_list.push(interval);
                         }
                     }
 
@@ -280,13 +270,13 @@ impl LocationAnalyzer {
 
                         // Convert the interval description into something k-means can work with.
                         let sample_dimensions = 2;
-                        let mut samples = vec![0.0 as f64; sample_dimensions * num_possible_intervals];
+                        let mut samples = vec![0.0_f64; sample_dimensions * num_possible_intervals];
                         let mut sample_index = 0;
                         for interval in &filtered_interval_list {
                             samples[sample_index] = interval.line_avg_speed;
-                            sample_index = sample_index + 1;
+                            sample_index += 1;
                             samples[sample_index] = interval.line_length_meters;
-                            sample_index = sample_index + 1;
+                            sample_index += 1;
                         }
 
                         // Determine the maximum value of k.
@@ -327,7 +317,7 @@ impl LocationAnalyzer {
                                 let interval = filtered_interval_list[interval_index];
                                 self.significant_intervals.push(interval);
                             }
-                            interval_index = interval_index + 1;
+                            interval_index += 1;
                         }
                     }
                 }

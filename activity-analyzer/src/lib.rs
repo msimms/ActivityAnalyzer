@@ -161,7 +161,7 @@ fn analyze_gpx_route(s: &str) -> String {
                     // Iterate through the points.
                     for point in trackseg.points {
                         context.location_analyzer.append_location(fake_time, point.lat, point.lon, point.ele);
-                        fake_time = fake_time + 1;
+                        fake_time += 1;
                     }
                 }
             }
@@ -207,7 +207,7 @@ pub fn analyze_gpx(s: &str) -> String {
                         let mut time = 0;
                         match point.time {
                             Some(temp_time) => {
-                                let temp: time::OffsetDateTime = gpx::Time::from(temp_time).into();
+                                let temp: time::OffsetDateTime = temp_time.into();
                                 time = temp.unix_timestamp();
                             }
                             _ => { time += 1; }, // data is from a route so just make up a time that is greater than the previous one.
@@ -461,7 +461,7 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         if let Some(event_num) = msg.event {
             // Front and rear gear change (42 == rear gear change, 43 == front gear change).
             if event_num == 42 || event_num == 43 {
-                let event = event::Event{ timestamp_ms: timestamp_ms, event_type: event_num, event_data: 0 };
+                let event = event::Event{ timestamp_ms, event_type: event_num, event_data: 0 };
                 callback_context.events.push(event);
             }
             // Radar threat alert.

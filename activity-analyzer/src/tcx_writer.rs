@@ -12,8 +12,7 @@ pub struct TcxWriter {
 impl TcxWriter {
     pub fn new() -> Self {
         let opt = Options { use_single_quote: true, attributes_indent: Indent::Spaces(2), indent: Indent::Spaces(2) };
-        let writer = TcxWriter{ writer: XmlWriter::new(opt) };
-        writer
+        TcxWriter{ writer: XmlWriter::new(opt) }
     }
 
     pub fn open(&mut self) {
@@ -26,8 +25,7 @@ impl TcxWriter {
         self.writer.write_attribute("elementFormDefault", "qualified");
     }
     pub fn close(self) -> String {
-        let result = self.writer.end_document();
-        result
+        self.writer.end_document()
     }
 
     pub fn write_id(&mut self, start_time_ms: u64) {

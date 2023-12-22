@@ -63,8 +63,8 @@ impl PowerAnalyzer {
     /// Returns the time associated with the specified record, or None if not found.
     pub fn get_best_power(&self, record_name: &str) -> f64 {
         match self.bests.get(record_name) {
-            Some(&number) => return number,
-            _ => return 0.0,
+            Some(&number) => number,
+            _ => 0.0,
         }
     }
 
@@ -228,11 +228,8 @@ impl PowerAnalyzer {
                     let mut filtered_interval_list = Vec::new();
                     for peak in peak_list {
                         let interval = self.examine_interval_peak(peak.left_trough.x, peak.right_trough.x);
-                        match interval {
-                            Some(interval) => {
-                                filtered_interval_list.push(interval);
-                            }
-                            None => {},
+                        if let Some(interval) = interval {
+                            filtered_interval_list.push(interval);
                         }
                     }
 
