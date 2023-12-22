@@ -172,9 +172,7 @@ fn analyze_gpx_route(s: &str) -> String {
     }
 
     // Copy items to the final report.
-    let analysis_report_str = make_final_report(&context);
-
-    analysis_report_str
+    make_final_report(&context)
 }
 
 #[wasm_bindgen]
@@ -197,9 +195,8 @@ pub fn analyze_gpx(s: &str) -> String {
             for track in gpx.tracks {
 
                 // Get the track name.
-                match &track._type {
-                    Some(activity_type) => context.location_analyzer.set_activity_type(activity_type.to_string()),
-                    _ => {},
+                if let Some(activity_type) = &track.type_ {
+                    context.location_analyzer.set_activity_type(activity_type.to_string())
                 }
 
                 // Iterate through the track segments.
@@ -209,8 +206,11 @@ pub fn analyze_gpx(s: &str) -> String {
                     for point in trackseg.points {
                         let mut time = 0;
                         match point.time {
-                            Some(temp_time) => { time = temp_time.timestamp(); }
-                            _ => { time = time + 1; }, // data is from a route so just make up a time that is greater than the previous one.
+                            Some(temp_time) => {
+                                let temp: time::OffsetDateTime = gpx::Time::from(temp_time).into();
+                                time = temp.unix_timestamp();
+                            }
+                            _ => { time += 1; }, // data is from a route so just make up a time that is greater than the previous one.
                         }
                         let lat = point.point().y();
                         let lon = point.point().x();
@@ -349,8 +349,8 @@ pub fn analyze_tcx(s: &str) -> String {
     }
 
     let mut analysis_report_str = "".to_string();
-    
-    if error == false {
+    if !error {
+
         // Copy items to the final report.
         analysis_report_str = make_final_report(&context);
 
@@ -370,21 +370,13 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
     if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_SESSION {
         let msg = fit_file::fit_file::FitSessionMsg::new(fields);
 
-        match msg.sport {
-            Some(sport_id) => {
-                let sport_names = fit_file::fit_file::init_sport_name_map();
-                callback_context.location_analyzer.set_activity_type(sport_names.get(&sport_id).unwrap().to_string());
-            }
-            None => {
-            }
+        if let Some(sport_id) = msg.sport {
+            let sport_names = fit_file::fit_file::init_sport_name_map();
+            callback_context.location_analyzer.set_activity_type(sport_names.get(&sport_id).unwrap().to_string());
         }
 
-        match msg.pool_length {
-            Some(pool_length) => {
-                callback_context.swim_analyzer.set_pool_length(pool_length);
-            }
-            None => {
-            }
+        if let Some(pool_length) = msg.pool_length {
+            callback_context.swim_analyzer.set_pool_length(pool_length);
         }
     }
     else if global_message_num == fit_file::fit_file::GLOBAL_MSG_NUM_RECORD {
@@ -396,92 +388,64 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         let mut altitude = 0.0;
         let mut valid_location = false;
 
-        match msg.position_lat {
-            Some(lat_semicircles) => {
+        if let Some(lat_semicircles) = msg.position_lat {
 
-                // Make sure we have a valid reading.
-                if lat_semicircles != 0x7FFFFFFF {
-                    latitude = fit_file::fit_file::semicircles_to_degrees(lat_semicircles);
+            // Make sure we have a valid reading.
+            if lat_semicircles != 0x7FFFFFFF {
+                latitude = fit_file::fit_file::semicircles_to_degrees(lat_semicircles);
 
-                    match msg.position_long {
-                        Some(lon_semicircles) => {
+                if let Some(lon_semicircles) = msg.position_long {
 
-                            // Make sure we have a valid reading.
-                            if lon_semicircles != 0x7FFFFFFF {
-                                longitude = fit_file::fit_file::semicircles_to_degrees(lon_semicircles);
-                                valid_location = true;
-                            }
-                        }
-                        None => {
-                        }
+                    // Make sure we have a valid reading.
+                    if lon_semicircles != 0x7FFFFFFF {
+                        longitude = fit_file::fit_file::semicircles_to_degrees(lon_semicircles);
+                        valid_location = true;
                     }
                 }
-            }
-            None => {
             }
         }
 
         // Some devices don't have altitude data, so just zero it out in that case.
-        match msg.altitude {
-            Some(res) => {
-                
-                // Make sure we have a valid reading.
-                if res != 0xFFFF {
-                    // Apply scaling and offset.
-                    altitude = (res as f64 / 5.0) - 500.0;
-                }
-            }
-            None => {
+        if let Some(res) = msg.altitude {
+    
+            // Make sure we have a valid reading.
+            if res != 0xFFFF {
+                // Apply scaling and offset.
+                altitude = (res as f64 / 5.0) - 500.0;
             }
         }
 
         // Prefer enhanced altitude over regular altitude.
-        match msg.enhanced_altitude {
-            Some(res) => {
-                
-                // Make sure we have a valid reading.
-                if res != 0xFFFF {
-                    // Apply scaling and offset.
-                    altitude = (res as f64 / 5.0) - 500.0;
-                }
-            }
-            None => {
+        if let Some(res) = msg.enhanced_altitude {
+
+            // Make sure we have a valid reading.
+            if res != 0xFFFF {
+                // Apply scaling and offset.
+                altitude = (res as f64 / 5.0) - 500.0;
             }
         }
 
-        match msg.heart_rate {
-            Some(heart_rate) => {
+        if let Some(heart_rate) = msg.heart_rate {
 
-                // Make sure we have a valid reading.
-                if heart_rate < 255 {
-                    callback_context.hr_analyzer.append_sensor_value(timestamp_ms, heart_rate as f64);
-                }
-            }
-            None => {
+            // Make sure we have a valid reading.
+            if heart_rate < 255 {
+                callback_context.hr_analyzer.append_sensor_value(timestamp_ms, heart_rate as f64);
             }
         }
 
-        match msg.power {
-            Some(watts) => {
+        if let Some(watts) = msg.power {
 
-                // Make sure we have a valid reading.
-                if watts < 65535 {
-                    callback_context.power_analyzer.append_sensor_value(timestamp_ms, watts as f64);
-                }
-            }
-            None => {
+            // Make sure we have a valid reading.
+            if watts < 65535 {
+                callback_context.power_analyzer.append_sensor_value(timestamp_ms, watts as f64);
             }
         }
 
-        match msg.temperature {
-            Some(temp) => {
+        if let Some(temp) = msg.temperature {
 
-                // Make sure we have a valid reading.
-                if temp < 127 {
-                    callback_context.temperature_analyzer.append_sensor_value(timestamp_ms, temp as f64);
-                }
-            }
-            None => {
+            // Make sure we have a valid reading.
+            if temp < 127 {
+                callback_context.temperature_analyzer.append_sensor_value(timestamp_ms, temp as f64);
             }
         }
 
@@ -494,18 +458,14 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         let msg = fit_file::fit_file::FitEventMsg::new(fields);
         let timestamp_ms = timestamp as u64 * 1000;
 
-        match msg.event {
-            Some(event_num) => {
-                // Front and rear gear change (42 == rear gear change, 43 == front gear change).
-                if event_num == 42 || event_num == 43 {
-                    let event = event::Event{ timestamp_ms: timestamp_ms, event_type: event_num, event_data: 0 };
-                    callback_context.events.push(event);
-                }
-                // Radar threat alert.
-                else if event_num == 75 {
-                }
+        if let Some(event_num) = msg.event {
+            // Front and rear gear change (42 == rear gear change, 43 == front gear change).
+            if event_num == 42 || event_num == 43 {
+                let event = event::Event{ timestamp_ms: timestamp_ms, event_type: event_num, event_data: 0 };
+                callback_context.events.push(event);
             }
-            None => {
+            // Radar threat alert.
+            else if event_num == 75 {
             }
         }
     }
@@ -513,13 +473,9 @@ fn callback(timestamp: u32, global_message_num: u16, _local_msg_type: u8, _messa
         let msg = fit_file::fit_file::FitLengthMsg::new(fields);
         let timestamp_ms = timestamp as u64 * 1000;
 
-        match msg.total_strokes {
-            Some(total_strokes) => {
-                if total_strokes < 65535 {
-                    callback_context.swim_analyzer.append_sensor_value(timestamp_ms, total_strokes);
-                }
-            }
-            None => {
+        if let Some(total_strokes) = msg.total_strokes {
+            if total_strokes < 65535 {
+                callback_context.swim_analyzer.append_sensor_value(timestamp_ms, total_strokes);
             }
         }
     }
@@ -551,7 +507,7 @@ pub fn analyze_fit(s: &[u8]) -> String {
 
     let mut analysis_report_str = "".to_string();
     
-    if error == false {
+    if !error {
         // Copy items to the final report.
         analysis_report_str = make_final_report(&context);
 
@@ -571,12 +527,11 @@ pub fn export_data(format: &str, split_start: u32, split_end: u32) -> String {
     let mut exported_data = String::new();
 
     unsafe {
-        if  CONTEXT_LIST.contexts.len() > 0 {
+        if !CONTEXT_LIST.contexts.is_empty() {
             let exporter = exporter::Exporter::new();
             exported_data = exporter.export(CONTEXT_LIST.contexts.last().unwrap(), format, (split_start as u64) * 1000, (split_end as u64) * 1000);
         }
-        else
-        {
+        else {
             alert("Nothing to export.");
         }
     }
@@ -598,8 +553,7 @@ pub fn merge(format: &str) -> String {
 
             merged_data = exporter.export(&merged_context, format, 0, 0);
         }
-        else
-        {
+        else {
             alert("Nothing to merge.");
         }
     }
@@ -611,7 +565,6 @@ pub fn merge(format: &str) -> String {
 mod tests {
     use std::io::Read;
     use std::fs::File;
-    use reqwest;
     use crate::analyze_tcx;
 
     /// Downloads a remote file to the local file path.
@@ -632,13 +585,12 @@ mod tests {
             Ok(mut file) => {
                 file.read_to_string(&mut content).unwrap();
             },
-            Err(error) => {
+            Err(_error) => {
             }
         }
 
         // Analyze the file and return the results.
-        let result = analyze_tcx(&content);
-        result
+        analyze_tcx(&content)
     }
 
     #[test]

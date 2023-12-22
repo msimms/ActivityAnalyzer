@@ -179,9 +179,7 @@ impl TcxWriter {
         let sec  = t / 1000;
         let ms = t % 1000;
 
-        let naive = NaiveDateTime::from_timestamp(sec as i64, 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-
+        let datetime = DateTime::<Utc>::from_timestamp(sec as i64, 0).unwrap();
         let buf1 = datetime.format("%Y-%m-%dT%H:%M:%S");
         let buf2 = format!("{}.{:03}Z", buf1, ms);
         buf2
