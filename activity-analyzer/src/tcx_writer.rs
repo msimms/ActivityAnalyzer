@@ -80,13 +80,6 @@ impl TcxWriter {
         self.writer.end_element();
         self.writer.set_preserve_whitespaces(false);
     }
-    pub fn store_lap_max_speed(&mut self, max_speed: f64) {
-        self.writer.start_element("MaximumSpeed");
-        self.writer.set_preserve_whitespaces(true);
-        self.writer.write_text_fmt(format_args!("{:?}", &max_speed));
-        self.writer.end_element();
-        self.writer.set_preserve_whitespaces(false);
-    }
 
     pub fn start_track(&mut self){
         self.writer.start_element("Track");
