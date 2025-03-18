@@ -6,11 +6,9 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 <!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
 
-
 <url>
-  <loc>http://activity-analyzer.app/</loc>
+  <loc>https://activity-analyzer.app/</loc>
   <lastmod>2022-04-17T14:23:34+00:00</lastmod>
 </url>
-
 
 </urlset>

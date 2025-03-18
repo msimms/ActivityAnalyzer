@@ -25,8 +25,7 @@
     div { margin: 0px }
     #map_canvas { height: 75% }
 
-    div.bar
-    {
+    div.bar {
         display: inline-block;
         width: 20px;
         height: 75px;	/* Gets overriden by D3-assigned height below */
@@ -34,8 +33,7 @@
     }
 
     .axis path,
-    .axis line
-    {
+    .axis line {
         fill: none;
         stroke: #000;
         stroke-width: 1;
@@ -55,16 +53,14 @@
 <script type="text/javascript">
     /// @function pad
     /// Utility function for padding a number with leading zeroes.
-    function pad(num, size)
-    {
+    function pad(num, size) {
         var s = "000000000" + num;
         return s.substr(s.length - size);
     }
 
     /// @function convert_seconds_to_hours_mins_secs
     /// Converts seconds to HH:MM:SS format.
-    function convert_seconds_to_hours_mins_secs(seconds_in)
-    {
+    function convert_seconds_to_hours_mins_secs(seconds_in) {
         seconds = seconds_in % 60;
         minutes = Math.trunc(seconds_in / 60);
         hours = Math.trunc(minutes / 60);
@@ -74,25 +70,21 @@
     }
 
     /// @function unix_time_ms_to_local_string
-    function unix_time_ms_to_local_string(unix_time)
-    {
+    function unix_time_ms_to_local_string(unix_time) {
         let date = new Date(unix_time);
         return date.toLocaleString();
     }
 
     /// @function unix_time_ms_to_local_date_string
-    function unix_time_ms_to_local_date_string(unix_time)
-    {
+    function unix_time_ms_to_local_date_string(unix_time) {
         let date = new Date(unix_time);
         return date.toLocaleDateString();
     }
 
     /// @function convert_distance_to_unit_system_str
     /// Converts meters to whatever the preferred units are and formats it as a string.
-    function convert_distance_to_unit_system_str(unit_system, meters_traveled)
-    {
-        if (unit_system == "Metric")
-        {
+    function convert_distance_to_unit_system_str(unit_system, meters_traveled) {
+        if (unit_system == "Metric") {
             let km = meters_traveled / 1000.0;
             return km.toFixed(2).toString() + " kms";
         }
@@ -102,10 +94,8 @@
 
     /// @function convert_vertical_distance_to_unit_system_str
     /// Converts meters to whatever the preferred units are and formats it as a string.
-    function convert_vertical_distance_to_unit_system_str(unit_system, meters_climbed)
-    {
-        if (unit_system == "Metric")
-        {
+    function convert_vertical_distance_to_unit_system_str(unit_system, meters_climbed) {
+        if (unit_system == "Metric") {
             return meters_climbed.toFixed(2).toString() + " meters";
         }
         let feet = meters_climbed * 3.28084;
@@ -114,10 +104,8 @@
 
     /// @function convert_speed_to_unit_system_str
     /// Converts meters/second to whatever the preferred units are and formats it as a string.
-    function convert_speed_to_unit_system_str(unit_system, speed)
-    {
-        if (unit_system == "Metric")
-        {
+    function convert_speed_to_unit_system_str(unit_system, speed) {
+        if (unit_system == "Metric") {
             let km = speed * 3.6;
             return km.toFixed(2).toString() + " km/hr";
         }
@@ -127,10 +115,8 @@
 
     /// @function convert_pace_to_unit_system_str
     /// Converts meters/minute to whatever the preferred units are and formats it as a string.
-    function convert_pace_to_unit_system_str(unit_system, pace)
-    {
-        if (unit_system == "Metric")
-        {
+    function convert_pace_to_unit_system_str(unit_system, pace) {
+        if (unit_system == "Metric") {
             let km = pace / 1000.0;
             return km.toFixed(2).toString() + " mins/km";
         }
@@ -139,8 +125,7 @@
     }
 
     /// @function append_to_table_row
-    function append_to_table_row(row, text)
-    {
+    function append_to_table_row(row, text) {
         let cell = row.insertCell();
         let a = document.createElement('a');
         let link_text = document.createTextNode(text);
@@ -152,8 +137,7 @@
     }
 
     /// @function append_to_table
-    function append_to_table(table, name, value)
-    {
+    function append_to_table(table, name, value) {
         let new_row = table.insertRow();
 
         append_to_table_row(new_row, name);
@@ -161,42 +145,35 @@
     }
 
     /// @function on_units_changed
-    function on_units_changed()
-    {
+    function on_units_changed() {
         let units = document.getElementById('units').value;
         document.cookie = "units=" + units;
     }
 
     /// @function on_export_format_changed
-    function on_export_format_changed()
-    {
+    function on_export_format_changed() {
         let export_format = document.getElementById('export_format').value;
         document.cookie = "export_format=" + export_format;
     }
 
     /// @function on_export_style_changed
-    function on_export_style_changed()
-    {
+    function on_export_style_changed() {
         let section = document.getElementById('export_splits');
 
-        if (document.getElementById('export_style').value == "MultipleFiles")
-        {
+        if (document.getElementById('export_style').value == "MultipleFiles") {
             section.style = "display: block;";
         }
-        else
-        {
+        else {
             section.style = "display: none;";
         }
     }
 
     /// @function normalize_split_times
-    function normalize_split_times(split_data)
-    {
+    function normalize_split_times(split_data) {
         let new_split_data = [];
         let last_split_value = 0;
 
-        for (let i = 0; i < split_data.length; ++i)
-        {
+        for (let i = 0; i < split_data.length; ++i) {
             let new_split_value = split_data[i] - last_split_value;
 
             last_split_value = split_data[i];
@@ -206,15 +183,13 @@
     }
 
     /// @function convert_speed_graph_to_display_units
-    function convert_speed_graph_to_display_units(unit_system, speed_list)
-    {
+    function convert_speed_graph_to_display_units(unit_system, speed_list) {
         let new_speed_list = [];
         let is_metric = (unit_system == "Metric");
         let max = 0.0;
 
         // Speed is in meters/second.
-        for (let data_point in speed_list)
-        {
+        for (let data_point in speed_list) {
             let date = speed_list[data_point].date;
             let speed = speed_list[data_point].value;
             let value = 0.0;
@@ -238,14 +213,12 @@
         let min = 0.0;
 
         // Speed is in meters/second.
-        for (let data_point in speed_list)
-        {
+        for (let data_point in speed_list) {
             let date = speed_list[data_point].date;
             let speed = speed_list[data_point].value;
             let value = 0.0;
 
-            if (speed > 1.25)
-            {
+            if (speed > 1.25) {
                 if (is_metric)
                     value = 16.6666667 / speed;
                 else
@@ -253,23 +226,24 @@
                 if (min < 0.1 || value < min)
                     min = value;
             }
-            else
+            else {
                 value = 0.0;
+            }
             pace_list.push({date, value});
         }
         return [ pace_list, min ];
     }
 
     /// @function compute_grade_adjusted_pace
-    function compute_grade_adjusted_pace(gradient_list, time_pace_data)
-    {
+    function compute_grade_adjusted_pace(gradient_list, time_pace_data) {
         let gap_list = time_pace_data.map(function(x, i) {
             let gradient = gradient_list[i];
             let cost = (155.4 * (Math.pow(gradient, 5))) - (30.4 * Math.pow(gradient, 4)) - (43.4 * Math.pow(gradient, 3)) - (46.3 * (gradient * gradient)) - (19.5 * gradient) + 3.6;
             let value = x.value + (cost - 3.6) / 3.6;
 
-            if (value < 0.0)
+            if (value < 0.0) {
                 value = 0.0;
+            }
 
             return {"date": new Date(x.date), "value": value};
         });
@@ -306,8 +280,7 @@
     let max_hr = null;
     let max_altitude = null;
 
-    function find_graph_extents(json_data)
-    {
+    function find_graph_extents(json_data) {
         let start_time_ms = json_data["Start Time (ms)"];
         let end_time_ms = json_data["End Time (ms)"];
 
@@ -316,22 +289,19 @@
         if (graph_end_time_ms == null || end_time_ms > graph_end_time_ms)
             graph_end_time_ms = end_time_ms
 
-        if (json_data["Maximum Power"] > 0)
-        {
+        if (json_data["Maximum Power"] > 0) {
             let temp = json_data["Maximum Power"];
 
             if (max_power == null || temp > max_power)
                 max_power = temp;
         }
-        if (json_data["Maximum Cadence"] > 0)
-        {
+        if (json_data["Maximum Cadence"] > 0) {
             let temp = json_data["Maximum Cadence"];
 
             if (max_cadence == null || temp > max_cadence)
                 max_cadence = temp;
         }
-        if (json_data["Maximum Heart Rate"] > 0)
-        {
+        if (json_data["Maximum Heart Rate"] > 0) {
             let temp = json_data["Maximum Heart Rate"];
 
             if (max_hr == null || temp > max_hr)
@@ -339,8 +309,7 @@
         }
     }
 
-    function render(json_data, file_num, total_num_files)
-    {
+    function render(json_data, file_num, total_num_files) {
         let fill = total_num_files == 1;
         let map_colors = ["red", "green", "blue"];
         let map_color = map_colors[(file_num - 1) % map_colors.length];
@@ -365,13 +334,11 @@
         let speed_units = "";
         let pace_units = "";
 
-        if (units == "Metric")
-        {
+        if (units == "Metric") {
             speed_units = "kph";
             pace_units = "mins/km";
         }
-        else
-        {
+        else {
             speed_units = "mph";
             pace_units = "mins/mile";
         }
@@ -495,47 +462,40 @@
         pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, null, time_pace_data, "Pace", pace_units, pace_graph_colors[graph_color_index], fill, pace_graph);
         gap_pace_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, null, gap_data, "Grade Adjusted Pace", pace_units, pace_graph_colors[graph_color_index], fill, gap_pace_graph);
 
-        if (power.length > 0)
-        {
+        if (power.length > 0) {
             let time_power_data = power_times.map(function(x, i) {
                 return {"date": new Date(x), "value": power[i]};
             });
             power_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, max_power, time_power_data, "Power", "Watts", power_colors[graph_color_index], fill, power_graph);
         }
-        if (cadence.length > 0)
-        {
+        if (cadence.length > 0) {
             let time_cadence_data = cadence_times.map(function(x, i) {
                 return {"date": new Date(x), "value": cadence[i]};
             });
             cadence_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, 0, max_cadence, time_cadence_data, "Cadence", "rpm", cadence_colors[graph_color_index], fill, cadence_graph);
         }
-        if (hr.length > 0)
-        {
+        if (hr.length > 0) {
             let time_hr_data = hr_times.map(function(x, i) {
                 return {"date": new Date(x), "value": hr[i]};
             });
             hr_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, max_hr, time_hr_data, "Heart Rate", "bpm", hr_colors[graph_color_index], fill, hr_graph);
         }
-        if (altitude.length > 0)
-        {
+        if (altitude.length > 0) {
             let time_altitude_data = times.map(function(x, i) {
                 return {"date": new Date(x), "value": altitude[i]};
             });
             altitude_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_altitude_data, "Altitude", "meters", altitude_colors[graph_color_index], fill, altitude_graph);
         }
-        if (temp_readings.length > 0)
-        {
+        if (temp_readings.length > 0) {
             let time_temp_data = temp_times.map(function(x, i) {
                 return {"date": new Date(x), "value": temp_readings[i]};
             });
             temp_graph = draw_graph(graph_start_time_ms, graph_end_time_ms, null, null, time_temp_data, "Temperature", "C", temp_colors[graph_color_index], fill, temp_graph);
         }
-        if (swim_strokes.length > 0)
-        {
+        if (swim_strokes.length > 0) {
             draw_bar_chart(swim_strokes, "Total Strokes", "Strokes", "LightSteelBlue");
         }
-        if (events.length > 0 && times.length > 0)
-        {
+        if (events.length > 0 && times.length > 0) {
             let new_events = events.map(function(event, i) {
                 let timestamp = event["timestamp_ms"];
                 let time_index = times.findIndex(function(val) { return val == timestamp; }, timestamp);
@@ -549,16 +509,14 @@
             events = new_events;
         }
 
-        if (latitudes.length > 0)
-        {
+        if (latitudes.length > 0) {
             draw_map(latitudes, longitudes, map_color, distance_meters, events);
         }
 
         // Show the export section, which may be configured differently depending on whether or not we're analyzing multiple files.
         let section = document.getElementById("export");
         section.style = "display: block;";
-        if (total_num_files > 1)
-        {
+        if (total_num_files > 1) {
             let export_button = document.getElementById("export_button");
             export_button.textContent = "Merge";
             let export_style = document.getElementById("export_style");
@@ -567,8 +525,7 @@
         current_file_num = current_file_num + 1;
     }
 
-    window.clear_graph_data = function clear_graph_data()
-    {
+    window.clear_graph_data = function clear_graph_data() {
         reports = [];
         current_file_num = 0;
 
@@ -591,31 +548,25 @@
         max_altitude = null;
     }
 
-    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, num_files_selected)
-    {
+    window.analyze_file_data = function analyze_file_data(name, ext, blob, file_num, num_files_selected) {
         let report = "";
 
-        if (ext.toLowerCase() == "gpx")
-        {
+        if (ext.toLowerCase() == "gpx") {
             report = analyze_gpx(blob);
         }
-        else if (ext.toLowerCase() == "tcx")
-        {
+        else if (ext.toLowerCase() == "tcx") {
             report = analyze_tcx(blob);
         }
-        else if (ext.toLowerCase() == "fit")
-        {
+        else if (ext.toLowerCase() == "fit") {
             let raw = new Uint8Array(blob);
             report = analyze_fit(raw);
         }
-        else
-        {
+        else {
             alert("Unrecognized file extension. Must be tcx, gpx, or fit.");
             return;
         }
 
-        if (report.length == 0)
-        {
+        if (report.length == 0) {
             return;
         }
 
@@ -628,24 +579,20 @@
         // Once all the files have been processed then render them all at once.
         // We need to do it like this so we can find the total extent (i.e. start time and end time)
         // for the purpose of drawing the graphs correctly.
-        if (file_num == num_files_selected)
-        {
+        if (file_num == num_files_selected) {
             // Find the start and end time.
-            for (let i = 1; i <= reports.length; i++)
-            {
+            for (let i = 1; i <= reports.length; i++) {
                 find_graph_extents(reports[i-1]);
             }
 
             // Render.
-            for (let i = 1; i <= reports.length; i++)
-            {
+            for (let i = 1; i <= reports.length; i++) {
                 render(reports[i-1], i, num_files_selected);
             }
         }
     }
 
-    function create_download_link(data, filename, type)
-    {
+    function create_download_link(data, filename, type) {
         let file = new Blob([data], { type: type });
         let downloads_div = document.getElementById('downloads');
         let a = document.createElement("a");
@@ -659,16 +606,13 @@
         downloads_div.appendChild(a);
     }
 
-    function create_local_file(data, filename, type)
-    {
+    function create_local_file(data, filename, type) {
         let file = new Blob([data], { type: type });
 
-        if (window.navigator.msSaveOrOpenBlob)
-        {
+        if (window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(file, filename);
         }
-        else
-        {
+        else {
             let a = document.createElement("a");
             let url = URL.createObjectURL(file);
 
@@ -685,46 +629,38 @@
         }
     }
 
-    function isNumber(n)
-    {
+    function isNumber(n) {
         return !isNaN(n)
     }
 
-    window.export_to_file = function export_to_file()
-    {
+    window.export_to_file = function export_to_file() {
         let export_button = document.getElementById("export_button");
         let export_format = document.getElementById('export_format').value.toLowerCase();
 
-        if (export_button.textContent == "Merge")
-        {
+        if (export_button.textContent == "Merge") {
             let data = merge(export_format);
 
             create_local_file(data, "file." + export_format, "text/plain;charset=utf-8");
         }
-        else
-        {
+        else {
             let split_offset_secs = 0;
 
-            if (document.getElementById('export_style').value == "MultipleFiles")
-            {
+            if (document.getElementById('export_style').value == "MultipleFiles") {
                 let split_time_value = document.getElementById('split_time').value;
 
-                if (isNumber(split_time_value))
-                {
+                if (isNumber(split_time_value)) {
                     split_offset_secs = Number(split_time_value);
                 }
             }
 
-            if (split_offset_secs > 0)
-            {
+            if (split_offset_secs > 0) {
                 let data1 = export_data(export_format, 0, split_offset_secs);
                 let data2 = export_data(export_format, split_offset_secs, 0);
 
                 create_download_link(data1, "file1." + export_format, "text/plain;charset=utf-8");
                 create_download_link(data2, "file2." + export_format, "text/plain;charset=utf-8");
             }
-            else
-            {
+            else {
                 let data = export_data(export_format, 0, 0);
 
                 create_local_file(data, "file." + export_format, "text/plain;charset=utf-8");
@@ -786,15 +722,13 @@
     let map = new OpenLayers.Map();
 
     /// @function clear_map
-    function clear_map()
-    {
+    function clear_map() {
         $('#map_canvas').empty();
         map = new OpenLayers.Map();
     }
 
     /// @function draw_map
-    function draw_map(latitudes, longitudes, line_color, extent_meters, events)
-    {
+    function draw_map(latitudes, longitudes, line_color, extent_meters, events) {
         let map_div = document.getElementById('map_canvas');
         map_div.style = "display: block;";
 
@@ -804,18 +738,15 @@
         let projection = new OpenLayers.Projection("EPSG:4326");
         let project_to = map.getProjectionObject(); // The map projection (Spherical Mercator)
 
-        if (events.length > 0)
-        {
+        if (events.length > 0) {
             let marker_color_list = ["red", "black"];
             let marker_layer_name = [events[0][2]];
             let marker_style_array = [new OpenLayers.StyleMap({ pointRadius: 6, fillColor: marker_color_list[0], fillOpacity: 0.5 })];
             let marker_vector_layer = [new OpenLayers.Layer.Vector(marker_layer_name[0], { styleMap: marker_style_array[0] })];
 
             let j = 0;
-            for (var i = 1; i < events.length; i++)
-            {
-                if (!marker_layer_name.includes(events[i][2]))
-                {
+            for (var i = 1; i < events.length; i++) {
+                if (!marker_layer_name.includes(events[i][2])) {
                     j++;
                     marker_layer_name.push(events[i][2]); // If new layer name found it is created
                     marker_style_array.push(new OpenLayers.StyleMap({ pointRadius: 6, fillColor: marker_color_list[j % marker_color_list.length], fillOpacity: 0.5 }));
@@ -823,8 +754,7 @@
                 }
             }
 
-            for (var i = 0; i < events.length; i++)
-            {
+            for (var i = 0; i < events.length; i++) {
                 let marker_lat = events[i][0];
                 let marker_lon = events[i][1];
                 let feature = new OpenLayers.Feature.Vector(
@@ -871,15 +801,13 @@
     var file_picker = document.getElementById('file_picker');
 
     /// @function clear_analysis_summary
-    function clear_analysis_summary()
-    {
+    function clear_analysis_summary() {
         let analysis_section = document.getElementById('analysis_section');
         analysis_section.innerHTML = '';
     }
 
     /// @function clear_all_graphs
-    function clear_all_graphs()
-    {
+    function clear_all_graphs() {
         window.clear_graph_data();
         $('#charts').empty();
     }
@@ -888,8 +816,7 @@
     // if existing_graph is provided, a new line will be appended to that graph.
     function draw_graph(graph_start_time_ms, graph_end_time_ms, min_y, max_y, data, title, units, color, fill, existing_graph)
     {
-        if (data.length <= 1)
-        {
+        if (data.length <= 1) {
             return;
         }
 
@@ -911,8 +838,7 @@
         data.unshift(graph_node);
 
         // To make all the graphs line up, make sure they have the same start and end time.
-        if (graph_start_time_ms > 0)
-        {
+        if (graph_start_time_ms > 0) {
             graph_node = {};
             graph_node["date"] = new Date(graph_start_time_ms);
             graph_node["value"] = 0.0;
@@ -925,8 +851,7 @@
         graph_node["value"] = 0.0;
         data.push(graph_node);
 
-        if (graph_end_time_ms >= last_ts)
-        {
+        if (graph_end_time_ms >= last_ts) {
             graph_node = {};
             graph_node["date"] = new Date(graph_end_time_ms);
             graph_node["value"] = 0.0;
@@ -950,8 +875,7 @@
             let coordinates = d3.mouse(this);
             let x = coordinates[0];
 
-            if (x < data.length)
-            {
+            if (x < data.length) {
                 tooltip
                     .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
                     .style("top", (event.pageY)+"px")
@@ -977,8 +901,7 @@
             .domain([ min_y, max_y ])
             .range([ height, 0 ]);
 
-        if (existing_graph == null)
-        {
+        if (existing_graph == null) {
             // Create the graph.
             svg = d3.select("#charts")
                 .append("svg")
@@ -1048,19 +971,16 @@
             function idled() { idle_time_out = null; }
 
             // A function that update the chart for given boundaries.
-            function update_chart()
-            {
+            function update_chart() {
                 // What are the selected boundaries?
                 let extent = d3.event.selection;
 
                 // If no selection, back to initial coordinate. Otherwise, update x axis domain.
-                if (extent)
-                {
+                if (extent) {
                     x_scale.domain([ x_scale.invert(extent[0]), x_scale.invert(extent[1]) ]);
                     line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done.
                 }
-                else
-                {
+                else {
                     if (!idle_time_out)
                         return idle_time_out = setTimeout(idled, 350); // This allows to wait a little bit.
                     x_scale.domain([4,8])
@@ -1079,15 +999,12 @@
 
         // Add the y axis.
         let y_axis = null;
-        if (draw_y_axis)
-        {
-            if (existing_graph == null)
-            {
+        if (draw_y_axis) {
+            if (existing_graph == null) {
                 y_axis = svg.append("g")
                     .call(d3.axisLeft(y_scale));
             }
-            else
-            {
+            else {
                 y_axis = svg.append("g")
                     .call(d3.axisRight(y_scale));
             }
@@ -1123,8 +1040,7 @@
     }
 
     /// @function draw_bar_chart
-    function draw_bar_chart(data, title, units, color)
-    {
+    function draw_bar_chart(data, title, units, color) {
         let tooltip = d3.select("#charts")
             .append("div")
                 .style("opacity", 0)
@@ -1142,8 +1058,7 @@
             let coordinates = d3.mouse(this);
             let x = Math.floor((coordinates[0] / width) * data.length);
 
-            if (x < data.length)
-            {
+            if (x < data.length) {
                 let value = data[x];
 
                 if (units == "Time")
@@ -1205,14 +1120,11 @@
     }
 
     /// @function draw_intervals_graph
-    function draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, interval_data, title, color, existing_graph)
-    {
+    function draw_intervals_graph(graph_start_time_ms, graph_end_time_ms, interval_data, title, color, existing_graph) {
         interval_graph = [];
 
-        if (interval_data.length > 0)
-        {
-            for (let i in interval_data)
-            {
+        if (interval_data.length > 0) {
+            for (let i in interval_data) {
                 let interval = interval_data[i];
                 let start_interval_time = interval.start_time;
                 let end_interval_time = interval.end_time;
@@ -1240,47 +1152,38 @@
     }
 
     /// @function analyze_selected_files
-    function analyze_selected_files()
-    {
+    function analyze_selected_files() {
         let file_num = 0;
 
-        if (selected_file_list.length > 0)
-        {
+        if (selected_file_list.length > 0) {
             clear_analysis_summary();
             clear_all_graphs();
             clear_map();
 
-            for (var i = 0; i < selected_file_list.length; i++)
-            {
+            for (var i = 0; i < selected_file_list.length; i++) {
                 let selected_file_obj = selected_file_list[i];
                 let reader = new FileReader();
                 let ext = selected_file_obj.name.split('.').pop();
 
-                reader.onerror = function(event)
-                {
+                reader.onerror = function(event) {
                     reader.abort();
                 };
-                reader.onload = function(e)
-                {
+                reader.onload = function(e) {
                     window.analyze_file_data(selected_file_obj.name, ext, reader.result, ++file_num, selected_file_list.length);
 
                     // If we've processed the last file then clear the file list, in case the user loads more files without refreshing the page.
-                    if (file_num == selected_file_list.length)
-                    {
+                    if (file_num == selected_file_list.length) {
                         selected_file_list = [];
                     }
                 }
 
-                if ((ext.toLowerCase() == "gpx") || (ext.toLowerCase() == "tcx"))
-                {
+                if ((ext.toLowerCase() == "gpx") || (ext.toLowerCase() == "tcx")) {
                     reader.readAsText(selected_file_obj);
                 }
-                else if (ext.toLowerCase() == "fit")
-                {
+                else if (ext.toLowerCase() == "fit") {
                     reader.readAsArrayBuffer(selected_file_obj);
                 }
-                else
-                {
+                else {
                     alert("Unrecognized file extension. Must be tcx, gpx, or fit.");
                     return;
                 }
@@ -1293,14 +1196,12 @@
     }
 
     /// @function get_cookie
-    function get_cookie(cookie_name)
-    {
+    function get_cookie(cookie_name) {
         let name = cookie_name + "=";
         let decoded_cookie = decodeURIComponent(document.cookie);
         let ca = decoded_cookie.split(';');
 
-        for (let i = 0; i < ca.length; i++)
-        {
+        for (let i = 0; i < ca.length; i++) {
             let c = ca[i];
 
             while (c.charAt(0) == ' ') {
@@ -1313,8 +1214,7 @@
         return "";
     }
 
-    $(document).ready(function()
-    {
+    $(document).ready(function() {
         // Add the on change listener for the file picker.
         file_picker.addEventListener('change', e => {
             for (let file of Array.from(e.target.files))
@@ -1339,15 +1239,6 @@
     });
 
 </script>
-
-<!--
-<section class="connections">
-    <div>
-        <h1>Connected Services</h1>
-        <a href="api/connect_to_strava"><img src="../images/connect_to_strava.png" width="256"></a>
-    </div>
-</section>
--->
 
 <section class="faq">
     <div>
@@ -1375,7 +1266,7 @@
 
 <section class="footer">
     <div>
-        <h2>Copyright (c) 2021 Michael J Simms</h2>
+        <h2>Copyright (c) 2021-2025 Michael J Simms</h2>
     </div>
 </section>
 
