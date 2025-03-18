@@ -179,7 +179,7 @@ fn analyze_gpx_route(s: &str) -> String {
 pub fn analyze_gpx(s: &str) -> String {
     utils::set_panic_hook();
 
-    let mut analysis_report_str = String::new();
+    let analysis_report_str;
     let mut context = analyzer_context::AnalyzerContext::new();
     let data = BufReader::new(s.as_bytes());
     let res = gpx::read(data);
