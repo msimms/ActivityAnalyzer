@@ -22,8 +22,8 @@ serde_derive = "1.0"
 serde-xml-rs = "0.4.0"
 lib_math = { path = "../LibMath/rust/" }
 reqwest = { version = "0.10.0-alpha.2", features = ["blocking"] }
-time = "*"
-xmlwriter = "*"
+time = "0.3.40"
+xmlwriter = "0.1.0"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
